@@ -201,10 +201,15 @@ def _pack_chunks(
                 break
             end = new_end
         if end <= prev_end:
-            # Fully contained in the previous chunk (coarse block granularity
-            # can backtrack past new content near the corpus tail): adds no
-            # new text, so stop instead of emitting redundant windows.
-            break
+            # Coarse block granularity or max-token trimming can land a packed
+            # chunk fully inside the previous one. Stopping here would abandon
+            # the document tail; resume at the first block whose text extends
+            # past the previous chunk (strict idx progress prevents loops).
+            following = [bidx for bidx, block in enumerate(blocks) if block.end > prev_end]
+            if not following or following[0] <= idx:
+                break
+            idx = following[0]
+            continue
         spans.append((start_edge, end))
         prev_end = end
 

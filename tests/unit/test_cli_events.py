@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from quarterline.cli import SUBCOMMAND_REGISTRY, main
+from quarterline.cli import SUBCOMMAND_REGISTRY
 from quarterline.observability.events import emit_run_event, new_run_id
 
 
@@ -37,13 +37,13 @@ def test_registry_has_wave0_handlers() -> None:
     assert "serve" in SUBCOMMAND_REGISTRY
 
 
-def test_unimplemented_subcommands_exit_2_with_notice(capsys) -> None:
-    # Wave-2 boundary update (same as the wave-1 update that removed
-    # `ingest facts`): `index build` and `search` are implemented by the
-    # retrieval track, so the still-stubbed assertions cover the wave-3
-    # evaluation subcommands instead.
-    assert main(["eval", "retrieval"]) == 2
-    assert "not implemented until wave 3" in capsys.readouterr().err
+def test_eval_cli_handlers_registered_at_wave3() -> None:
+    # Wave-3 boundary update (same as the wave-1/wave-2 updates before it):
+    # `eval retrieval` and `eval generation` are implemented by the F6
+    # evaluation track, so the stub-notice assertions become registration
+    # assertions. cli.main lazy-imports quarterline.eval, which registers
+    # its handlers into SUBCOMMAND_REGISTRY at import time.
+    import quarterline.eval  # noqa: F401 (registers the eval handlers)
 
-    assert main(["eval", "generation"]) == 2
-    assert "not implemented until wave 3" in capsys.readouterr().err
+    assert "eval:retrieval" in SUBCOMMAND_REGISTRY
+    assert "eval:generation" in SUBCOMMAND_REGISTRY

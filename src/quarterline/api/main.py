@@ -13,7 +13,16 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
-from quarterline.api.routers import companies, filings, health, screener
+from quarterline.api.routers import (
+    ask,
+    brief,
+    companies,
+    dashboard,
+    filings,
+    health,
+    runs,
+    screener,
+)
 
 API_DIR = Path(__file__).resolve().parent
 
@@ -50,5 +59,12 @@ def create_app() -> FastAPI:
     app.include_router(companies.router)
     app.include_router(screener.router)
     app.include_router(filings.router)
+
+    # --- wave-3 router registration (F5 replaces this line) ---
+    app.include_router(brief.router)
+    app.include_router(ask.router)
+    app.include_router(runs.router)
+    # --- wave-3 router registration (F6 replaces this line) ---
+    app.include_router(dashboard.router)
 
     return app

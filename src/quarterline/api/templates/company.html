@@ -110,9 +110,14 @@
 </section>
 {% endif %}
 
-<section class="panel brief-placeholder">
+<section class="panel" id="brief-panel"
+         hx-post="/api/c/{{ ticker }}/brief"
+         hx-trigger="click from:.brief-generate"
+         hx-target="#brief-panel" hx-swap="outerHTML">
   <h2>Generated brief</h2>
-  <p class="muted">Brief generation available in a later release. This panel will show
-  a grounded, citation-checked brief produced from retrieved filing evidence.</p>
+  <p class="muted">A grounded, citation-checked brief produced from retrieved filing
+  evidence. Every claim is validated against the supplied evidence before display;
+  numbers are rendered by Quarterline's calculation engine, never by the model.</p>
+  <button type="button" class="brief-generate">Generate brief</button>
 </section>
 {% endblock %}

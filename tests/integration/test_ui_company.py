@@ -58,7 +58,7 @@ def test_company_page_renders_charts_label_and_fact_table(client) -> None:
     assert "at_least_three_signals_true" in html  # the applied rule is shown
     assert "Rule-based quarterly performance label." in html
     # brief panel placeholder keeps the final layout (wave F5 fills it)
-    assert "available in a later release" in html
+    assert 'id="brief-panel"' in html  # wave-3: real brief panel replaced the placeholder
 
 
 def test_missing_data_renders_missing_never_zero(client) -> None:

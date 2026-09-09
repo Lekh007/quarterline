@@ -1,0 +1,59 @@
+{# Reusable metrics block for the observability dashboard (SPEC §24).
+   Expects `summary` in context: the dict from
+   quarterline.observability.metrics.metrics_summary. #}
+<section class="panel" id="metrics">
+  <h2>Request metrics <span class="muted">({{ summary.total_runs }} runs, {{ summary.total_events }} events)</span></h2>
+
+  <h3>Latency (ms, P50 / P95 from stored durations)</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Kind</th><th>n</th><th>P50</th><th>P95</th></tr>
+    </thead>
+    <tbody>
+      {% for kind, stats in summary.latency_ms.items() %}
+      <tr>
+        <td>{{ kind }}</td>
+        <td class="value-cell">{{ stats.n }}</td>
+        <td class="value-cell">{% if stats.p50_ms is not none %}{{ "%.1f" | format(stats.p50_ms) }}{% else %}<span class="value-missing">no data</span>{% endif %}</td>
+        <td class="value-cell">{% if stats.p95_ms is not none %}{{ "%.1f" | format(stats.p95_ms) }}{% else %}<span class="value-missing">no data</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Rates and breakdowns</h3>
+  <table class="data-table">
+    <thead>
+      <tr><th>Metric</th><th>n</th><th>Count</th><th>Rate</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Cache hits</td><td class="value-cell">{{ summary.cache_hit.n }}</td><td class="value-cell">{{ summary.cache_hit.count }}</td><td class="value-cell">{{ summary.cache_hit.rate if summary.cache_hit.rate is not none else "n/a" }}</td></tr>
+      <tr><td>JSON valid (after repair)</td><td class="value-cell">{{ summary.json.valid.n }}</td><td class="value-cell">{{ summary.json.valid.count }}</td><td class="value-cell">{{ summary.json.valid.rate if summary.json.valid.rate is not none else "n/a" }}</td></tr>
+      <tr><td>JSON repaired</td><td class="value-cell">{{ summary.json.repaired.n }}</td><td class="value-cell">{{ summary.json.repaired.count }}</td><td class="value-cell">{{ summary.json.repaired.rate if summary.json.repaired.rate is not none else "n/a" }}</td></tr>
+      <tr><td>Numeric rejections</td><td class="value-cell">{{ summary.numeric_rejection.n }}</td><td class="value-cell">{{ summary.numeric_rejection.count }}</td><td class="value-cell">{{ summary.numeric_rejection.rate if summary.numeric_rejection.rate is not none else "n/a" }}</td></tr>
+      <tr><td>Insufficient-evidence answers</td><td class="value-cell">{{ summary.answer_status.insufficient_evidence.n }}</td><td class="value-cell">{{ summary.answer_status.insufficient_evidence.count }}</td><td class="value-cell">{{ summary.answer_status.insufficient_evidence.rate if summary.answer_status.insufficient_evidence.rate is not none else "n/a" }}</td></tr>
+      <tr><td>Policy refusals</td><td class="value-cell">{{ summary.answer_status.refusal.n }}</td><td class="value-cell">{{ summary.answer_status.refusal.count }}</td><td class="value-cell">{{ summary.answer_status.refusal.rate if summary.answer_status.refusal.rate is not none else "n/a" }}</td></tr>
+      <tr><td>Provider failures</td><td class="value-cell">{{ summary.answer_status.provider_failure.n }}</td><td class="value-cell">{{ summary.answer_status.provider_failure.count }}</td><td class="value-cell">{{ summary.answer_status.provider_failure.rate if summary.answer_status.provider_failure.rate is not none else "n/a" }}</td></tr>
+      <tr><td>Bullet retention</td><td class="value-cell">{{ summary.bullet_retention.retained + summary.bullet_retention.dropped }}</td><td class="value-cell">{{ summary.bullet_retention.retained }} kept / {{ summary.bullet_retention.dropped }} dropped</td><td class="value-cell">{{ summary.bullet_retention.rate if summary.bullet_retention.rate is not none else "n/a" }}</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Provider / model breakdown</h3>
+  {% if summary.provider_model_breakdown %}
+  <table class="data-table">
+    <thead><tr><th>Provider / model</th><th>Events</th></tr></thead>
+    <tbody>
+      {% for key, count in summary.provider_model_breakdown.items() %}
+      <tr><td>{{ key }}</td><td class="value-cell">{{ count }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No provider-tagged events yet.</p>
+  {% endif %}
+
+  <h3>Endpoints</h3>
+  <p>
+    {% for endpoint, count in summary.endpoints.items() %}<span class="chip">{{ endpoint }}: {{ count }}</span> {% else %}<span class="muted">no events</span>{% endfor %}
+  </p>
+</section>

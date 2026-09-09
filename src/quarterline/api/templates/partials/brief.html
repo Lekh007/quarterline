@@ -1,0 +1,129 @@
+<section class="panel brief-panel" id="brief-panel">
+  <h2>Generated brief{% if outcome.ticker %} — {{ outcome.ticker }}{% endif %}
+  {% if outcome.label_display %}<span class="label-badge label-{{ outcome.label_value }}">{{ outcome.label_display }}</span>{% endif %}
+  </h2>
+  <p class="muted">
+    Constrained-writer output: every statement was citation-checked against the
+    supplied filing evidence and unsupported content was dropped as a whole
+    statement. Numbers are rendered by code from the fact card, never typed by
+    the model. Research and education only &mdash; not investment advice.
+  </p>
+
+  {% if outcome.status == 'provider_unavailable' %}
+  <p class="banner banner-degraded"><strong>generation unavailable &mdash; showing
+  facts and evidence, not generated prose.</strong></p>
+  {% elif outcome.status == 'insufficient_evidence' %}
+  <p class="banner banner-insufficient"><strong>Insufficient evidence.</strong>
+  The versioned evidence policy did not find admissible support for a brief,
+  so none was generated (missing stays missing &mdash; never substituted).</p>
+  {% elif outcome.status == 'refused' %}
+  <p class="banner banner-refused"><strong>Research-only refusal.</strong>
+  Quarterline does not provide investment advice, recommendations, or price
+  targets.</p>
+  {% elif outcome.status == 'partial' %}
+  <p class="banner banner-partial"><strong>Partial brief.</strong> Some
+  generated statements did not pass validation and were dropped; survivors are
+  shown below.</p>
+  {% endif %}
+
+  {% if outcome.brief and outcome.brief.bullets %}
+  <h3>What happened</h3>
+  <ul class="brief-statements">
+    {% for bullet in outcome.brief.bullets %}
+    <li>{{ bullet.text }}
+      {% for evidence_id in bullet.evidence_ids %}
+      <a class="evidence-link" href="/evidence/{{ evidence_id }}"><code>{{ evidence_id }}</code></a>
+      {% endfor %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if outcome.brief and outcome.brief.risks %}
+  <h3>Risks identified by management</h3>
+  <ul class="brief-statements">
+    {% for risk in outcome.brief.risks %}
+    <li>{{ risk.text }}
+      {% for evidence_id in risk.evidence_ids %}
+      <a class="evidence-link" href="/evidence/{{ evidence_id }}"><code>{{ evidence_id }}</code></a>
+      {% endfor %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if outcome.metric_facts %}
+  <h3>Fact-card numbers (rendered by code)</h3>
+  <ul class="brief-metric-facts">
+    {% for fact in outcome.metric_facts %}
+    <li>{{ fact }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if outcome.brief and outcome.brief.open_questions %}
+  <h3>Open questions</h3>
+  <ul class="brief-open-questions">
+    {% for question in outcome.brief.open_questions %}
+    <li>{{ question.text }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if outcome.facts %}
+  <details class="brief-facts">
+    <summary>Fact card ({{ outcome.facts | length }} metrics)</summary>
+    <table class="data-table brief-fact-table">
+      <thead><tr><th>Metric</th><th>Value</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for row in outcome.facts %}
+        <tr>
+          <td><code>{{ row.metric_id }}</code></td>
+          <td>{{ row.display if row.display else (row.status if row.status != 'ok' else 'n/a') }}</td>
+          <td>{{ row.status }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% endif %}
+
+  {% if outcome.evidence %}
+  <details class="brief-evidence" {% if outcome.status == 'provider_unavailable' %}open{% endif %}>
+    <summary>Retrieved evidence ({{ outcome.evidence | length }} supplied windows)</summary>
+    <ul class="evidence-list">
+      {% for item in outcome.evidence %}
+      <li>
+        <a class="evidence-link" href="/evidence/{{ item.evidence_id }}"><code>{{ item.evidence_id }}</code></a>
+        <span class="muted">doc #{{ item.document_id }}{% if item.section %} · {{ item.section }}{% endif %}</span>
+        <div class="evidence-snippet">{{ item.text[:280] }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
+  {% if outcome.reasons %}
+  <details class="brief-validation">
+    <summary>Validation record ({{ outcome.reasons | length }} recorded reason(s))</summary>
+    <ul class="validation-reasons">
+      {% for reason in outcome.reasons %}
+      <li><code>{{ reason }}</code></li>
+      {% endfor %}
+    </ul>
+    {% if outcome.validation %}
+    <p class="muted">Gate version {{ outcome.validation.version }};
+    citations valid: {{ outcome.validation.citation_valid }};
+    numeric checks passed: {{ outcome.validation.factcheck_passed }}.</p>
+    {% endif %}
+  </details>
+  {% endif %}
+
+  {% if outcome.cache_hit %}
+  <p class="muted">Served from the generation cache (keyed by content hashes:
+  company, period, fact card, evidence, provider, prompt, validation
+  version).</p>
+  {% endif %}
+
+  <p class="muted">{{ disclaimer }}</p>
+</section>

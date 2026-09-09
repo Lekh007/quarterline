@@ -1,0 +1,23 @@
+{# Ordered event timeline for one run (SPEC §24). Expects `trace` (the dict
+   from quarterline.observability.tracing.run_trace) or nothing for a no-op. #}
+{% if trace %}
+<div class="run-trace">
+  <h3>Timeline for <code>{{ trace.run.run_id[:12] }}</code>
+    <span class="muted">({{ trace.run.endpoint or "unknown" }} &middot; {{ trace.run.status or "n/a" }})</span></h3>
+  <table class="data-table">
+    <thead><tr><th>#</th><th>Stored at</th><th>Event</th></tr></thead>
+    <tbody>
+      {% for event in trace.events %}
+      <tr>
+        <td class="value-cell">{{ event.event_row_id }}</td>
+        <td>{{ event.stored_at or "n/a" }}</td>
+        <td><code class="formula-cell">{{ event | tojson }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="table-note muted">Question text is never stored — events carry a question hash + length only (SPEC §24).</p>
+</div>
+{% elif no_trace_message is defined and no_trace_message %}
+<p class="muted">{{ no_trace_message }}</p>
+{% endif %}

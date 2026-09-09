@@ -1,0 +1,72 @@
+<section class="panel ask-panel" id="ask-panel">
+  <h2>Ask the filings</h2>
+  <p class="muted">
+    Answers come only from supplied filing evidence, are citation-checked, and
+    numbers are never typed by the model. Research and education only &mdash;
+    not investment advice.
+  </p>
+
+  <form method="post" action="/api/ask" class="ask-form">
+    <label for="ask-question">Question</label>
+    <input type="text" id="ask-question" name="question" required
+           placeholder="e.g. What did management say about the change in revenue?">
+    <label for="ask-ticker">Ticker (optional)</label>
+    <input type="text" id="ask-ticker" name="ticker" placeholder="AAPL">
+    <button type="submit">Ask</button>
+    <p class="muted">Questions are sent as a POST body, never a URL query string.</p>
+  </form>
+
+  {% if outcome %}
+  <div class="ask-result">
+    <p class="muted">Question: {{ question }}</p>
+    {% if outcome.status == 'refused' %}
+    <p class="banner banner-refused"><strong>Research-only refusal.</strong></p>
+    {% elif outcome.status == 'insufficient_evidence' %}
+    <p class="banner banner-insufficient"><strong>Insufficient evidence.</strong>
+    The supplied filings do not answer this question; nothing was substituted.</p>
+    {% elif outcome.status == 'provider_unavailable' %}
+    <p class="banner banner-degraded"><strong>generation unavailable &mdash;
+    showing facts and evidence, not generated prose.</strong></p>
+    {% elif outcome.status == 'partial' %}
+    <p class="banner banner-partial"><strong>Partial answer</strong> (some
+    content failed validation and was dropped).</p>
+    {% endif %}
+
+    {% if outcome.answer %}
+    <blockquote class="answer-text">{{ outcome.answer.text }}
+      {% for evidence_id in outcome.answer.evidence_ids %}
+      <a class="evidence-link" href="/evidence/{{ evidence_id }}"><code>{{ evidence_id }}</code></a>
+      {% endfor %}
+    </blockquote>
+    {% endif %}
+
+    {% if outcome.evidence %}
+    <details class="ask-evidence">
+      <summary>Retrieved evidence ({{ outcome.evidence | length }})</summary>
+      <ul class="evidence-list">
+        {% for item in outcome.evidence %}
+        <li>
+          <a class="evidence-link" href="/evidence/{{ item.evidence_id }}"><code>{{ item.evidence_id }}</code></a>
+          <span class="muted">doc #{{ item.document_id }}{% if item.section %} · {{ item.section }}{% endif %}</span>
+          <div class="evidence-snippet">{{ item.text[:280] }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+
+    {% if outcome.reasons %}
+    <details class="ask-validation">
+      <summary>Validation record</summary>
+      <ul class="validation-reasons">
+        {% for reason in outcome.reasons %}
+        <li><code>{{ reason }}</code></li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <p class="muted">{{ disclaimer }}</p>
+</section>

@@ -1,0 +1,47 @@
+# Scheduled / manual fixture evaluation (SPEC §23 "Scheduled/manual evaluation").
+#
+# Runs the OFFLINE fixture-corpus evaluation and the regression check only:
+# no live SEC requests, no paid or remote model providers, no Ollama
+# dependency. The fixture numbers come from the deterministic fake embedding
+# provider and measure pipeline behavior (retrieval plumbing + regression
+# guards), NOT generation quality.
+#
+# IMPORTANT (SPEC §23): real-model evaluations (local Ollama generation,
+# local nomic embeddings, optional LLM judge) run OPT-IN on a local/self-
+# hosted machine. CI must never pretend a fake provider measures generation
+# quality — a real-model run therefore requires an attached local evaluation
+# report instead of a CI substitute.
+#
+# Runner note: use a self-hosted runner for any future opt-in real-model
+# variant; hosted runners have neither the models nor the local store.
+name: scheduled_eval
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly, Mondays 03:17 UTC.
+    - cron: "17 3 * * 1"
+
+jobs:
+  fixture-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run fixture retrieval eval + regression check
+        # Exit code 1 = regression FAIL against the committed baseline.
+        run: uv run python -m quarterline eval retrieval --dataset data/eval/questions.jsonl
+
+      - name: Run generation harness check (scripted fake — harness only)
+        run: uv run python -m quarterline eval generation --dataset data/eval/questions.jsonl
+
+      - name: Upload evaluation reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: storage/eval_reports/
+          if-no-files-found: error

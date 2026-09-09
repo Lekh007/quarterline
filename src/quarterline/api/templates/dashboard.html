@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Observability dashboard — Quarterline{% endblock %}
+{% block content %}
+<h1>Observability dashboard</h1>
+<nav class="dashboard-nav muted" aria-label="Dashboard sections">
+  <a href="#metrics">Metrics</a> ·
+  <a href="#latest-eval">Latest evaluation</a> ·
+  <a href="#recent-runs">Recent runs</a> ·
+  <a href="/api/runs">Runs API</a>
+</nav>
+<p class="muted">{{ disclaimer }}</p>
+
+{% if empty %}
+<section class="panel empty-state">
+  <h2>No runs recorded yet</h2>
+  <p>
+    Once you run searches, generation, or evaluations, structured run events
+    (runs/run_events) appear here with latencies, cache hits, JSON repair,
+    abstention and failure rates &mdash; each with its sample size.
+  </p>
+</section>
+{% else %}
+{% include "partials/dashboard.html" %}
+{% endif %}
+
+<section class="panel" id="latest-eval">
+  <h2>Latest evaluation</h2>
+  {% if latest_report %}
+  <p>
+    Report generated {{ latest_report.generated_at }}
+    {% if latest_report.dataset_version %}&middot; dataset <code>{{ latest_report.dataset_version }}</code>{% endif %}
+    &middot; corpus: {{ latest_report.corpus or "fixture" }}
+  </p>
+  {% if latest_report.matrix %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Strategy</th><th>Retrieval</th><th>Hit@5</th><th>Recall@5</th><th>MRR</th><th>n</th></tr>
+    </thead>
+    <tbody>
+      {% for row in latest_report.matrix %}
+      <tr>
+        <td>{{ row.strategy }}</td><td>{{ row.retrieval }}</td>
+        <td class="value-cell">{% if row.hit_at_5 is not none %}{{ "%.1f" | format(row.hit_at_5 * 100) }}%{% else %}n/a{% endif %}</td>
+        <td class="value-cell">{% if row.recall_at_5 is not none %}{{ "%.1f" | format(row.recall_at_5 * 100) }}%{% else %}n/a{% endif %}</td>
+        <td class="value-cell">{% if row.mrr is not none %}{{ "%.3f" | format(row.mrr) }}{% else %}n/a{% endif %}</td>
+        <td class="value-cell">{{ row.n_questions }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="table-note muted">Fixture-corpus measurements with deterministic fake embeddings — pipeline checks, not real-model quality (real-model matrix: Wave 5).</p>
+  {% endif %}
+  {% if latest_report.regression %}
+  <p>Regression check: <strong>{{ latest_report.regression.status }}</strong></p>
+  {% endif %}
+  {% elif eval_summary %}
+  <p>
+    Last eval run #{{ eval_summary.eval_run_id }} ({{ eval_summary.status }}):
+    {{ eval_summary.chunking_strategy or "generation" }} {{ eval_summary.retrieval_config or "" }}
+    {% if eval_summary.finished_at %}&middot; {{ eval_summary.finished_at }}{% endif %}
+  </p>
+  <p class="muted">{{ eval_summary.notes }}</p>
+  {% else %}
+  <p class="muted">No evaluation has been run yet. Run <code>uv run python -m quarterline eval retrieval</code> to produce the fixture-corpus matrix.</p>
+  {% endif %}
+</section>
+
+<section class="panel" id="recent-runs">
+  <h2>Recent runs</h2>
+  {% if runs %}
+  <table class="data-table">
+    <thead><tr><th>Run</th><th>Endpoint</th><th>Status</th><th>Started</th><th>Trace</th></tr></thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td class="value-cell"><code>{{ run.run_id[:12] }}</code></td>
+        <td>{{ run.endpoint or "unknown" }}</td>
+        <td>{{ run.status or "n/a" }}{% if run.error_type %} ({{ run.error_type }}){% endif %}</td>
+        <td>{{ run.started_at or "n/a" }}</td>
+        <td><a href="/api/runs/{{ run.run_id }}">timeline JSON</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No runs recorded yet.</p>
+  {% endif %}
+  {% with trace = latest_trace, no_trace_message = "Run a search or evaluation to see its event timeline here." %}
+    {% include "partials/run_trace.html" %}
+  {% endwith %}
+</section>
+{% endblock %}
