@@ -1,0 +1,16 @@
+ticker,cik,name,sector,country
+AAPL,0000320193,Apple Inc.,Information Technology,US
+MSFT,0000789019,MICROSOFT CORP,Information Technology,US
+GOOGL,0001652044,Alphabet Inc.,Communication Services,US
+AMZN,0001018724,AMAZON COM INC,Consumer Discretionary,US
+META,0001326801,"Meta Platforms, Inc.",Communication Services,US
+NVDA,0001045810,NVIDIA CORP,Information Technology,US
+AVGO,0001730168,Broadcom Inc.,Information Technology,US
+ORCL,0001341439,ORACLE CORP,Information Technology,US
+CRM,0001108524,"Salesforce, Inc.",Information Technology,US
+ADBE,0000796343,ADOBE INC.,Information Technology,US
+COST,0000909832,COSTCO WHOLESALE CORP /NEW,Consumer Staples,US
+WMT,0000104169,Walmart Inc.,Consumer Staples,US
+CAT,0000018230,CATERPILLAR INC,Industrials,US
+UNP,0000100885,UNION PACIFIC CORP,Industrials,US
+HON,0000773840,HONEYWELL INTERNATIONAL INC,Industrials,US

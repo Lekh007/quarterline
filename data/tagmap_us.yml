@@ -1,0 +1,44 @@
+revenue:
+  - RevenueFromContractWithCustomerExcludingAssessedTax
+  - SalesRevenueNet
+  - Revenues
+  - RevenueFromContractWithCustomerIncludingAssessedTax
+
+gross_profit:
+  - GrossProfit
+
+operating_income:
+  - OperatingIncomeLoss
+
+net_income:
+  - NetIncomeLoss
+
+diluted_eps:
+  - EarningsPerShareDiluted
+
+shares_diluted:
+  - WeightedAverageNumberOfDilutedSharesOutstanding
+
+cfo:
+  - NetCashProvidedByUsedInOperatingActivities
+
+capex_outflow:
+  - PaymentsToAcquirePropertyPlantAndEquipment
+
+cash:
+  - CashAndCashEquivalentsAtCarryingValue
+
+total_assets:
+  - Assets
+
+total_liabilities:
+  - Liabilities
+
+long_term_debt:
+  - LongTermDebt
+
+current_assets:
+  - AssetsCurrent
+
+current_liabilities:
+  - LiabilitiesCurrent

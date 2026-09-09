@@ -1,0 +1,50 @@
+[project]
+name = "quarterline"
+version = "0.1.0"
+description = "Local-first public-company research desk: official filings in, explainable research out."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic>=2",
+    "pydantic-settings",
+    "sqlalchemy>=2.0",
+    "alembic",
+    "httpx",
+    "jinja2",
+    "pyyaml",
+    "numpy",
+    "pymupdf",
+    "beautifulsoup4",
+    "lxml",
+    "edgartools",
+    "langgraph",
+    "yfinance",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+rerank = ["sentence-transformers"]
+
+[project.scripts]
+quarterline = "quarterline.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/quarterline"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not live'"
+testpaths = ["tests"]
+markers = [
+    "live: requires network or local models (deselected by default)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
