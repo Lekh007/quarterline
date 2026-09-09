@@ -17,6 +17,7 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     LargeBinary,
@@ -251,6 +252,10 @@ class Document(Base):
     document_kind: Mapped[str | None] = mapped_column(String(32))  # 10-Q | 10-K | 8-K-exhibit | pdf
     period_end: Mapped[date | None] = mapped_column(Date)
     filed_at: Mapped[date | None] = mapped_column(Date)
+    # 8-K three-date rule (SPEC §13.1): event date is the filing's period-of-report,
+    # distinct from filed_at and from the discussed period stored in period_end.
+    event_date: Mapped[date | None] = mapped_column(Date)
+    extraction_notes: Mapped[str | None] = mapped_column(Text)
     source_url: Mapped[str | None] = mapped_column(Text)
     source_artifact_id: Mapped[int | None] = mapped_column(ForeignKey("source_artifacts.id"))
     extracted_path: Mapped[str | None] = mapped_column(Text)
@@ -270,6 +275,10 @@ class Section(Base):
     end_offset: Mapped[int | None] = mapped_column(Integer)
     page_start: Mapped[int | None] = mapped_column(Integer)
     page_end: Mapped[int | None] = mapped_column(Integer)
+    # Section-detection honesty (SPEC §13.2): uncertain matches stay "other"
+    # with a recorded confidence instead of a whole-filing mislabel.
+    confidence: Mapped[float | None] = mapped_column(Float)
+    notes: Mapped[str | None] = mapped_column(Text)
 
 
 class Chunk(Base):

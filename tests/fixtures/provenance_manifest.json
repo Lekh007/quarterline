@@ -1,0 +1,38 @@
+{
+  "manifest_version": "1",
+  "policy": "All financial values in these fixtures are real, verbatim SEC-reported values. Nothing was invented, rounded, or synthesized except the explicitly marked synthetic fixture (tests/fixtures/sec/synthetic_edge_cases.json), which must never be treated as real company data (SPEC 26).",
+  "fixtures": [
+    {
+      "path": "tests/fixtures/sec/aapl_companyfacts_subset.json",
+      "company": {
+        "ticker": "AAPL",
+        "cik": "0000320193",
+        "entityName": "Apple Inc."
+      },
+      "source_url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json",
+      "source_endpoint": "SEC XBRL companyfacts API (official)",
+      "fetched_at": "2026-09-09",
+      "fetch_user_agent": "Quarterline build (fixture verification)",
+      "full_response_sha256": "73a86c6aedc31f77cac2ea4df5f80f0b3bd7e6eb58bb4e01444fbedf3afb9c43",
+      "full_response_bytes": 3789099,
+      "content_sha256": "08035f9eda2ffb6e0e55d0fc634cdfcef4b9a4f57a38908425be3923389f1efa",
+      "content_bytes": 102494,
+      "trimmed_but_real": true,
+      "trim_rule": "Kept only the 'us-gaap' taxonomy nodes for the exact tags listed in data/tagmap_us.yml (data/dei and all other us-gaap tags removed). Within each kept tag, kept every unit observation whose period 'end' is >= '2023-06-01' (covers the FY2023 annual period, needed as the prior-year comparative, through the latest quarters as of the fetch date) verbatim, including val, accn, fy, fp, form, filed, frame and start/end fields. The tag RevenueFromContractWithCustomerIncludingAssessedTax is absent because Apple genuinely never reported it in the source payload; the remaining revenue fallback list is intact.",
+      "entry_count": 400
+    },
+    {
+      "path": "tests/fixtures/sec/synthetic_edge_cases.json",
+      "company": {
+        "ticker": "SYNTH",
+        "cik": "9999999",
+        "entityName": "SYNTHETIC EDGE CASE CORP (NOT A REAL COMPANY)"
+      },
+      "source_url": null,
+      "synthetic": true,
+      "purpose": "Deterministic edge cases for normalization/fiscal-calendar tests: non-calendar fiscal year end (October) with a 53-week fiscal year, YTD 6m/9m cumulative durations, a restated quarter (two filings, same period, different value), direct quarterly EPS absent while YTD/annual EPS present (must stay missing, never derived), negative capex reporting, and a zero-margin quarter. Clearly marked synthetic; never use as real company data (SPEC 26).",
+      "content_sha256": "007b6dd5e57037101721fc15527ea308cd6d08312b32a517d3d6630b7ee27d87",
+      "regenerated_by": "scripts/make_synthetic_fixture.py"
+    }
+  ]
+}

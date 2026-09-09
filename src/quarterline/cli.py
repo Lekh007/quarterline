@@ -198,7 +198,33 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+_WAVE_PACKAGES = (
+    "quarterline.ingest",
+    "quarterline.retrieve",
+    "quarterline.llm",
+    "quarterline.eval",
+    "quarterline.agent",
+)
+
+
+def _register_wave_handlers() -> None:
+    """Import wave packages so their modules register subcommand handlers.
+
+    A not-yet-implemented package is fine (swallowed); an ImportError raised
+    from *inside* an implemented one is a real bug and must surface.
+    """
+    import importlib
+
+    for name in _WAVE_PACKAGES:
+        try:
+            importlib.import_module(name)
+        except ModuleNotFoundError as exc:
+            if exc.name is None or not exc.name.startswith(name):
+                raise
+
+
 def main(argv: list[str] | None = None) -> int:
+    _register_wave_handlers()
     parser = build_parser()
     args = parser.parse_args(argv)
     key: str = getattr(args, "registry_key", "")

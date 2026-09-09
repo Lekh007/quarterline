@@ -38,10 +38,10 @@ def test_registry_has_wave0_handlers() -> None:
 
 
 def test_unimplemented_subcommands_exit_2_with_notice(capsys) -> None:
-    assert main(["ingest", "facts"]) == 2
+    assert main(["index", "build", "--strategy", "fixed"]) == 2
     err = capsys.readouterr().err
-    assert "ingest facts" in err
-    assert "not implemented until wave 1" in err
+    assert "index build" in err
+    assert "not implemented until wave 2" in err
 
     assert main(["search", "--ticker", "AAPL", "--query", "q"]) == 2
     assert "not implemented until wave 2" in capsys.readouterr().err
