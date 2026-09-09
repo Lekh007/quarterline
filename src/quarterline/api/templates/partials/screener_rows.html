@@ -1,0 +1,22 @@
+{% if rows %}
+{% for row in rows %}
+<tr class="screener-row" data-ticker="{{ row.ticker }}">
+  <td><a href="/c/{{ row.ticker }}">{{ row.ticker }}</a></td>
+  <td>{{ row.name or "n/a" }}</td>
+  <td>{{ row.quarter }}</td>
+  <td>{{ row.revenue_yoy }}</td>
+  <td>{{ row.operating_margin }}</td>
+  <td>{{ row.cfo_to_net_income }}</td>
+  <td>{{ row.fcf }}</td>
+  <td><span class="label-badge label-{{ row.label_value or 'none' }}">{{ row.label }}</span></td>
+  <td>{{ row.coverage }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr class="row-empty">
+  <td colspan="9" class="empty-cell">
+    No companies match the active filters. Missing data never satisfies a
+    numeric filter — try lowering a threshold or clearing a filter.
+  </td>
+</tr>
+{% endif %}

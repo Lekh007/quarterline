@@ -164,6 +164,9 @@ def build_parser() -> argparse.ArgumentParser:
     index_build.add_argument(
         "--strategy", choices=["fixed", "section"], default="fixed", help="chunking strategy"
     )
+    index_build.add_argument(
+        "--tickers", nargs="*", default=None, help="optional ticker subset (default: whole corpus)"
+    )
     index_build.set_defaults(registry_key="index:build")
 
     # search
@@ -179,6 +182,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="hybrid",
         help="retrieval configuration",
     )
+    search.add_argument(
+        "--mode",
+        choices=["general", "brief", "risk"],
+        default="general",
+        help="section-filter preset (brief: mda+earnings, risk: risk factors+mda)",
+    )
+    search.add_argument("--top-k", type=int, default=None, help="override result count")
     search.set_defaults(registry_key="search")
 
     # eval retrieval | generation

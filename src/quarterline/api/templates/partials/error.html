@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ status }} — Quarterline{% endblock %}
+{% block content %}
+<section class="panel empty-state">
+  <h1>{{ status }} — not found</h1>
+  <p>{{ detail }}</p>
+  <p><a href="/">Back to the watchlist</a></p>
+</section>
+{% endblock %}

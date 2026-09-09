@@ -38,13 +38,12 @@ def test_registry_has_wave0_handlers() -> None:
 
 
 def test_unimplemented_subcommands_exit_2_with_notice(capsys) -> None:
-    assert main(["index", "build", "--strategy", "fixed"]) == 2
-    err = capsys.readouterr().err
-    assert "index build" in err
-    assert "not implemented until wave 2" in err
-
-    assert main(["search", "--ticker", "AAPL", "--query", "q"]) == 2
-    assert "not implemented until wave 2" in capsys.readouterr().err
+    # Wave-2 boundary update (same as the wave-1 update that removed
+    # `ingest facts`): `index build` and `search` are implemented by the
+    # retrieval track, so the still-stubbed assertions cover the wave-3
+    # evaluation subcommands instead.
+    assert main(["eval", "retrieval"]) == 2
+    assert "not implemented until wave 3" in capsys.readouterr().err
 
     assert main(["eval", "generation"]) == 2
     assert "not implemented until wave 3" in capsys.readouterr().err

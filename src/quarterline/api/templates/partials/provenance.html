@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Provenance — {{ report.ticker }} / {{ report.metric_id }} — Quarterline{% endblock %}
+{% block content %}
+<h1>Provenance — <a href="{{ back_url }}">{{ report.ticker }}</a> / <code>{{ report.metric_id }}</code></h1>
+<p class="muted">Full lineage for {{ report.period_end }}. Every displayed financial metric
+must have inspectable provenance; this page is that record.</p>
+
+<section class="panel">
+  <table class="data-table">
+    <tbody>
+      <tr><th>Value</th><td>{{ report.value if report.value is not none else "missing" }} {{ report.unit or "" }}</td></tr>
+      <tr><th>Status</th><td>{{ report.status }}</td></tr>
+      <tr><th>Derivation</th><td><span class="type-badge type-{{ 'direct' if report.derivation == 'direct' else ('derived' if report.derivation in ('derived', 'computed') else 'missing') }}">{{ report.derivation }}</span></td></tr>
+      <tr><th>Formula</th><td>{{ report.formula_text or "n/a" }}</td></tr>
+      <tr><th>Formula version</th><td><code>{{ report.formula_version or "n/a" }}</code></td></tr>
+      {% if report.input_concepts %}
+      <tr><th>Input concepts</th><td>{{ report.input_concepts | join(", ") }}</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Source observations</h2>
+  {% if sources %}
+  <table class="data-table">
+    <thead>
+      <tr><th>Observation</th><th>Accession</th><th>Form</th><th>Filed at</th><th>Original tag</th><th>Canonical concept</th><th>Value</th><th>Unit</th><th>Role</th><th>Direct?</th></tr>
+    </thead>
+    <tbody>
+      {% for s in sources %}
+      <tr>
+        <td>{{ s.observation_id }}</td>
+        <td>{{ s.accession or "n/a" }}</td>
+        <td>{{ s.form or "n/a" }}</td>
+        <td>{{ s.filed_at or "n/a" }}</td>
+        <td>{{ s.original_tag }}</td>
+        <td>{{ s.canonical_concept }}</td>
+        <td>{{ s.value or "missing" }}</td>
+        <td>{{ s.unit or "—" }}</td>
+        <td>{{ s.role }}</td>
+        <td>{{ "yes" if s.direct else "no" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No source observations recorded for this metric (it may be a rule-based
+  label or score, or its inputs were missing — missing stays missing).</p>
+  {% endif %}
+</section>
+
+{% if report.notes %}
+<section>
+  <h2>Notes</h2>
+  <ul class="notes-list">
+    {% for note in report.notes %}<li>{{ note }}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+<p><a href="{{ back_url }}">Back to {{ report.ticker }}</a></p>
+{% endblock %}

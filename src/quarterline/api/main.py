@@ -1,8 +1,9 @@
 """FastAPI application factory (SPEC §19).
 
-Wave 0 ships the shell: security headers, static mount, Jinja2 templates, the
-health router, and a placeholder index page. Later waves add routers for
-companies, filings, screener, brief, ask, memo, runs, and dashboard.
+Wave 0 shipped the shell; wave 2 registers the deterministic routers
+(companies/watchlist, screener, filings/evidence). The placeholder index
+route moved to ``routers.companies`` (real watchlist table). LLM routes
+(brief, ask, memo, runs, dashboard) arrive in later waves.
 """
 
 from __future__ import annotations
@@ -10,15 +11,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 
-from quarterline.api.routers import health
+from quarterline.api.routers import companies, filings, health, screener
 
 API_DIR = Path(__file__).resolve().parent
 
 #: research-only disclaimer shown in the base template footer of every page.
+#: Exported for the generation wave (memo exports embed the same text).
 DISCLAIMER = "Research and education only. Not investment advice."
 
 #: CSP allows self + inline for now (SPEC §2.3.6); wave F4 tightens this.
@@ -37,7 +37,6 @@ def create_app() -> FastAPI:
     # Per-app provider-health cache used by the /health router (30 s TTL).
     app.state.provider_health_cache: dict | None = None
 
-    templates = Jinja2Templates(directory=str(API_DIR / "templates"))
     app.mount("/static", StaticFiles(directory=str(API_DIR / "static")), name="static")
 
     @app.middleware("http")
@@ -48,13 +47,8 @@ def create_app() -> FastAPI:
         return response
 
     app.include_router(health.router)
-
-    @app.get("/", response_class=HTMLResponse)
-    async def index(request: Request):
-        return templates.TemplateResponse(
-            request=request,
-            name="index.html",
-            context={"title": "Quarterline", "disclaimer": DISCLAIMER},
-        )
+    app.include_router(companies.router)
+    app.include_router(screener.router)
+    app.include_router(filings.router)
 
     return app

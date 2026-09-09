@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}{{ company.ticker }} — Quarterline{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{{ company.ticker }}{% if company.name %} <span class="muted">· {{ company.name }}</span>{% endif %}</h1>
+  <p class="muted">
+    {% if company.sector %}Sector: {{ company.sector }} · {% endif %}CIK {{ company.cik }}
+    {% if has_data %} · Data completeness: {{ coverage }}{% endif %}
+  </p>
+</section>
+
+{% if not has_data %}
+<section class="panel empty-state">
+  <h2>No data ingested</h2>
+  <p>No SEC facts have been ingested for {{ company.ticker }} yet, so no metrics,
+  charts, or labels can be shown. Missing data is never substituted with zeros.</p>
+  <p><a href="/">Back to the watchlist</a></p>
+</section>
+{% else %}
+
+<section class="quarter-picker">
+  <span class="muted">Quarter:</span>
+  {% for card in cards %}
+  <a class="chip {{ 'chip-active' if card.period_end == selected.period_end }}"
+     href="/c/{{ company.ticker }}?period_end={{ card.period_end.isoformat() }}">{{ quarter_texts[loop.index0] }}</a>
+  {% endfor %}
+</section>
+
+<section class="panel label-panel">
+  <h2>Quarter label — {{ selected_quarter }}</h2>
+  {% if label_panel %}
+  <p>Label: <span class="label-badge label-{{ label_panel.label_value }}">{{ label_panel.label }}</span></p>
+  <table class="data-table signal-table">
+    <thead>
+      <tr><th>Signal</th><th>Input</th><th>State</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      {% for signal in label_panel.signals %}
+      <tr>
+        <td>{{ signal.signal_id }}</td>
+        <td>{{ signal.description }}</td>
+        <td><span class="state-badge state-{{ signal.state }}">{{ signal.state }}</span></td>
+        <td>{{ signal.detail }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">Rule applied: <code>{{ label_panel.rule_applied }}</code>
+     ({{ label_panel.formula_version }}){% if label_panel.notes %} — {{ label_panel.notes | join("; ") }}{% endif %}</p>
+  <p class="table-note muted">{{ label_panel.caption }}</p>
+  {% else %}
+  <p class="muted">Label not computable for this period.</p>
+  {% endif %}
+</section>
+
+<section class="charts">
+  <h2>Eight-quarter charts</h2>
+  <p class="muted">Rendered by Chart.js from the JSON metrics endpoint data below;
+  with JavaScript off, the summary table underneath is the fallback.</p>
+  <script type="application/json" id="chart-data">{{ chart_payload | tojson }}</script>
+  <noscript><p class="muted">JavaScript is off — use the summary table below.</p></noscript>
+  <div class="chart-grid">
+    <div class="chart-panel" data-chart="revenue"><h3>Revenue (USD M)</h3><canvas id="chart-revenue" width="480" height="240" role="img" aria-label="Revenue by quarter"></canvas></div>
+    <div class="chart-panel" data-chart="net_income"><h3>Net income (USD M)</h3><canvas id="chart-net-income" width="480" height="240" role="img" aria-label="Net income by quarter"></canvas></div>
+    <div class="chart-panel" data-chart="margins"><h3>Margins (%)</h3><canvas id="chart-margins" width="480" height="240" role="img" aria-label="Operating and net margin by quarter"></canvas></div>
+    <div class="chart-panel" data-chart="fcf"><h3>Free cash flow (USD M)</h3><canvas id="chart-fcf" width="480" height="240" role="img" aria-label="Free cash flow by quarter"></canvas></div>
+  </div>
+  <table class="data-table summary-table">
+    <thead>
+      <tr><th>Quarter</th><th>Revenue (USD M)</th><th>Net income (USD M)</th><th>Operating margin</th><th>Net margin</th><th>FCF (USD M)</th></tr>
+    </thead>
+    <tbody>
+      {% for row in summary_rows %}
+      <tr>
+        <td>{{ row.quarter }}</td>
+        <td>{{ row.revenue }}</td>
+        <td>{{ row.net_income }}</td>
+        <td>{{ row.operating_margin }}</td>
+        <td>{{ row.net_margin }}</td>
+        <td>{{ row.fcf }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="facts">
+  <h2>Fact table — {{ selected_quarter }}</h2>
+  <p class="muted">Every value links to its full provenance (source accession, form,
+  filing date, and the derivation formula when derived).</p>
+  <table class="data-table fact-table">
+    <thead>
+      <tr><th>Metric</th><th>Value</th><th>Unit</th><th>Type</th><th>Formula</th><th>Version</th><th>Provenance</th><th>Warnings</th></tr>
+    </thead>
+    <tbody>
+      {% for row in fact_rows %}
+      <tr data-metric="{{ row.metric_id }}">
+        <td><code>{{ row.metric_id }}</code></td>
+        <td class="value-cell {{ 'value-missing' if row.badge_kind == 'missing' }}">{{ row.value }}</td>
+        <td>{{ row.unit or "—" }}</td>
+        <td><span class="type-badge type-{{ row.badge_kind }}">{{ row.badge }}</span></td>
+        <td class="formula-cell">{{ row.formula_text }}</td>
+        <td class="muted">{{ row.formula_version or "—" }}</td>
+        <td><a href="{{ row.provenance_url }}">lineage</a></td>
+        <td class="warning-cell">{% for w in row.warnings %}<span class="warning">{{ w }}</span>{% else %}—{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="panel brief-placeholder">
+  <h2>Generated brief</h2>
+  <p class="muted">Brief generation available in a later release. This panel will show
+  a grounded, citation-checked brief produced from retrieved filing evidence.</p>
+</section>
+{% endblock %}

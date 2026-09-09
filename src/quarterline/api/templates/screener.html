@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Screener — Quarterline{% endblock %}
+{% block content %}
+<h1>Screener</h1>
+<p class="muted">
+  Deterministic filters over the latest complete quarter of ingested facts.
+  Pure rule-based screening &mdash; results are not recommendations. Works fully
+  offline; no model is involved.
+</p>
+
+<section class="panel">
+  <h2>Filters</h2>
+  {% if filters.errors %}
+  <ul class="error-list">
+    {% for error in filters.errors %}<li class="error">{{ error }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <form method="post" action="/screener" class="screener-form">
+    <div class="form-grid">
+      <label>Revenue YoY &gt;
+        <input type="text" inputmode="decimal" name="revenue_yoy_gt" value="{{ filters.raw['revenue_yoy_gt'] }}" placeholder="e.g. 0.10">
+      </label>
+      <label>Operating margin &gt;
+        <input type="text" inputmode="decimal" name="operating_margin_gt" value="{{ filters.raw['operating_margin_gt'] }}" placeholder="e.g. 0.20">
+      </label>
+      <label>Operating margin change (pp) &gt;
+        <input type="text" inputmode="decimal" name="operating_margin_change_pp_gt" value="{{ filters.raw['operating_margin_change_pp_gt'] }}" placeholder="e.g. 0.5">
+      </label>
+      <label>Minimum data coverage (0–1)
+        <input type="text" inputmode="decimal" name="minimum_data_coverage" value="{{ filters.raw['minimum_data_coverage'] }}" placeholder="e.g. 0.8">
+      </label>
+      <label>Quarter label
+        <select name="quarter_label">
+          <option value="">any</option>
+          {% for value, display in label_choices %}
+          <option value="{{ value }}" {{ 'selected' if filters.quarter_label == value }}>{{ display }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Sector
+        <select name="sector">
+          <option value="">any</option>
+          {% for sector in sectors %}
+          <option value="{{ sector }}" {{ 'selected' if filters.sector == sector }}>{{ sector }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" name="fcf_positive" {{ 'checked' if filters.fcf_positive }}> FCF positive
+      </label>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn">Apply filters</button>
+      <a class="btn btn-secondary" href="/screener">Reset</a>
+    </div>
+  </form>
+</section>
+
+<section>
+  <h2>Results</h2>
+  <p class="muted" id="screener-count">
+    {% if filters.active %}
+    {{ result_count }} of {{ with_data }} watchlist companies with ingested data match the active filters.
+    {% else %}
+    Showing all {{ with_data }} watchlist companies with ingested data (no filters active).
+    {% endif %}
+  </p>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Ticker</th><th>Company</th><th>Latest complete quarter</th><th>Revenue YoY</th>
+        <th>Operating margin</th><th>CFO / net income</th><th>FCF (USD M)</th>
+        <th>Quarter label</th><th>Data completeness</th>
+      </tr>
+    </thead>
+    <tbody id="screener-rows">
+      {% include "partials/screener_rows.html" %}
+    </tbody>
+  </table>
+  <p class="table-note muted">{{ label_caption }}</p>
+</section>
+{% endblock %}

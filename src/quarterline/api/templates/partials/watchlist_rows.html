@@ -1,0 +1,19 @@
+{% for row in rows %}
+<tr class="{{ 'row-empty' if not row.has_data }}" data-ticker="{{ row.ticker }}">
+  <td><a href="/c/{{ row.ticker }}">{{ row.ticker }}</a></td>
+  <td>{{ row.name or "n/a" }}</td>
+  {% if row.has_data %}
+  <td>{{ row.quarter }}</td>
+  <td>{{ row.revenue_yoy }}</td>
+  <td>{{ row.operating_margin }}</td>
+  <td>{{ row.cfo_to_net_income }}</td>
+  <td>{{ row.fcf }}</td>
+  <td><span class="label-badge label-{{ row.label_value or 'none' }}">{{ row.label }}</span></td>
+  <td>{{ row.fundamental_score }}</td>
+  <td>{{ row.coverage }}</td>
+  <td class="muted">{{ row.ingested_at }}</td>
+  {% else %}
+  <td colspan="9" class="empty-cell">no data ingested</td>
+  {% endif %}
+</tr>
+{% endfor %}

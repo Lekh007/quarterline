@@ -92,7 +92,8 @@ with fixture-backed tests of your own and report the gap. Never edit another wav
 |---|---|---|
 | 0 foundation | done | 45 tests, ruff clean, `/health` exercised, 15 CIKs verified vs SEC ticker file |
 | 1 financial / documents | done (orchestrator wiring applied) | 192 tests, ruff clean, migration `52e66ea29e8e` (document metadata cols), `verify facts` CLI works on fixture DB |
-| 2 retrieval / UI | pending | — |
+| 2 retrieval / UI | done | 309 tests, ruff clean, both chunk strategies + hybrid search demoed on real 8-K fixture, 21 routes smoke-tested with Ollama unreachable |
+| 3 generation / eval+obs | pending | — |
 | 3 generation / eval+obs | pending | — |
 | 4 agent workflow | pending | — |
 | 5 integration + acceptance | pending | — |
@@ -101,3 +102,8 @@ Orchestrator wiring at wave-1 boundary: `ingest/__init__.py` registers handler m
 lazy-imports wave packages (missing future packages tolerated, nested ImportErrors surface);
 `documents.event_date`/`extraction_notes` + `sections.confidence`/`notes` columns added and now
 persisted by the documents pipeline; W0 CLI-notice test updated (`ingest facts` is implemented).
+
+Deferred to Wave 5 (integration): (1) authoritative fix in `core/provenance.py` for input lineage of
+growth metrics (`revenue_yoy` etc.) — router-level enrichment currently covers display; (2) switch the
+`/evidence/{id}` route to `SearchIndexRepo.get_chunk_by_evidence_id` instead of a linear scan;
+(3) `/dashboard` nav target arrives with F6.

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Filing #{{ document.id }} — Quarterline{% endblock %}
+{% block content %}
+<h1>Filing viewer — {{ document.form or document.document_kind or "document" }}</h1>
+<p class="muted">
+  Cleaned, extracted text only. The raw third-party filing HTML is never served
+  from this application; use the link below to read the original on sec.gov.
+</p>
+
+<section class="panel">
+  <h2>Metadata</h2>
+  <table class="data-table">
+    <tbody>
+      <tr><th>Company</th><td>{% if company %}<a href="/c/{{ company.ticker }}">{{ company.ticker }}</a>{% if company.name %} — {{ company.name }}{% endif %}{% else %}n/a{% endif %}</td></tr>
+      <tr><th>Form</th><td>{{ document.form or "n/a" }}</td></tr>
+      <tr><th>Accession</th><td>{{ document.accession or "n/a" }}</td></tr>
+      <tr><th>Filed at</th><td>{{ document.filed_at or "n/a" }}</td></tr>
+      <tr><th>Event date</th><td>{{ document.event_date or "n/a" }}</td></tr>
+      <tr><th>Period end</th><td>{{ document.period_end or "n/a" }}</td></tr>
+      <tr><th>Extraction</th><td>{{ document.extraction_status or "n/a" }} ({{ document.extraction_version or "n/a" }})</td></tr>
+      <tr><th>Original source</th><td>{% if document.source_url %}<a href="{{ document.source_url }}" rel="noopener noreferrer" target="_blank">{{ document.source_url }}</a>{% else %}n/a{% endif %}</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Extracted text</h2>
+  {% if sections %}
+    {% for section in sections %}
+    <article class="filing-section">
+      <h3>{{ section.heading or section.section_type or "Section" }}</h3>
+      <pre class="filing-text">{{ section.text }}</pre>
+    </article>
+    {% endfor %}
+  {% else %}
+  <p class="muted">No sections were extracted for this document.</p>
+  {% endif %}
+</section>
+{% endblock %}

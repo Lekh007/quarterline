@@ -1,13 +1,35 @@
 {% extends "base.html" %}
+{% block title %}Watchlist — Quarterline{% endblock %}
 {% block content %}
-<section class="placeholder">
-  <h1>{{ title }}</h1>
-  <p>
-    Quarterline turns public-company disclosures into comparable financial facts,
-    explainable research signals, and source-linked research briefs.
-  </p>
-  <p><a href="/screener">Open the watchlist</a></p>
-  <p class="muted">Wave 0 placeholder page &mdash; company pages, charts and the screener
-  arrive in later build waves.</p>
-</section>
+<h1>Watchlist</h1>
+<p class="muted">
+  The 15 tracked US companies. Values come from official SEC filings; derived
+  metrics are computed in code with inspectable provenance. Companies without
+  ingested data are shown as such &mdash; missing data is never filled with zeros.
+</p>
+<div class="table-toolbar">
+  <span id="watchlist-count" class="muted">{{ rows | selectattr("has_data") | list | length }} of {{ rows | length }} companies have ingested data</span>
+  <button type="button" class="btn" hx-get="/" hx-target="#watchlist-rows" hx-swap="innerHTML">Refresh</button>
+</div>
+<table class="data-table" id="watchlist-table">
+  <thead>
+    <tr>
+      <th>Ticker</th>
+      <th>Company</th>
+      <th>Latest complete quarter</th>
+      <th>Revenue YoY</th>
+      <th>Operating margin</th>
+      <th>CFO / net income</th>
+      <th>FCF (USD M)</th>
+      <th title="{{ label_caption }}">Quarter label</th>
+      <th>Fundamental score (experimental)</th>
+      <th>Data completeness</th>
+      <th>Last ingestion</th>
+    </tr>
+  </thead>
+  <tbody id="watchlist-rows">
+    {% include "partials/watchlist_rows.html" %}
+  </tbody>
+</table>
+<p class="table-note muted">{{ label_caption }}</p>
 {% endblock %}

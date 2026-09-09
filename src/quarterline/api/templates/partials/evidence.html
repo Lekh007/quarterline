@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Evidence {{ evidence_id }} — Quarterline{% endblock %}
+{% block content %}
+<h1>Evidence snippet</h1>
+<p class="muted">Evidence id <code>{{ evidence_id }}</code> · strategy
+<code>{{ strategy }}</code> · offsets [{{ start_offset }}, {{ end_offset }})</p>
+{% if document %}
+<p>
+  Document #{{ document.id }}: {{ document.form or document.document_kind }}
+  {% if document.filed_at %}filed {{ document.filed_at }}{% endif %}
+  {% if filing_url %}· <a href="{{ filing_url }}">open filing viewer</a>{% endif %}
+  {% if document.source_url %}· <a href="{{ document.source_url }}" rel="noopener noreferrer" target="_blank">original on sec.gov</a>{% endif %}
+</p>
+{% endif %}
+<section class="panel evidence-text">
+  <pre>{{ text }}</pre>
+</section>
+<p><a href="/">Back to the watchlist</a></p>
+{% endblock %}
