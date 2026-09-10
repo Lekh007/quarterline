@@ -184,9 +184,7 @@ def answer_json_schema() -> dict:
 
 def _statement_items(evidence_ids: list[str] | None = None) -> dict:
     citation_items = (
-        {"type": "string", "enum": sorted(evidence_ids)}
-        if evidence_ids
-        else {"type": "string"}
+        {"type": "string", "enum": sorted(evidence_ids)} if evidence_ids else {"type": "string"}
     )
     return {
         "type": "array",

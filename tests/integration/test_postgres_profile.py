@@ -514,6 +514,10 @@ def test_corpus_stats_and_backend_labels(pg_session, seeded):
     )
     stats = repo.corpus_stats()
     assert stats["documents"] == 1
-    assert stats["chunks"]["fixed/fixed-1"] == 3
+    # 2 base chunks carry strategy_version "fixed-1"; the bounded expansion
+    # window is its own row family ("fixed-1-window") per the wave-2
+    # row-family convention.
+    assert stats["chunks"]["fixed/fixed-1"] == 2
+    assert stats["chunks"]["fixed/fixed-1-window"] == 1
     assert repo.storage_backend == "postgres-pgvector"
     assert repo.lexical_method == "postgres-tsrank"

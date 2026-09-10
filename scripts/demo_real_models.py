@@ -154,7 +154,8 @@ def index_and_search() -> None:
             text=True,
             env=env,
             cwd=str(REPO),
-            timeout=600, check=False,
+            timeout=600,
+            check=False,
         )
         print(f"[index:{strategy}] rc={out.returncode} {out.stdout.strip()[-400:]}")
         if out.returncode != 0:
@@ -186,7 +187,8 @@ def index_and_search() -> None:
         text=True,
         env=env,
         cwd=str(REPO),
-        timeout=300, check=False,
+        timeout=300,
+        check=False,
     )
     print(f"[search] rc={out.returncode} took {time.perf_counter() - t0:.1f}s")
     print(out.stdout.strip()[-1200:] or out.stderr[-800:])
@@ -239,7 +241,8 @@ print("reasons:", data.get("reasons"))
         text=True,
         env=env,
         cwd=str(REPO),
-        timeout=1500, check=False,
+        timeout=1500,
+        check=False,
     )
     print(f"[brief] total {time.perf_counter() - t0:.1f}s rc={out.returncode}")
     print(out.stdout.strip() or out.stderr[-1500:])

@@ -579,7 +579,7 @@ def search_dense_postgres(
         "chunk_vectors.provider = :provider",
         "chunk_vectors.model = :model",
         "chunk_vectors.model_revision = :revision",
-        "chunk_vectors.dim = :dim",
+        "chunk_vectors.dimension = :dim",
         "(" + " OR ".join(version_clauses) + ")",
         "companies.ticker = :ticker",
     ]
@@ -606,7 +606,7 @@ def search_dense_postgres(
     # different dim must not be silently skipped — raise like vector.py does.
     mismatch_filters = (
         "chunk_vectors.provider = :provider AND chunk_vectors.model = :model "
-        "AND chunk_vectors.model_revision = :revision AND chunk_vectors.dim <> :dim"
+        "AND chunk_vectors.model_revision = :revision AND chunk_vectors.dimension <> :dim"
     )
     mismatch = session.execute(
         text(f"SELECT COUNT(*) AS n {base_from} WHERE {mismatch_filters}"),

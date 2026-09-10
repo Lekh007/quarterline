@@ -79,8 +79,45 @@ a real embedding model, so **no reranker quality claim is made**.
 
 ## Real-model measurements
 
-**PENDING.** The orchestrator's wave-5 verification runs the same 2×4 matrix
-with `nomic-embed-text` embeddings (Ollama) and `qwen3:4b` generation against
-the frozen corpus, per SPEC §23 scheduled/manual evaluation. Until those
-numbers exist, no real-model retrieval or generation quality is claimed
-anywhere in this documentation set.
+Measured 2026-09-10 on the development machine (Ryzen AI 9 HX 370, 31 GB RAM,
+RTX 4060 Laptop GPU; Ollama 0.33.3), live `nomic-embed-text` (768-dim, Nomic
+query/document prefixes applied) for both index and queries, frozen fixture
+corpus, n=11 reviewed questions, 7 gold-bearing. Reproduce with
+`uv run python scripts/eval_real_models.py`; raw report in
+`storage/eval_reports/real_model_matrix_*.md`.
+
+| strategy | retrieval | Hit@5 | Recall@5 | MRR | wrong-co | period-err | lat p50/p95 ms |
+|---|---|---|---|---|---|---|---|
+| fixed | lexical | 100.0% | 100.0% | 0.929 | 0.0% | 0.0% | 10.7/18.0 |
+| fixed | dense | 100.0% | 100.0% | 0.738 | 0.0% | 0.0% | 35.9/39.7 |
+| fixed | hybrid | 100.0% | 100.0% | 0.786 | 0.0% | 0.0% | 35.9/44.4 |
+| fixed | hybrid-rerank (degraded) | 100.0% | 100.0% | 0.786 | 0.0% | 0.0% | 38.2/48.6 |
+| section | lexical | 100.0% | 100.0% | 1.000 | 0.0% | 0.0% | 10.2/11.2 |
+| section | dense | 85.7% | 85.7% | 0.743 | 0.0% | 0.0% | 35.3/37.6 |
+| section | hybrid | 100.0% | 100.0% | 0.833 | 0.0% | 0.0% | 47.1/59.5 |
+| section | hybrid-rerank (degraded) | 100.0% | 100.0% | 0.833 | 0.0% | 0.0% | 43.6/50.6 |
+
+Findings (measured, small-n):
+
+- Real semantic embeddings removed the fake-embedding artifact entirely:
+  fixed/dense rose 42.9% → 100% Hit@5 versus the deterministic-fake matrix
+  above. 7 of 8 configs reach 100% Hit@5; section/lexical is perfect (MRR 1.0).
+- Zero wrong-company retrievals and zero period-filter errors with live
+  queries — the metadata filter path holds on real vectors.
+- Lexical (FTS5) remains the strongest single signal and the fastest
+  (p50 ≈ 10 ms); hybrid buys robustness at ~3-4× lexical latency, still
+  <60 ms p95 locally.
+- Reranker arm still degraded (extra not installed); no rerank quality claim.
+
+Generation side (same session, `scripts/demo_real_models.py`): live
+`qwen3:4b` briefs through the full pipeline produced schema-valid JSON with
+correct label echo and real citation IDs once schema-constrained decoding was
+enabled, but residual 4B-model compliance failures (inline `[ev-…]` sentence
+format, template/metric pair validity) were caught by the §18 gate and
+honestly reported as `insufficient_evidence`. An earlier cached-failure bug
+(failures written to `brief_cache`) was found by these runs and fixed.
+**No clean end-to-end `ok` brief from a local ≤7B model has been measured
+yet** — the demo currently proves the guardrail path, not generation quality.
+
+These are fixture-corpus numbers (one real filing exhibit); they are not
+production-scale retrieval quality claims.
