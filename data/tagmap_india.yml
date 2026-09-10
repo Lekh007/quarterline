@@ -1,0 +1,61 @@
+# tagmap_india.yml — SEBI in-capmkt (Integrated Finance Ind AS, IFIndAs V2.1)
+# canonical concept mapping (SPEC 27 "create explicit concept mappings").
+#
+# Discovered from the four committed NSE Integrated Filing fixtures
+# (tests/fixtures/india/, namespace http://www.sebi.gov.in/xbrl/2026-01-31/in-capmkt);
+# no tag was guessed from US-GAAP. Priority is list order, applied after
+# compatibility filtering (scope, period kind, unit) in the normalization wave.
+#
+# US concept IDs (data/tagmap_us.yml) are deliberately NOT reused: an India
+# fact must never be normalized under a us-gaap-derived concept name.
+#
+# Uncertain mappings are flagged with `# uncertain:` comments and mirrored in
+# docs/india_source_audit.md §IND-2 and in concept_map.py UNCERTAIN_TAGS.
+
+revenue_from_operations:
+  - RevenueFromOperations
+
+total_income:
+  - Income
+
+profit_before_tax:
+  - ProfitBeforeTax
+  # uncertain: before-exceptional variant; keep as fallback only — the Ind AS
+  # statement line "Profit before tax" is ProfitBeforeTax (after exceptional items).
+  - ProfitBeforeExceptionalItemsAndTax
+
+profit_after_tax:
+  - ProfitLossForPeriod
+  # uncertain: continuing-operations-only variant. HUL FY2025-26 has discontinued
+  # operations (ice-cream demerger): ProfitLossForPeriod is the total bottom line,
+  # the continuing-only tag differs materially (₹1,06,670 Cr vs ₹1,50,590 Cr annual).
+  - ProfitLossForPeriodFromContinuingOperations
+
+profit_attributable_to_owners:
+  - ProfitOrLossAttributableToOwnersOfParent
+
+exceptional_items:
+  - ExceptionalItemsBeforeTax
+
+eps_basic:
+  - BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations
+  # uncertain: continuing-operations-only variant differs from the headline EPS
+  # whenever discontinued operations exist (HUL Q4 FY26: 12.73 vs 12.76).
+  - BasicEarningsLossPerShareFromContinuingOperations
+
+eps_diluted:
+  - DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations
+  # uncertain: continuing-operations-only variant (same caveat as eps_basic).
+  - DilutedEarningsLossPerShareFromContinuingOperations
+
+# Annual (Q4) instances only — quarterly exchange instances carry no cash-flow
+# statement (docs/india_source_audit.md §5). Never fabricated into quarters.
+cash_flow_operations:
+  - CashFlowsFromUsedInOperatingActivities
+
+capex:
+  - PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
+  # uncertain: Ind AS capex convention. US capex_outflow uses
+  # PaymentsToAcquirePropertyPlantAndEquipment only; whether intangible purchases
+  # belong in the India capex series is a derivation-wave decision, not assumed here.
+  - PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities

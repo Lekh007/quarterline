@@ -1,0 +1,146 @@
+{
+  "manifest_version": "1",
+  "created": "2026-09-11",
+  "wave": "IND-1 (India source feasibility - acquisition)",
+  "policy": "All files listed are real, unmodified documents exactly as served by the cited official source (exchange archive or company IR site). Nothing was invented, rounded, or synthesized. No anti-bot protection was bypassed: where a source rejected plain httpx clients, files were fetched through a normal interactive browser session (no captchas solved, no credentials, no cookie forging, no aggregator scraping). SPEC 2.4 (no Screener/Trendlyne/Moneycontrol) and SPEC 27 (source feasibility first) observed.",
+  "fetch_session": {
+    "fetch_date": "2026-09-11",
+    "fetch_user_agent_httpx": "Quarterline build (source feasibility research) contact: quarterline-research@proton.me",
+    "fetch_methods_used": {
+      "httpx": "plain httpx GET; rejected (403 Akamai or connection drop) by every India source tried",
+      "browser": "real Chromium session (Playwright); page-context fetch + file save; byte-exact (sha256 verified after transfer)"
+    },
+    "rate_limiting": "single-shot, low-volume fetches (about 30 requests over about one hour); no throttling responses encountered; no rate-limit headers observed",
+    "taxonomy_note": "Every NSE Integrated Filing (Finance) XBRL instance carries the comment 'IFIndAs V2.1 (26-06-2026)' and uses the SEBI in-capmkt Integrated Finance Ind AS namespace http://www.sebi.gov.in/xbrl/2026-01-31/in-capmkt with schemaRef in-capmkt-ent-2026-01-31.xsd (relative reference; schema not bundled with the instance)."
+  },
+  "issuers": {
+    "IN-INFY": {
+      "name": "Infosys Limited",
+      "isin": "INE009A01021",
+      "nse_symbol": "INFY",
+      "bse_code": "500209",
+      "identifier_verification": "NSE quote page heading 'Infosys Limited (INE009A01021)' (https://www.nseindia.com/get-quote/equity/INFY/Infosys-Limited); BSE stock page '(INFY | 500209 | INE009A01021)' (https://www.bseindia.com/stock-share-price/infosys-ltd/infy/500209/); Infosys IR share-details table 'NSE Symbol: INFY, BSE Symbol: INFY' (https://www.infosys.com/investors/shares/share-details.html); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE009A01021, in-capmkt:Symbol=INFY, in-capmkt:ScripCode=500209)"
+    },
+    "IN-HINDUNILVR": {
+      "name": "Hindustan Unilever Limited",
+      "isin": "INE030A01027",
+      "nse_symbol": "HINDUNILVR",
+      "bse_code": "500696",
+      "identifier_verification": "NSE quote page heading 'Hindustan Unilever Limited (INE030A01027)' (https://www.nseindia.com/get-quote/equity/HINDUNILVR/Hindustan-Unilever-Limited); BSE stock page '(HINDUNILVR | 500696 | INE030A01027)' (https://www.bseindia.com/stock-share-price/hindustan-unilever-ltd/hindunilvr/500696/); HUL results letterhead inside hul-jq26-financial-results.pdf page 1 ('Stock Code: BSE: 500696, NSE: HINDUNILVR, ISIN: INE030A01027'); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE030A01027, in-capmkt:Symbol=HINDUNILVR, in-capmkt:ScripCode=500696)"
+    }
+  },
+  "periods": {
+    "q1_fy2026-27": {
+      "label": "Q1 FY2026-27",
+      "period_start": "2026-04-01",
+      "period_end": "2026-06-30",
+      "note": "Quarter ended 30 June 2026; results broadcast July 2026"
+    },
+    "q4_fy2025-26": {
+      "label": "Q4 FY2025-26 + FY full year",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "year_start": "2025-04-01",
+      "year_end": "2026-03-31",
+      "note": "Quarter AND year ended 31 March 2026 filed together; results broadcast April 2026"
+    }
+  },
+  "committed_fixtures": [
+    {
+      "file": "INFY-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-INFY",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1700136_23072026054446_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "177385", "broadcast_ist": "2026-07-23 17:40:57", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "5928e8ca820f60f944a66367291a7dc76c8df4536dfaf5627f3d3ff077487bae",
+      "size_bytes": 53642,
+      "excerpted": false,
+      "storage_copy": "storage/raw/india/infosys/q1_fy2026-27/exchange_nse/INFY-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026. Contains Reg-33 minimum set only: P&L, EPS, OCI, segments, audit status, identifiers. NO cash-flow and NO balance-sheet facts (see docs/india_source_audit.md cash-flow finding)."
+    },
+    {
+      "file": "INFY-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-INFY",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1658040_23042026090154_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "152465", "broadcast_ist": "2026-04-23 20:47:17", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "6f1e964f2ffa30952e4b969d96933e04c85bb04ae24463456ee87b801de32b73",
+      "size_bytes": 151244,
+      "excerpted": false,
+      "storage_copy": "storage/raw/india/infosys/q4_fy2025-26/exchange_nse/INFY-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026. Adds full balance-sheet and annual cash-flow statement facts (CashFlowsFromUsedInOperatingActivities = 339860000000 for 2025-04-01..2026-03-31, LevelOfRounding=Crores, TypeOfCashFlowStatement='Cash Flow Indirect', WhetherCashFlowStatementIsApplicableOnCompany='true')."
+    },
+    {
+      "file": "HUL-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-HINDUNILVR",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1703419_28072026074155_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "179457", "broadcast_ist": "2026-07-28 19:41:55", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "ee85ebdc4ddf71fba5c81a4db3ca8a390880eeca873c2a14fa0f4476502604ee",
+      "size_bytes": 34926,
+      "excerpted": false,
+      "storage_copy": "storage/raw/india/hindustan_unilever/q1_fy2026-27/exchange_nse/HUL-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Un-Audited). Reg-33 minimum set only; no cash-flow or balance-sheet facts."
+    },
+    {
+      "file": "HUL-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-HINDUNILVR",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1662632_30042026090622_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "155083", "broadcast_ist": "2026-04-30 21:06:22", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "5f302861c829d8c192f67499b44cee25bbbb41c67df9ea352a0bab84cb3b3530",
+      "size_bytes": 100551,
+      "excerpted": false,
+      "storage_copy": "storage/raw/india/hindustan_unilever/q4_fy2025-26/exchange_nse/HUL-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 109990000000 for 2025-04-01..2026-03-31, LevelOfRounding=Crores, TypeOfCashFlowStatement='Cash Flow Indirect'). FY2025-26 includes discontinued operations (ice-cream demerger)."
+    }
+  ],
+  "storage_cache_only": [
+    {"path": "storage/raw/india/infosys/q1_fy2026-27/exchange_nse/INFY-Q1FY27-standalone-nse-integrated-filing-xbrl.xml", "issuer_id": "IN-INFY", "period": "q1_fy2026-27", "scope": "standalone", "doc_type": "financial_results", "format": "xbrl", "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1700098_23072026054118_WEB.xml", "source_tier": "exchange", "exchange_filing": {"seq_id": "177355", "broadcast_ist": "2026-07-23 17:41:05", "audited_status": "Audited", "revision": "Original"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "6116b0db3b0f42654892d531a415a423e0ebc32bafdfd62ab70ec303f19cc7b8", "size_bytes": 22223},
+    {"path": "storage/raw/india/infosys/q1_fy2026-27/exchange_nse/INFY-Q1FY27-consolidated-nse-integrated-filing-ixbrl.html", "issuer_id": "IN-INFY", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "ixbrl_html", "source_url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_177385_23072026174446_iXBRL_WEB.html", "source_tier": "exchange", "exchange_filing": {"seq_id": "177385"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "36ab0f47fe430447dd22534c95082025a0b5e8ff304ac1b15cdc6368a8313c38", "size_bytes": 46771, "note": "Human-readable inline-XBRL rendering of the same filing"},
+    {"path": "storage/raw/india/infosys/q4_fy2025-26/exchange_nse/INFY-Q4FY26-standalone-nse-integrated-filing-xbrl.xml", "issuer_id": "IN-INFY", "period": "q4_fy2025-26", "scope": "standalone", "doc_type": "financial_results", "format": "xbrl", "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1658041_23042026090203_WEB.xml", "source_tier": "exchange", "exchange_filing": {"seq_id": "152466", "broadcast_ist": "2026-04-23 20:47:44", "audited_status": "Audited", "revision": "Original"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "969f1c76789da1772effc8d93af369d4e16f295ef133ba50a9eed4f826d9b446", "size_bytes": 1826430},
+    {"path": "storage/raw/india/hindustan_unilever/q1_fy2026-27/exchange_nse/HUL-Q1FY27-standalone-nse-integrated-filing-xbrl.xml", "issuer_id": "IN-HINDUNILVR", "period": "q1_fy2026-27", "scope": "standalone", "doc_type": "financial_results", "format": "xbrl", "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1703415_28072026074020_WEB.xml", "source_tier": "exchange", "exchange_filing": {"seq_id": "179453", "broadcast_ist": "2026-07-28 19:40:21", "audited_status": "Un-Audited", "revision": "Original"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "ba2cd9baade939ca8f26e71dcd6dc8ad73774a3c12fd6a6818be48499bd19e04", "size_bytes": 33907},
+    {"path": "storage/raw/india/hindustan_unilever/q4_fy2025-26/exchange_nse/HUL-Q4FY26-standalone-nse-integrated-filing-xbrl.xml", "issuer_id": "IN-HINDUNILVR", "period": "q4_fy2025-26", "scope": "standalone", "doc_type": "financial_results", "format": "xbrl", "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1662628_30042026090444_WEB.xml", "source_tier": "exchange", "exchange_filing": {"seq_id": "155079", "broadcast_ist": "2026-04-30 21:04:44", "audited_status": "Audited", "revision": "Original"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "1d1b9dc96b3f07a46f62daa4442577bcd0544f8a9d266f79550172c3d37547d2", "size_bytes": 808515},
+    {"path": "storage/raw/india/hindustan_unilever/q1_fy2026-27/exchange_nse/HUL-Q1FY27-consolidated-nse-integrated-filing-ixbrl.html", "issuer_id": "IN-HINDUNILVR", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "ixbrl_html", "source_url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_179457_28072026194155_iXBRL_WEB.html", "source_tier": "exchange", "exchange_filing": {"seq_id": "179457"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "8bf49603f64026c910046e9604c30578fb8376a150b8bb1f23e66315f81f8362", "size_bytes": 40857, "note": "Human-readable inline-XBRL rendering of the same filing"},
+    {"path": "storage/raw/india/infosys/q1_fy2026-27/q1-fy27-financial-results-auditorsreports.pdf", "issuer_id": "IN-INFY", "period": "q1_fy2026-27", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2026-2027/q1/documents/q1-fy27-financial-results-auditorsreports.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "0eb82364f852768157940337466b7078cc4a75ea22c85cb88e40d60752ae3010", "size_bytes": 5939298, "description": "Standalone and consolidated Ind AS results with Regulation 33 auditors' reports (the document whose content the exchange filings mirror)"},
+    {"path": "storage/raw/india/infosys/q1_fy2026-27/consol-fy27-q1-finstatement.pdf", "issuer_id": "IN-INFY", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2026-2027/q1/documents/consolidated/consol-fy27-q1-finstatement.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "798b110997d7fed06f83edc586cacfc3435b4da5ede561423f3f5b0ff82bfbc0", "size_bytes": 1005112, "description": "Condensed Consolidated Ind AS financial statements, three months ended June 30, 2026. Page 6 carries a QUARTERLY cash-flow statement ('Three months ended June 30', in Rs crore; net cash generated by operating activities 9,330). Infosys is the exception that publishes quarter-granularity cash flow."},
+    {"path": "storage/raw/india/infosys/q1_fy2026-27/sa-fy27-q1-finstatement.pdf", "issuer_id": "IN-INFY", "period": "q1_fy2026-27", "scope": "standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2026-2027/q1/documents/standalone/sa-fy27-q1-finstatement.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "28ac9f84603dac5868f3052f10fa694075f4be0dbad306b01e5d1bf883f48867", "size_bytes": 906280},
+    {"path": "storage/raw/india/infosys/q1_fy2026-27/infosys-q1fy27-ifrs-inr-press-release.pdf", "issuer_id": "IN-INFY", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2026-2027/q1/documents/ifrs-inr-press-release.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "417a69774f091d7662c8fa9297a0f25b95580ed8808453e61fd8d0c1a6061ae0", "size_bytes": 474552, "description": "IFRS-INR press release with management commentary (RAG corpus); dated July 23, 2026"},
+    {"path": "storage/raw/india/infosys/q4_fy2025-26/q4-and-12m-fy26-financial-results-auditorsreports.pdf", "issuer_id": "IN-INFY", "period": "q4_fy2025-26", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2025-2026/q4/documents/q4-and-12m-fy26-financial-results-auditorsreports.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "335dbea73b04f46ec26be3a0494217288f87160016d82bec1c62124fd5106082", "size_bytes": 5746960, "description": "Standalone and consolidated Ind AS results with Regulation 33 auditors' reports; cash-flow statements on pages 17 and 23"},
+    {"path": "storage/raw/india/infosys/q4_fy2025-26/consol-fy26-q4-and-12m-finstatement.pdf", "issuer_id": "IN-INFY", "period": "q4_fy2025-26", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2025-2026/q4/documents/consolidated/consol-fy26-q4-and-12m-finstatement.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "8082dacf94b9700abe037b545660adbf5ee4271eb66126c029cea32757ac2fa7", "size_bytes": 1132316},
+    {"path": "storage/raw/india/infosys/q4_fy2025-26/sa-fy26-q4-and-12m-finstatement.pdf", "issuer_id": "IN-INFY", "period": "q4_fy2025-26", "scope": "standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2025-2026/q4/documents/standalone/sa-fy26-q4-and-12m-finstatement.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "c8980a8d40d245b3eaedaa209cc8d4649d1e9f8433c0ce46d9b7c0e7ccab993c", "size_bytes": 1000172},
+    {"path": "storage/raw/india/infosys/q4_fy2025-26/infosys-q4fy26-ifrs-inr-press-release.pdf", "issuer_id": "IN-INFY", "period": "q4_fy2025-26", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://www.infosys.com/investors/reports-filings/quarterly-results/2025-2026/q4/documents/ifrs-inr-press-release.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "690841a4dc6971a09a8eb3f3d41f400d07f56263530196f1e2748ed253bd8d86", "size_bytes": 555748},
+    {"path": "storage/raw/india/hindustan_unilever/q1_fy2026-27/hul-jq26-financial-results.pdf", "issuer_id": "IN-HINDUNILVR", "period": "q1_fy2026-27", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.hul.co.in/files/hul-jq-26-results.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "707e215f1d49f4bdffff7f5cedcd1f17280d9d3d71210e7544867f12dad06d17", "size_bytes": 6154352, "description": "Board-approves-results letter + unaudited limited-review results for quarter ended 30-Jun-2026; letterhead verifies identifiers; NO cash-flow statement anywhere in the document"},
+    {"path": "storage/raw/india/hindustan_unilever/q1_fy2026-27/hul-jq26-results-in-excel.xlsx", "issuer_id": "IN-HINDUNILVR", "period": "q1_fy2026-27", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "xlsx", "source_url": "https://www.hul.co.in/files/hul-jq-26-results-in-excel.xlsx", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "9fe5ceb8d51349fd2c0b690970a550702acba92327ff52d4754488e3e80a5aa3", "size_bytes": 884489, "description": "Company workbook, sheets: SEBI Consolidated, Segment Consolidated, SEBI Standalone, Segment Standalone. No cash-flow sheets (Q1). Deterministic parsing candidate."},
+    {"path": "storage/raw/india/hindustan_unilever/q1_fy2026-27/hul-jq26-results-presentation.pdf", "issuer_id": "IN-HINDUNILVR", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "results_presentation", "format": "pdf", "source_url": "https://www.hul.co.in/files/hul-jq-26-results-presentation.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "e5d2de83d3620d29a3c4677dea3958ea91cfcc5e980d85d1bd19ab12dcc4a9f8", "size_bytes": 4013521, "description": "Management commentary presentation (RAG corpus)"},
+    {"path": "storage/raw/india/hindustan_unilever/q1_fy2026-27/hul-jq26-earnings-call-transcript.pdf", "issuer_id": "IN-HINDUNILVR", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://www.hul.co.in/files/jq26-earnings-call-transcript.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "a4bf4c1a02598e332f742c62370f3b1de6206accab0570a8c59fdffd249e113b", "size_bytes": 197488, "description": "Earnings call transcript (management commentary for RAG; filed under press_release for doc_type vocabulary)"},
+    {"path": "storage/raw/india/hindustan_unilever/q4_fy2025-26/hul-mq26-financial-results.pdf", "issuer_id": "IN-HINDUNILVR", "period": "q4_fy2025-26", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.hul.co.in/files/hul-mq-26-results.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "2ba594fddeca6fa564a1a8af295cc75c0e98313bc723a043a4d7a1c2ae594eb0", "size_bytes": 21593599, "description": "Audited results for quarter and year ended 31-Mar-2026; annual cash-flow statements on page 11 (consolidated, 'Year ended 31st March, 2026', Rs in Crores) and page 19 (standalone); includes discontinued operations (ice-cream demerger)"},
+    {"path": "storage/raw/india/hindustan_unilever/q4_fy2025-26/hul-mq26-results-in-excel.xlsx", "issuer_id": "IN-HINDUNILVR", "period": "q4_fy2025-26", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "xlsx", "source_url": "https://www.hul.co.in/files/hul-mq-26-results-in-excel.xlsx", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "2f9ad92d67ec72b155e4f2746d44c5b71ce9dec420384103b625e3e9b6fc33a9", "size_bytes": 1008196, "description": "Sheets include 'Cash Flow Consolidated' and 'Cash Flow Standalone' (annual). Confirms annual-only cash-flow cadence for HUL."},
+    {"path": "storage/raw/india/hindustan_unilever/q4_fy2025-26/hul-mq26-fy26-results-presentation.pdf", "issuer_id": "IN-HINDUNILVR", "period": "q4_fy2025-26", "scope": "consolidated", "doc_type": "results_presentation", "format": "pdf", "source_url": "https://www.hul.co.in/files/hul-mq-26-and-fy-26-results-presentation.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "1aaa879c7c41d3da690f1010c5f7e650cadadaf4d4ea0332cc5dd381442590c0", "size_bytes": 5165722},
+    {"path": "storage/raw/india/hindustan_unilever/q4_fy2025-26/hul-mq26-earnings-call-transcript.pdf", "issuer_id": "IN-HINDUNILVR", "period": "q4_fy2025-26", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://www.hul.co.in/files/mq-26-earnings-call-transcript.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "7ecb4a89728521a5f77a1261f5a92a18bc8634fe669491fc1f7e72646f315818", "size_bytes": 260754, "description": "Earnings call transcript (management commentary for RAG; filed under press_release for doc_type vocabulary)"}
+  ]
+}

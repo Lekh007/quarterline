@@ -149,6 +149,38 @@ def build_parser() -> argparse.ArgumentParser:
         "--forms", nargs="*", default=["10-Q", "10-K"], help="form types to download"
     )
     ingest_docs.set_defaults(registry_key="ingest:documents")
+    india_doc = ingest_sub.add_parser(
+        "india-document", help="manually import an official Indian filing (Phase D)"
+    )
+    india_doc.add_argument("--issuer", required=True, help="issuer_id from data/watchlist_india.csv")
+    india_doc.add_argument("--file", required=True, help="path to the officially downloaded file")
+    india_doc.add_argument(
+        "--type",
+        default="financial_results",
+        choices=["financial_results", "results_notes", "earnings_presentation",
+                 "annual_report", "management_transcript", "exchange_announcement"],
+        help="India document type",
+    )
+    india_doc.add_argument("--period-start", required=True, help="period start (YYYY-MM-DD)")
+    india_doc.add_argument("--period-end", required=True, help="period end (YYYY-MM-DD)")
+    india_doc.add_argument(
+        "--scope", default="consolidated", choices=["consolidated", "standalone"],
+        help="reporting scope declared by the filing",
+    )
+    india_doc.add_argument("--published", required=True, help="publication date (YYYY-MM-DD)")
+    india_doc.add_argument("--source-url", default=None, help="official source URL, if known")
+    india_doc.add_argument("--notes", default=None, help="free-text provenance notes")
+    india_doc.add_argument("--exchange", default=None, help="declaring exchange (NSE/BSE), if known")
+    india_doc.add_argument("--seq-id", default=None, help="exchange listing sequence id, if known")
+    india_doc.add_argument(
+        "--audited", default=None, choices=["Audited", "Unaudited"],
+        help="audit status declared by the filing",
+    )
+    india_doc.add_argument(
+        "--revision", default=None, choices=["Original", "Revised"],
+        help="revision status declared by the listing",
+    )
+    india_doc.set_defaults(registry_key="ingest:india-document")
 
     # verify facts
     verify = subparsers.add_parser("verify", help="verification helpers")
@@ -156,6 +188,13 @@ def build_parser() -> argparse.ArgumentParser:
     verify_facts = verify_sub.add_parser("facts", help="reconcile stored facts vs SEC source")
     verify_facts.add_argument("--ticker", required=True, help="ticker to verify")
     verify_facts.set_defaults(registry_key="verify:facts")
+    verify_india = verify_sub.add_parser(
+        "india", help="source-linked reconciliation table for an Indian issuer"
+    )
+    verify_india.add_argument(
+        "--issuer", required=True, help="issuer_id from data/watchlist_india.csv"
+    )
+    verify_india.set_defaults(registry_key="verify:india")
 
     # index build
     index = subparsers.add_parser("index", help="retrieval index maintenance")
@@ -210,6 +249,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 _WAVE_PACKAGES = (
     "quarterline.ingest",
+    "quarterline.sources.india",
     "quarterline.retrieve",
     "quarterline.llm",
     "quarterline.eval",

@@ -118,3 +118,58 @@ def cache_get(url: str, settings: Settings | None = None) -> CachedEntry | None:
         path=body,
         metadata=metadata,
     )
+
+
+def cache_file(
+    path: str | Path,
+    relative_location: str,
+    settings: Settings | None = None,
+) -> CachedEntry:
+    """Import a manually acquired file into the raw cache (IND-2, content-addressed).
+
+    Mirrors :func:`cache_put` for documents obtained outside the HTTP fetch layer
+    (browser-session downloads of India exchange/IR files — every India source
+    rejects non-browser clients, docs/india_source_audit.md §2). The body is
+    stored at ``{STORAGE_DIR}/raw/{relative_location}`` and a ``.json`` metadata
+    sidecar records the original source path, import timestamp and the sha256
+    ``content_hash`` of the bytes, so provenance matches HTTP-cached artifacts.
+
+    Idempotent: re-importing a byte-identical file overwrites the same
+    content-addressed location. Existing functions are unchanged.
+    """
+    settings = settings or get_settings()
+    source_path = Path(path)
+    content = source_path.read_bytes()
+    directory = Path(settings.storage_dir) / "raw" / relative_location
+    directory.mkdir(parents=True, exist_ok=True)
+
+    content_hash = hashlib.sha256(content).hexdigest()
+    imported_at = datetime.now(UTC).isoformat()
+    body = directory / source_path.name
+    body.write_bytes(content)
+
+    metadata: dict[str, object] = {
+        "url": f"manual-import://{source_path.as_posix()}",
+        "fetched_at": imported_at,
+        "etag": None,
+        "last_modified": None,
+        "content_type": None,
+        "content_hash": content_hash,
+        "body_file": body.name,
+        "source_path": source_path.as_posix(),
+        "relative_location": relative_location,
+    }
+    meta = directory / f"{source_path.name}.json"
+    meta.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+
+    return CachedEntry(
+        url=str(metadata["url"]),
+        content=content,
+        content_hash=content_hash,
+        etag=None,
+        last_modified=None,
+        content_type=None,
+        fetched_at=imported_at,
+        path=body,
+        metadata=metadata,
+    )

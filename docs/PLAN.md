@@ -96,6 +96,7 @@ with fixture-backed tests of your own and report the gap. Never edit another wav
 | 3 generation / eval+obs | done | 496 tests, ruff clean, fixture eval baseline committed, 2×4 matrix measured on fixture corpus |
 | 4 agent workflow | done | 561 tests, ruff clean, budgets+approval exercised, 7 real failure cases documented |
 | 5 integration + acceptance | done | PG profile wired via factory + psycopg extra; docs set complete; live-model verification recorded in the implementation log |
+| D feasibility (India) | done (IND-1 + IND-2 + orchestrator wiring) | identifiers verified 4-way; 26 official files cached, 4 exchange XBRLs committed as fixtures; access conditions documented (browser-only); cash-flow frequency finding (quarterly XBRL has no CF); 693 tests incl. 132 India tests; INFY reconciliation live on dev store |
 
 Orchestrator wiring at wave-1 boundary: `ingest/__init__.py` registers handler modules; `cli.main()`
 lazy-imports wave packages (missing future packages tolerated, nested ImportErrors surface);

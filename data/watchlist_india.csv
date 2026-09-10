@@ -1,0 +1,11 @@
+issuer_id,ticker_nse,bse_code,isin,name,sector,verification_status,verified_source
+IN-INFY,INFY,500209,INE009A01021,Infosys Limited,Information Technology,verified,"NSE quote page (INE009A01021); BSE stock page (INFY|500209|INE009A01021); infosys.com/investors share-details; NSE Integrated Filing XBRL in-capmkt:ISIN"
+IN-HINDUNILVR,HINDUNILVR,500696,INE030A01027,"Hindustan Unilever Limited",Consumer Staples,verified,"NSE quote page (INE030A01027); BSE stock page (HINDUNILVR|500696|INE030A01027); HUL results letterhead; NSE Integrated Filing XBRL in-capmkt:ISIN"
+IN-TCS,TCS,,,Tata Consultancy Services Limited,Information Technology,proposed,,
+IN-HCLTECH,HCLTECH,,,HCL Technologies Limited,Information Technology,proposed,,
+IN-ITC,ITC,,,ITC Limited,Consumer Staples,proposed,,
+IN-ASIANPAINT,ASIANPAINT,,,Asian Paints Limited,Consumer Discretionary,proposed,,
+IN-MARUTI,MARUTI,,,Maruti Suzuki India Limited,Consumer Discretionary,proposed,,
+IN-ULTRACEMCO,ULTRACEMCO,,,UltraTech Cement Limited,Industrials,proposed,,
+IN-SUNPHARMA,SUNPHARMA,,,Sun Pharmaceutical Industries Limited,Healthcare,proposed,,
+IN-LT,LT,,,Larsen & Toubro Limited,Industrials,proposed,,
