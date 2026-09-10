@@ -267,6 +267,7 @@ def long_term_net_debt_proxy(long_term_debt: Decimal | None, cash: Decimal | Non
 
 def yoy_growth(
     metric_id: str,
+    input_concept: str,
     current: Decimal | None,
     prior: Decimal | None,
     unit: str | None,
@@ -278,7 +279,7 @@ def yoy_growth(
     percentage growth, the absolute change, and a deterministic
     turned-profitable / turned-loss-making note when applicable.
     """
-    refs = [f"{metric_id}:current", f"{metric_id}:prior_year_quarter"]
+    refs = [f"{input_concept}:current", f"{input_concept}:prior_year_quarter"]
     if current is None or prior is None:
         return _value(
             metric_id,
@@ -318,10 +319,13 @@ def yoy_growth(
 
 
 def margin_change_pp(
-    metric_id: str, current_margin: Decimal | None, prior_margin: Decimal | None
+    metric_id: str,
+    input_concept: str,
+    current_margin: Decimal | None,
+    prior_margin: Decimal | None,
 ) -> MetricValue:
     """Margin change in PERCENTAGE POINTS (SPEC 11.2), not a relative ratio."""
-    refs = [f"{metric_id}:current", f"{metric_id}:prior_year_quarter"]
+    refs = [f"{input_concept}:current", f"{input_concept}:prior_year_quarter"]
     if current_margin is None or prior_margin is None:
         return _value(
             metric_id,

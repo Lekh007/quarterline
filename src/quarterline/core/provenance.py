@@ -341,10 +341,13 @@ def build_quarter_data(
         if "operating_income" in py_facts or "revenue" in py_facts
         else None
     )
-    revenue_yoy_metric = yoy_growth("revenue_yoy", revenue, revenue_py, UNIT_RATIO)
-    shares_yoy_metric = yoy_growth("shares_yoy", shares, shares_py, UNIT_RATIO)
+    revenue_yoy_metric = yoy_growth("revenue_yoy", "revenue", revenue, revenue_py, UNIT_RATIO)
+    shares_yoy_metric = yoy_growth("shares_yoy", "shares_diluted", shares, shares_py, UNIT_RATIO)
     op_margin_change_metric = margin_change_pp(
-        "operating_margin_change_pp", operating_margin_metric.value, operating_margin_py
+        "operating_margin_change_pp",
+        "operating_margin",
+        operating_margin_metric.value,
+        operating_margin_py,
     )
 
     for metric in (

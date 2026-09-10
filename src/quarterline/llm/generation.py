@@ -565,6 +565,7 @@ def default_generation_provider(settings: Settings | None = None) -> GenerationP
         settings.ollama_base_url,
         settings.ollama_model,
         num_ctx=settings.ollama_num_ctx,
+        timeout_seconds=settings.generation_timeout_seconds,
     )
 
 
@@ -890,7 +891,10 @@ def _generate_brief(
     evidence_map = build_evidence_map(
         session, bundle, ticker=card.ticker, scoped_period=card.period_end
     )
-    spec = load_prompt("brief", "v1")
+    # v2: added a concrete metric_mentions example after qwen3:4b and
+    # qwen2.5:7b both systematically swapped metric_id/template (measured
+    # 2026-09-09); see docs/retrieval_experiments.md and the wave-5 log.
+    spec = load_prompt("brief", "v2")
     provider = provider if provider is not None else default_generation_provider(settings)
     key = _cache_key(
         ticker=card.ticker,
@@ -927,7 +931,13 @@ def _generate_brief(
     gen_started = time.perf_counter()
     try:
         repaired: RepairOutcome = generate_and_parse(
-            provider, messages=messages, model_cls=Brief, json_schema=brief_json_schema()
+            provider,
+            messages=messages,
+            model_cls=Brief,
+            json_schema=brief_json_schema(
+                label_echo=label_display,
+                evidence_ids=[p.evidence_id for p in bundle.passages],
+            ),
         )
     except GenerationProviderUnavailable as exc:
         return _provider_down(base, evidence, exc, provider)
@@ -948,25 +958,26 @@ def _generate_brief(
         final_status = "partial"
 
     # 5. cache persist (successes only) + run events ------------------------------
-    _cache_put(
-        session,
-        key,
-        company_id=_company_id(session, card.ticker),
-        period_end=card.period_end,
-        provider=provider.provider_name,
-        model=provider.model_id,
-        prompt_version=spec.prompt_version,
-        payload={
-            "brief": surviving.model_dump(mode="json"),
-            "validation": report.model_dump(),
-            "status": final_status,
-            "metric_facts": metric_facts,
-            "reasons": reasons,
-            "provider": provider.provider_name,
-            "model": provider.model_id,
-        },
-        settings=settings,
-    )
+    if final_status in ("ok", "partial"):
+        _cache_put(
+            session,
+            key,
+            company_id=_company_id(session, card.ticker),
+            period_end=card.period_end,
+            provider=provider.provider_name,
+            model=provider.model_id,
+            prompt_version=spec.prompt_version,
+            payload={
+                "brief": surviving.model_dump(mode="json"),
+                "validation": report.model_dump(),
+                "status": final_status,
+                "metric_facts": metric_facts,
+                "reasons": reasons,
+                "provider": provider.provider_name,
+                "model": provider.model_id,
+            },
+            settings=settings,
+        )
     _emit_event(
         run_id=run_id,
         endpoint="brief",

@@ -76,6 +76,9 @@ class Settings(BaseSettings):
     max_generation_concurrency: int = 1
     max_prompt_tokens: int = 7500
     max_output_tokens: int = 900
+    #: Per-call generation timeout. CPU inference of a 4B model with a large
+    #: prompt can take several minutes; 180 s proved too tight in practice.
+    generation_timeout_seconds: float = 600.0
 
     # Agent budgets
     agent_max_tool_calls: int = 4

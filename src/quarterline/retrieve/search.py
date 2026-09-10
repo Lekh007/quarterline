@@ -36,7 +36,9 @@ import re
 import time
 
 import numpy as np
+from sqlalchemy.orm import Session
 
+from quarterline.config import Settings
 from quarterline.observability.events import emit_run_event, new_run_id
 from quarterline.retrieve.chunk_fixed import FixedWindowChunker, SectionRef
 from quarterline.retrieve.chunk_section import SectionParentChildChunker
@@ -65,6 +67,7 @@ from quarterline.retrieve.models import text_hash as sha256_text
 from quarterline.retrieve.vector import DenseFilters, DenseHit, search_dense
 from quarterline.store.models import Chunk, Company, Document
 from quarterline.store.repositories.documents import DocumentsRepo
+from quarterline.store.repositories.search_postgres import get_search_repo
 from quarterline.store.repositories.search_sqlite import (
     SearchIndexRepo,
     provider_revision,
@@ -189,7 +192,7 @@ def build_index(
     chunker = STRATEGY_REGISTRY[strategy]()
     strategy_version = chunker.STRATEGY_VERSION
     settings = settings or _get_settings()
-    repo = SearchIndexRepo(session)
+    repo = _repo_for(session, settings)
     repo.ensure_schema()
     docs_repo = DocumentsRepo(session)
 
@@ -334,6 +337,15 @@ def _document_meta(docs_repo: DocumentsRepo, document: Document) -> DocumentMeta
 # ---------------------------------------------------------------------------
 
 
+def _repo_for(session: Session, settings: Settings):
+    """Select the search backend for the configured DATABASE_URL (SQLite
+    default; PostgreSQL + pgvector profile when the URL targets Postgres)."""
+    url = str(getattr(settings, "database_url", "") or "")
+    if url.startswith(("postgresql://", "postgres://", "postgresql+")):
+        return get_search_repo(session, settings)
+    return SearchIndexRepo(session)
+
+
 class SearchService:
     """Query orchestration per SPEC §16 (SQLite profile)."""
 
@@ -351,7 +363,7 @@ class SearchService:
         self.reranker = reranker
         self.reranker_enabled = reranker_enabled
         self.settings = settings or _get_settings()
-        self.repo = SearchIndexRepo(session)
+        self.repo = _repo_for(session, self.settings)
         self.repo.ensure_schema()
 
     # -- public API -----------------------------------------------------------

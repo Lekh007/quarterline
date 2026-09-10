@@ -107,9 +107,17 @@ class Answer(StrictModel):
     evidence_ids: list[str] = Field(default_factory=list)
 
 
-def brief_json_schema() -> dict:
+def brief_json_schema(
+    label_echo: str | None = None,
+    evidence_ids: list[str] | None = None,
+) -> dict:
     """JSON-schema description of :class:`Brief` handed to providers that
-    support a JSON mode (advisory; the validation gate never trusts it)."""
+    support structured decoding (advisory; the validation gate never trusts
+    it). Values knowable before generation are enum-constrained: ``label_echo``
+    to the code-generated label, citation ids to the supplied evidence set —
+    invented citations become undecodable for schema-aware providers. The
+    validation gate remains the backstop for providers without constrained
+    decoding."""
 
     return {
         "type": "object",
@@ -127,7 +135,11 @@ def brief_json_schema() -> dict:
                 "type": "string",
                 "enum": ["ok", "partial", "insufficient_evidence"],
             },
-            "label_echo": {"type": ["string", "null"]},
+            "label_echo": (
+                {"type": ["string", "null"], "enum": [label_echo, None]}
+                if label_echo is not None
+                else {"type": ["string", "null"]}
+            ),
             "metric_mentions": {
                 "type": "array",
                 "items": {
@@ -135,7 +147,12 @@ def brief_json_schema() -> dict:
                     "additionalProperties": False,
                     "required": ["metric_id", "template"],
                     "properties": {
-                        "metric_id": {"type": "string"},
+                        # Enum-constrain metric_id so schema-aware providers
+                        # (Ollama structured outputs) cannot decode an
+                        # off-allowlist identifier; the pydantic gate remains
+                        # authoritative for providers without constrained
+                        # decoding.
+                        "metric_id": {"type": "string", "enum": sorted(METRIC_IDS)},
                         "template": {
                             "type": "string",
                             "enum": ["reported_change", "reported_value", "reported_level"],
@@ -143,9 +160,9 @@ def brief_json_schema() -> dict:
                     },
                 },
             },
-            "bullets": _statement_items(),
-            "risks": _statement_items(),
-            "open_questions": _statement_items(),
+            "bullets": _statement_items(evidence_ids),
+            "risks": _statement_items(evidence_ids),
+            "open_questions": _statement_items(evidence_ids),
         },
     }
 
@@ -165,7 +182,12 @@ def answer_json_schema() -> dict:
     }
 
 
-def _statement_items() -> dict:
+def _statement_items(evidence_ids: list[str] | None = None) -> dict:
+    citation_items = (
+        {"type": "string", "enum": sorted(evidence_ids)}
+        if evidence_ids
+        else {"type": "string"}
+    )
     return {
         "type": "array",
         "items": {
@@ -174,7 +196,7 @@ def _statement_items() -> dict:
             "required": ["text", "evidence_ids"],
             "properties": {
                 "text": {"type": "string"},
-                "evidence_ids": {"type": "array", "items": {"type": "string"}},
+                "evidence_ids": {"type": "array", "items": citation_items},
             },
         },
     }

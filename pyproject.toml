@@ -27,6 +27,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
 rerank = ["sentence-transformers"]
+postgres = ["psycopg[binary]"]
 
 [project.scripts]
 quarterline = "quarterline.cli:main"
@@ -43,6 +44,7 @@ addopts = "-m 'not live'"
 testpaths = ["tests"]
 markers = [
     "live: requires network or local models (deselected by default)",
+    "postgres: requires a reachable PostgreSQL 16 + pgvector server",
 ]
 
 [tool.ruff]

@@ -1,0 +1,34 @@
+# Quarterline PostgreSQL 16 + pgvector profile (SPEC §15, §29 `make test-postgres`).
+#
+# The credentials below are LOCAL DEVELOPMENT DEFAULTS ONLY — the database binds
+# to 127.0.0.1 and holds only locally-ingested fixture/demo data. Never reuse
+# them for any hosted or multi-user deployment (SPEC §28: authn/authz and
+# multi-user isolation are explicitly out of scope for this release).
+#
+# Start:   docker compose up -d quarterline-db
+# Test:    make test-postgres
+# Connect: DATABASE_URL=postgresql://quarterline:quarterline@127.0.0.1:5432/quarterline
+
+services:
+  quarterline-db:
+    image: pgvector/pgvector:pg16
+    container_name: quarterline-db
+    environment:
+      POSTGRES_USER: quarterline
+      POSTGRES_PASSWORD: quarterline
+      POSTGRES_DB: quarterline
+      # Local dev only: no TLS between the app and a loopback-bound container.
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - quarterline-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quarterline -d quarterline"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  quarterline-pgdata:

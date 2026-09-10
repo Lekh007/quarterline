@@ -97,14 +97,14 @@ def test_long_term_net_debt_proxy_labelled_proxy() -> None:
 
 
 def test_growth_positive_prior() -> None:
-    metric = yoy_growth("revenue_yoy", D(1100), D(1000), "ratio")
+    metric = yoy_growth("revenue_yoy", "revenue", D(1100), D(1000), "ratio")
     assert metric.value == D("0.1")
     assert metric.status is MetricStatus.ok
     assert any("absolute change: 100" in note for note in metric.notes)
 
 
 def test_growth_zero_prior_null_percentage_with_turned_profitable_note() -> None:
-    metric = yoy_growth("revenue_yoy", D(110), D(0), "ratio")
+    metric = yoy_growth("revenue_yoy", "revenue", D(110), D(0), "ratio")
     assert metric.value is None
     assert metric.status is MetricStatus.unsuitable
     assert any("turned profitable" in note for note in metric.notes)
@@ -112,7 +112,7 @@ def test_growth_zero_prior_null_percentage_with_turned_profitable_note() -> None
 
 
 def test_growth_negative_prior_null_with_turned_profitable_note() -> None:
-    metric = yoy_growth("revenue_yoy", D(150), D(-50), "ratio")
+    metric = yoy_growth("revenue_yoy", "revenue", D(150), D(-50), "ratio")
     assert metric.value is None
     assert metric.status is MetricStatus.unsuitable
     assert any("turned profitable" in note for note in metric.notes)
@@ -121,23 +121,27 @@ def test_growth_negative_prior_null_with_turned_profitable_note() -> None:
 
 def test_growth_turned_loss_making_note() -> None:
     """A positive prior makes growth computable; the loss turn is a note."""
-    metric = yoy_growth("revenue_yoy", D(-30), D(200), "ratio")
+    metric = yoy_growth("revenue_yoy", "revenue", D(-30), D(200), "ratio")
     assert metric.status is MetricStatus.ok
     assert metric.value == D(-30) / D(200) - 1
     assert any("turned loss-making" in note for note in metric.notes)
 
 
 def test_growth_missing_quarter_is_missing_never_zero() -> None:
-    metric = yoy_growth("revenue_yoy", D(100), None, "ratio")
+    metric = yoy_growth("revenue_yoy", "revenue", D(100), None, "ratio")
     assert metric.status is MetricStatus.missing
     assert metric.value is None
 
 
 def test_margin_change_in_percentage_points() -> None:
-    metric = margin_change_pp("operating_margin_change_pp", D("0.20"), D("0.15"))
+    metric = margin_change_pp(
+        "operating_margin_change_pp", "operating_margin", D("0.20"), D("0.15")
+    )
     assert metric.value == D("5.00")
     assert metric.unit == "percentage_points"
-    decrease = margin_change_pp("operating_margin_change_pp", D("0.10"), D("0.25"))
+    decrease = margin_change_pp(
+        "operating_margin_change_pp", "operating_margin", D("0.10"), D("0.25")
+    )
     assert decrease.value == D("-15.00")
 
 
@@ -160,7 +164,7 @@ def test_all_ratios_carry_formula_version() -> None:
         margin("net_margin", D(1), D(4)),
         free_cash_flow(D(1), D(-1)),
         current_ratio(D(2), D(1)),
-        yoy_growth("shares_yoy", D(2), D(1), "shares"),
+        yoy_growth("shares_yoy", "shares_diluted", D(2), D(1), "shares"),
         cfo_to_net_income(D(2), D(1)),
     ):
         assert metric.provenance.formula_version == FORMULA_VERSION_RATIOS

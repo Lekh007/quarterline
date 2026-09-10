@@ -89,9 +89,11 @@ class OllamaGenerationProvider:
             "options": {"num_ctx": self.num_ctx},
         }
         if json_schema is not None:
-            # Ollama structured-output mode: the validation gate still treats
+            # Ollama structured-output mode: pass the full JSON schema for
+            # constrained decoding (plain "json" mode still let small models
+            # produce type-wrong fields). The validation gate still treats
             # the reply as untrusted (SPEC §18).
-            payload["format"] = "json"
+            payload["format"] = json_schema
 
         started = time.perf_counter()
         try:

@@ -93,17 +93,19 @@ with fixture-backed tests of your own and report the gap. Never edit another wav
 | 0 foundation | done | 45 tests, ruff clean, `/health` exercised, 15 CIKs verified vs SEC ticker file |
 | 1 financial / documents | done (orchestrator wiring applied) | 192 tests, ruff clean, migration `52e66ea29e8e` (document metadata cols), `verify facts` CLI works on fixture DB |
 | 2 retrieval / UI | done | 309 tests, ruff clean, both chunk strategies + hybrid search demoed on real 8-K fixture, 21 routes smoke-tested with Ollama unreachable |
-| 3 generation / eval+obs | pending | — |
-| 3 generation / eval+obs | pending | — |
-| 4 agent workflow | pending | — |
-| 5 integration + acceptance | pending | — |
+| 3 generation / eval+obs | done | 496 tests, ruff clean, fixture eval baseline committed, 2×4 matrix measured on fixture corpus |
+| 4 agent workflow | done | 561 tests, ruff clean, budgets+approval exercised, 7 real failure cases documented |
+| 5 integration + acceptance | done | PG profile wired via factory + psycopg extra; docs set complete; live-model verification recorded in the implementation log |
 
 Orchestrator wiring at wave-1 boundary: `ingest/__init__.py` registers handler modules; `cli.main()`
 lazy-imports wave packages (missing future packages tolerated, nested ImportErrors surface);
 `documents.event_date`/`extraction_notes` + `sections.confidence`/`notes` columns added and now
 persisted by the documents pipeline; W0 CLI-notice test updated (`ingest facts` is implemented).
 
-Deferred to Wave 5 (integration): (1) authoritative fix in `core/provenance.py` for input lineage of
-growth metrics (`revenue_yoy` etc.) — router-level enrichment currently covers display; (2) switch the
-`/evidence/{id}` route to `SearchIndexRepo.get_chunk_by_evidence_id` instead of a linear scan;
-(3) `/dashboard` nav target arrives with F6.
+Wave-5 integration results: (1) authoritative fix applied in `core/ratios.py` + `core/provenance.py` —
+growth/margin-change metrics now carry real input concepts in `derived_from` (router enrichment is a
+no-op); (2) `/evidence/{id}` left as-is — the indexed lookup is itself a documented content-derived
+scan; the real improvement is a persisted `evidence_id` column (future schema migration); (3) `/dashboard`
+live since F6. Orchestrator also applied: brief-prompt v2 (measured metric_id/template swaps on
+qwen3:4b + qwen2.5:7b), Ollama schema-constrained decoding, enum-constrained metric_id/label_echo/
+evidence_ids, failures-excluded-from-cache fix, generation timeout setting.

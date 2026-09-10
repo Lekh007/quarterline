@@ -103,7 +103,7 @@ def test_ollama_generation_request_shape_and_provider_usage() -> None:
     assert body["messages"] == MESSAGES
     assert body["stream"] is False
     assert body["options"]["num_ctx"] == 4096
-    assert body["format"] == "json"  # structured mode when a schema is supplied
+    assert body["format"] == {"type": "object"}  # full schema: constrained decoding
 
 
 def test_ollama_estimates_tokens_when_usage_absent() -> None:

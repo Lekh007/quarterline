@@ -27,8 +27,22 @@ serve:
 test:
 	uv run pytest -q
 
+# PostgreSQL 16 + pgvector profile (SPEC §15/§29).
+# Boots the compose database (or reuses one already running), runs the pgvector
+# contract tests, then stops the service. Safe to run twice: tests recreate the
+# schema and the named volume persists across runs.
+# If Docker is unavailable the pytest run still executes and the tests SKIP
+# (fast TCP probe) instead of failing.
+POSTGRES_TEST_URL ?= postgresql://quarterline:quarterline@127.0.0.1:5432/quarterline
+
 test-postgres:
-	@echo "PostgreSQL + pgvector profile is not implemented until wave 5 (F8 integration)"
+	@docker compose up -d quarterline-db 2>/dev/null \
+		|| echo "docker compose unavailable/failed - continuing (tests will skip if PostgreSQL is unreachable)"
+	@until docker compose exec -T quarterline-db pg_isready -U quarterline -d quarterline >/dev/null 2>&1; do \
+		sleep 1; \
+	done 2>/dev/null || true
+	QUARTERLINE_TEST_POSTGRES_URL=$(POSTGRES_TEST_URL) uv run pytest -q tests/integration/test_postgres_profile.py
+	@docker compose stop quarterline-db 2>/dev/null || true
 
 eval: eval-retrieval eval-generation
 
