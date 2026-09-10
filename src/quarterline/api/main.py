@@ -66,5 +66,9 @@ def create_app() -> FastAPI:
     app.include_router(runs.router)
     # --- wave-3 router registration (F6 replaces this line) ---
     app.include_router(dashboard.router)
+    # --- wave-4 router registration (F7 adds this line) ---
+    from quarterline.api.routers import memo
+
+    app.include_router(memo.router)
 
     return app

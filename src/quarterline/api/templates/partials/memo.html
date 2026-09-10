@@ -1,0 +1,152 @@
+<section class="panel memo-panel" id="memo-panel">
+  <h2>Agent memo {{ result.ticker }} <span class="muted">run {{ result.run_id }}</span></h2>
+  <p class="muted">
+    Bounded agent workflow output: rule-based plan, allowlisted read tools each
+    run at most once, and the same constrained-writer gate as briefs — citations
+    checked against supplied filing evidence, numbers rendered by code from the
+    fact card, advice refused. Research and education only &mdash; not
+    investment advice.
+  </p>
+
+  <p>Status: <code>{{ result.status }}</code>
+    {% if result.intent %}&middot; intent <code>{{ result.intent }}</code>{% endif %}
+    {% if result.approval_status %}&middot; approval <code>{{ result.approval_status }}</code>{% endif %}
+  </p>
+
+  {% if result.status == 'insufficient_evidence' %}
+  <p class="banner banner-insufficient"><strong>Insufficient evidence.</strong>
+  The run ended without a memo; missing evidence stays missing (never
+  substituted).</p>
+  {% elif result.status == 'refused' %}
+  <p class="banner banner-refused"><strong>Research-only refusal.</strong>
+  Quarterline does not provide investment advice, recommendations, or price
+  targets.</p>
+  {% elif result.status == 'failed' %}
+  <p class="banner banner-degraded"><strong>Run failed in a controlled way.</strong>
+  Facts and evidence collected so far are preserved in the checkpoint; see the
+  recorded errors below.</p>
+  {% elif result.status == 'awaiting_approval' %}
+  <p class="banner banner-partial"><strong>Awaiting export approval.</strong>
+  The validated memo is held; exporting requires an approval tied to this run
+  id, the exact memo content hash, the export type, and an expiry.</p>
+  {% elif result.status == 'completed' %}
+  <p class="banner banner-ok"><strong>Exported.</strong>
+  {% if result.exported %}<code>{{ result.exported.filename }}</code> written
+  under the restricted exports directory.{% endif %}</p>
+  {% endif %}
+
+  {% if result.errors %}
+  <details class="memo-errors">
+    <summary>Recorded errors / rejection reasons ({{ result.errors | length }})</summary>
+    <ul>
+      {% for error in result.errors %}
+      <li><code>{{ error }}</code></li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
+  {% if sections %}
+  <div class="memo-sections">
+    {% for section in sections %}
+    <h3>{{ section.heading.replace('_', ' ') }}</h3>
+    <p class="memo-statement">
+      {%- for part in section.parts -%}
+        {%- if part.evidence_id -%}
+          <a class="evidence-link" href="/evidence/{{ part.evidence_id }}"><code>{{ part.text }}</code></a>
+        {%- else -%}
+          {{ part.text }}
+        {%- endif -%}
+      {%- endfor -%}
+    </p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if result.metric_facts %}
+  <h3>Fact-card numbers (rendered by code)</h3>
+  <ul class="memo-metric-facts">
+    {% for fact in result.metric_facts %}
+    <li>{{ fact }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  {% if result.validation_results %}
+  {% set checks = result.validation_results.checks %}
+  <details class="memo-validation">
+    <summary>Validation record ({{ checks | length }} checks)</summary>
+    <table class="data-table">
+      <thead><tr><th>Check</th><th>Result</th><th>Dropped</th></tr></thead>
+      <tbody>
+        {% for check in checks %}
+        <tr>
+          <td><code>{{ check.check_id }} {{ check.name }}</code></td>
+          <td>{{ 'passed' if check.passed else 'FAILED' }}</td>
+          <td>{{ check.dropped_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if result.validation_results.reasons %}
+    <ul class="validation-reasons">
+      {% for reason in result.validation_results.reasons %}
+      <li><code>{{ reason }}</code></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </details>
+  {% endif %}
+
+  {% if result.budgets %}
+  <details class="memo-budgets">
+    <summary>Budgets used</summary>
+    <ul>
+      <li>Tool calls: {{ result.budgets.tool_calls.used }} / {{ result.budgets.tool_calls.limit }} (export included)</li>
+      <li>Graph transitions: {{ result.budgets.transitions.used }} / {{ result.budgets.transitions.limit }}</li>
+      <li>Memo repair attempts: {{ result.budgets.memo_repair_attempts.used }} / {{ result.budgets.memo_repair_attempts.limit }}</li>
+      <li>Request deadline: {{ result.budgets.deadline_seconds }}s</li>
+    </ul>
+  </details>
+  {% endif %}
+
+  {% if result.evidence %}
+  <details class="memo-evidence">
+    <summary>Supplied evidence ({{ result.evidence | length }} windows)</summary>
+    <ul class="evidence-list">
+      {% for item in result.evidence %}
+      <li>
+        <a class="evidence-link" href="/evidence/{{ item.evidence_id }}"><code>{{ item.evidence_id }}</code></a>
+        <span class="muted">doc #{{ item.document_id }}{% if item.section %} &middot; {{ item.section }}{% endif %}</span>
+        <div class="evidence-snippet">{{ item.text[:280] }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endif %}
+
+  {% if result.approval_request_id and result.status == 'awaiting_approval' %}
+  <div class="memo-approval-controls">
+    <h3>Approve export</h3>
+    <p class="muted">Approval request #{{ result.approval_request_id }} is bound to
+      run <code>{{ result.run_id }}</code>, the exact memo content hash, the chosen
+      export type, and an expiry.</p>
+    <form method="post" action="/api/memos/{{ result.run_id }}/approve-export">
+      <input type="hidden" name="approval_request_id" value="{{ result.approval_request_id }}">
+      <label>Export type:
+        <select name="export_type">
+          <option value="md">Markdown (.md)</option>
+          <option value="json">JSON (.json)</option>
+        </select>
+      </label>
+      <button type="submit">Approve and export</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if result.trace_uri %}
+  <p class="muted">Observability trace: <a href="{{ result.trace_uri }}">{{ result.trace_uri }}</a></p>
+  {% endif %}
+
+  <p class="muted">{{ disclaimer }}</p>
+</section>
