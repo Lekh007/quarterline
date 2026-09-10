@@ -1,5 +1,8 @@
 # Quarterline
 
+[![CI](https://github.com/Lekh007/quarterline/actions/workflows/ci.yml/badge.svg)](https://github.com/Lekh007/quarterline/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Local-first public-company research desk: official filings in, explainable
 research out. Built as an **AI-engineering portfolio project** — the point is
 the engineering discipline: provenance for every number, a validation gate in
