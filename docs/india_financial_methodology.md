@@ -1,20 +1,27 @@
-# India financial methodology (IND-2)
+# India financial methodology (IND-2, hardened in IND-3)
 
-Status: parsing-feasibility milestone, 2026-09-11. This document encodes the
-normalization rules that the India pipeline (`src/quarterline/sources/india/`)
-implements and that later derivation/scoring waves MUST keep. Every rule here is
-traceable to observed evidence in `docs/india_source_audit.md` (IND-1 §5, §9) or
-to the committed fixtures (`tests/fixtures/india/`). Nothing on this page is
-inferred from column labels, press commentary, or aggregator sites.
+Status: IND-2 parsing-feasibility milestone; IND-3 (2026-09-11) financial-correctness
+hardening per the reviewer corrections (claim audit:
+`docs/india_source_audit.md` §10; review packet: `docs/india_reconciliation_review.md`).
+This document encodes the normalization rules that the India pipeline
+(`src/quarterline/sources/india/`) implements and that later derivation/scoring
+waves MUST keep. Every rule here is traceable to observed evidence in
+`docs/india_source_audit.md` (IND-1 §5, §9, §10) or to the committed fixtures
+(`tests/fixtures/india/`). Nothing on this page is inferred from column labels,
+press commentary, or aggregator sites.
 
-## 1. Units rule (lakh / crore, EPS exemption)
+## 1. Units and precision rules (lakh / crore, EPS exemption)
 
 - All SEBI `in-capmkt` fact values are **full rupees**. The instance's
   `LevelOfRounding="Crores"` trait describes the *presentation* scale of the
   human-readable rendering only; `339860000000` IS ₹33,986 Cr. The parser stores
   the value exactly as filed (`units.normalize_amount` is a passthrough) and
   carries the trait in `context_metadata_json.rounding_trait`. The trait is
-  NEVER applied as a multiplier.
+  NEVER applied as a multiplier — not once, not twice.
+- **`decimals="-7"` is PRECISION, not scale**: it declares the source's own
+  rounding (values are exact to ₹1,00,00,000). Displayed crore figures must
+  reconcile EXACTLY with that precision (`482110000000` → ₹48,211 Cr, integer
+  crores). Stored facts are never changed to match a rounded display.
 - Standard Indian units: `LAKH = 100,000`, `CRORE = 10,000,000`
   (`units.py`). Display strings are parsed only with an explicit scale
   (`"₹1,234 Cr"`) or an explicitly declared scale (from a detected
@@ -22,9 +29,14 @@ inferred from column labels, press commentary, or aggregator sites.
   `AmbiguousScaleError` — ambiguity surfaces, never guesses.
 - **EPS and per-share values NEVER inherit a lakh/crore multiplier.** Concepts
   `eps_basic` / `eps_diluted` carry the `per_share` flag in the concept map;
-  facts in per-share units (`unitRef INRPerShare`, logical `INR/shares`) are
-  stored with `unit="INR/share"` and the raw per-share value (`19.19` stays
-  `19.19`). A "₹ in Crores" header on the same page as EPS does not scale EPS.
+  facts in per-share units (declared unit `INRPerShare`, logical `INR/shares`,
+  `decimals="INF"`) are stored with `unit="INR/share"` and the raw per-share
+  value (`19.19` stays `19.19`). A "₹ in Crores" header on the same page as
+  EPS does not scale EPS.
+- **Unit semantics are verified, not assumed (IND-3).** A mapped fact whose
+  declared unit is not `INR` (money concepts) or `INR/shares` (per-share
+  concepts) is skipped and counted as `skipped_unknown_unit` — share counts,
+  percentages, or any unknown unit semantic go to review, never into INR.
 
 ## 2. Scope rules (consolidated vs standalone)
 
@@ -58,29 +70,57 @@ inferred from column labels, press commentary, or aggregator sites.
   relabeling of the 9M value.
 - Prior-year comparison quarter = same start/end one year earlier
   (`periods.prior_year_quarter`).
+- **Source labels vs application labels (IND-3):** the issuer's own labels
+  (Infosys' "quarterly results, June 2026 quarter" style; the instance
+  qualifiers `ReportingQuarter="First quarter"`,
+  `TypeOfReportingPeriod="Quarterly"`) are SOURCE metadata. The application's
+  `Q1 FY2026-27` style label is Quarterline's OWN presentation layer, derived
+  from the exact context dates only. Calendar dates are the primary truth;
+  every displayed label must be reproducible from
+  `period_start`/`period_end` (see `periods.period_label`).
 
-## 4. Cash-flow frequency rule (IND-1 finding, now encoded)
+## 4. Cash-flow rule (IND-3 corrected policy — supersedes IND-2 §4)
 
-For the exchange-filed record, cash-flow statements are **annual-only**, filed
-with the March-quarter results. Encoded consequences:
+The IND-2 rule "CFO/capex map only from annual instances" was **wrong (too
+restrictive)**. The actual requirement is: **do not invent quarterly cash flow
+when the source does not report it** — which is not the same as restricting
+extraction to annual documents. The corrected policy:
 
-- `cash_flow_operations` (`CashFlowsFromUsedInOperatingActivities`) and `capex`
-  (`PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities`) are
-  mapped **only for the annual (Q4) instance**. Quarterly exchange instances
-  carry zero cash-flow concepts (verified: INFY Q1 FY27 and HUL Q1 FY27 have
-  none; HUL's Q1 workbook has no cash-flow sheets).
-- **Never fabricate a quarterly cash-flow statement** for an India issuer, and
-  **never treat the annual CF as a Q4 quarter CF** (the annual value shares
-  31-Mar with Q4 but is period-kind `annual`).
-- Infosys is the documented exception: quarter-granularity CF exists only in
-  company-IR condensed-statement PDFs (Q1 FY27 net cash from operating
-  activities ₹9,330 Cr, p. 6). Ingesting it is a later PDF milestone; until then
-  India cash-flow metrics are annual-cadence.
-- H2 cash flow, if ever derived, comes only from compatible annual − H1 inputs
-  and is labeled **H2** — never "Q3+Q4" as separate quarters.
+- **Reported observations** are accepted from an identified official document
+  whenever the concept is established, the exact reporting duration is known,
+  scope/units are known, and extraction provenance is preserved. Eligible
+  reported durations (`cash_flow.REPORTED_CF_DURATIONS`): `quarter`,
+  `half_year`, `nine_month_ytd`, `annual`, `other_duration`. Exact start/end
+  dates are stored regardless of label. A quarterly CFO in an Infosys IR
+  condensed-FS PDF is legitimate and IS extractable (text-level extraction with
+  page provenance via `pdf_results.extract_cash_flow_statement`; any table
+  ambiguity yields `requires_manual_review` — never a guess).
+- **Derived observations** come ONLY from checked subtraction
+  (`cash_flow.derive_by_subtraction`): the concept must be additive, the
+  cumulative periods must share the correct starting boundary, units/scope/
+  revision status must match, and BOTH source observations are preserved.
+  Examples: `annual − H1 = H2` (labeled **H2**, never Q4);
+  `nine_month_ytd − H1 = Q3`. Permitted only when the underlying observations
+  actually exist and pass the compatibility checks
+  (`IncompatibleDerivation` otherwise).
+- **NEVER**: divide annual CFO by four, divide half-year by two, treat H2 as
+  Q4, assume a 6-month observation is H1 without checking dates, or
+  annualize/trailing-figure from incomplete coverage. No division code path
+  exists in `cash_flow.py` by construction (structurally tested).
+- **Missing-data statuses (IND-3, distinct, never zero)** —
+  `data_status.MissingDataStatus`: `not_present_in_ingested_sources`,
+  `source_not_ingested`, `extraction_failed`, `requires_manual_review`,
+  `not_applicable`. Where older documents said a company "has no quarterly
+  CF", the correct statement is "quarterly CF **not present in the ingested
+  sources**" — a statement about our corpus, not about the company. Absence is
+  never rendered as 0 and never raised as an error.
+- Verified availability in the acquired corpus: INFY — annual CFO/capex
+  (Q4 exchange instance) AND quarterly CFO (IR condensed-FS PDF p.6);
+  HUL — annual CFO/capex only (Q4 exchange instance); HUL Q1 has no CF in any
+  ingested source.
 - HUL's FY2025-26 includes discontinued operations (ice-cream demerger): the
-  annual `ProfitLossForPeriod` (₹1,50,590 Cr) and
-  `ProfitLossForPeriodFromContinuingOperations` (₹1,06,670 Cr) differ materially
+  annual `ProfitLossForPeriod` (₹15,059 Cr) and
+  `ProfitLossForPeriodFromContinuingOperations` (₹10,667 Cr) differ materially
   and are kept as separate observations; any continuing-vs-total derivation must
   choose explicitly.
 
@@ -117,9 +157,17 @@ Until such a derivation exists, the app displays no India "EBITDA" figure.
 
 `revenue_from_operations, total_income, profit_before_tax, profit_after_tax,
 profit_attributable_to_owners, exceptional_items, eps_basic, eps_diluted` map in
-every instance; `cash_flow_operations, capex` only in annual instances. US
-concept IDs (`data/tagmap_us.yml`) are never used for India facts. Uncertain
-fallback mappings are flagged in `data/tagmap_india.yml` (`# uncertain:`
-comments) and `docs/india_source_audit.md` §9.1. Unknown tags resolve to an
-explicit unmapped result and are counted in the ingest report — never silently
-dropped.
+every instance; `cash_flow_operations, capex` are accepted at their ACTUAL
+reported duration (IND-3 corrected policy, §4 — in the acquired corpus: annual
+from the Q4 instances for both issuers, plus INFY's reported quarterly CFO from
+the IR condensed-FS PDF). `revenue_from_operations` and `total_income` are kept
+DISTINCT (every acquired period differs: total income includes other income);
+`profit_after_tax` and `profit_attributable_to_owners` are kept DISTINCT
+(non-controlling interests). US concept IDs (`data/tagmap_us.yml`) are never
+used for India facts. Uncertain fallback mappings are flagged in
+`data/tagmap_india.yml` (`# uncertain:` comments) and
+`docs/india_source_audit.md` §9.1. Unknown tags resolve to an explicit unmapped
+result and are counted in the ingest report — never silently dropped; the
+INFY undimensioned `SegmentRevenue` total (a segment-disclosure total that
+numerically equals P&L revenue) stays unmapped so a segment fact can never
+masquerade as the company total.

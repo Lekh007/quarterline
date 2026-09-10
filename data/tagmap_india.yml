@@ -48,8 +48,15 @@ eps_diluted:
   # uncertain: continuing-operations-only variant (same caveat as eps_basic).
   - DilutedEarningsLossPerShareFromContinuingOperations
 
-# Annual (Q4) instances only — quarterly exchange instances carry no cash-flow
-# statement (docs/india_source_audit.md §5). Never fabricated into quarters.
+# Cash-flow concepts are accepted at their ACTUAL reported duration from any
+# identified official document (quarter, half-year, 9M YTD, annual, other known
+# duration — IND-3 corrected policy; docs/india_financial_methodology.md §4).
+# What is forbidden is FABRICATION: never divide an annual figure by four, never
+# halve a half-year, never relabel H2 as Q4, never annualize from incomplete
+# coverage. Quarterly exchange instances carry no cash-flow facts (verified),
+# but Infosys' IR condensed-FS PDF reports a legitimate quarterly CFO — accepted
+# with page provenance. Missing cash flow is a distinct missing-data status
+# (data_status.MissingDataStatus), never zero.
 cash_flow_operations:
   - CashFlowsFromUsedInOperatingActivities
 

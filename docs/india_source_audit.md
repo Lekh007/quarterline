@@ -6,10 +6,28 @@ recording, and the cash-flow reporting-frequency finding for the ingestion desig
 Normalization, parsing, and scoring are **out of scope** (IND-2 builds `src/quarterline/sources/india/`
 against the files and manifest this milestone produced).
 
-Observed on the ground: every India financial source tried **rejects non-browser HTTP clients**. All
-documents below were obtained through a normal interactive browser session. No captcha was solved, no
-cookie was forged, no anti-bot control was bypassed, and no commercial aggregator (Screener, Trendlyne,
-Moneycontrol) was used (SPEC 2.4.6).
+Observed on the ground: every India source tried **rejected the non-browser
+HTTPS client tested** (plain `httpx` GETs with a research user agent — note this
+means an automated non-browser client, NOT an unencrypted `http://` URL; all
+tested endpoints were HTTPS throughout).
+>
+> **CORRECTED (IND-3, 2026-09-11 — reviewer correction B, recorded not silently
+> edited):** earlier drafts phrased this as "every Indian source rejects plain
+> HTTP", which exceeded the evidence in three ways: (1) it universalized two
+> issuers' IR sites and two exchange hosts to "every Indian source"; (2) "plain
+> HTTP" was ambiguous — the tested clients used **HTTPS**, what failed was
+> *non-browser* client fingerprinting (Akamai 403 / TCP drop against httpx);
+> (3) browser-assisted acquisition is a **prototype approach**: it proves only
+> that these tested URLs, through these clients (interactive Chromium +
+> Playwright page-context fetch), on 2026-09-11, returned these files. It does
+> NOT establish that all automated access is impossible (browser-automation
+> clients, headless fleets, or other fingerprints were not measured from the
+> project runtime), and it does NOT establish that commercial redistribution is
+> permitted (SPEC 2.4.5 posture unchanged). The per-URL evidence remains in §2
+> and the manifest. All documents below were obtained through a normal
+> interactive browser session. No captcha was solved, no cookie was forged, no
+> anti-bot control was bypassed, and no commercial aggregator (Screener,
+> Trendlyne, Moneycontrol) was used (SPEC 2.4.6).
 
 ---
 
@@ -133,11 +151,30 @@ fallback to older periods was needed.
 
 ## 5. Cash-flow reporting frequency finding (design rule input)
 
-**Rule the evidence supports: for the exchange-filed record, cash-flow statements are ANNUAL-only
-(full financial year, presented with the March-quarter results). Quarterly cash flow does not exist in
-the exchange feed; for Infosys it exists only as a bonus in company-IR condensed statements. The app
-must never fabricate a quarterly cash-flow statement for an India issuer, and must never treat the
+**Rule the evidence supports: for the four ingested exchange instances, cash-flow
+statements were ANNUAL-only (full financial year, presented with the
+March-quarter results). Quarterly cash flow was not present in the ingested
+exchange feed for either issuer in the acquired periods; for Infosys it exists
+only in company-IR condensed statements. The app must never fabricate a
+quarterly cash-flow statement for an India issuer, and must never treat the
 annual CF as a Q4 quarter CF.**
+
+> **CORRECTED (IND-3, 2026-09-11 — reviewer corrections A and B, recorded not
+> silently edited):** (1) The phrase "quarterly cash flow does not exist in the
+> exchange feed" overgeneralized: the evidence covers TWO issuers × TWO periods
+> (4 consolidated instances). The correct statement is "quarterly CF **not
+> present in the ingested sources**" — a statement about our corpus, never about
+> the companies ("HUL has no quarterly cash flow anywhere" was unsupported;
+> HUL's Q1 statements simply do not report CF in anything we ingested). (2) The
+> IND-2 encoding took this further and restricted CFO/capex extraction to
+> ANNUAL instances — that was WRONG (too restrictive): a cash-flow observation
+> is acceptable from any identified official document at its actual reported
+> duration (quarter/half-year/9M-YTD/annual/other) with known dates, scope,
+> units and provenance; Infosys' Q1 condensed-FS PDF quarterly CFO (₹9,330 Cr,
+> p.6) is legitimate and must be extractable. See
+> `docs/india_financial_methodology.md` §4 (rewritten) and
+> `docs/india_reconciliation_review.md` §5. Missing cash flow is now recorded
+> as one of five distinct missing-data statuses, never zero.
 
 Evidence, per company:
 
@@ -265,6 +302,16 @@ an India fact can never normalize under a us-gaap-derived concept name.
 | `cash_flow_operations` | `CashFlowsFromUsedInOperatingActivities` | — | certain; **annual instances only** |
 | `capex` | `PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities` | `PurchaseOfIntangibleAssetsClassifiedAsInvestingActivities` | fallback **uncertain**: whether Ind AS capex includes intangibles is a derivation-wave decision, not assumed |
 
+> **CORRECTED (IND-3, 2026-09-11, recorded not silently edited):** (1) the crore
+> displays in the `profit_before_tax` and `profit_after_tax` rows above carry a
+> ×10 slip: the underlying rupee values are exact, and the correct crore
+> renderings are ₹3,928 vs ₹3,681 Cr (HUL Q4 quarter PBT vs before-exceptional)
+> and ₹15,059 vs ₹10,667 Cr (HUL FY26 annual total vs continuing PAT). (2) The
+> `cash_flow_operations` row's "annual instances only" restriction is superseded
+> by the IND-3 corrected cash-flow policy
+> (`docs/india_financial_methodology.md` §4): cash-flow concepts are accepted at
+> their ACTUAL reported duration from any identified official document.
+
 Notable DELIBERATELY-UNMAPPED tags (surfaced in `IndiaInstance.unmapped_tags`, never silently dropped):
 `OtherIncome` (already inside `Income`), `Expenses`, `TaxExpense`, `CurrentTax`, `DeferredTax`,
 discontinued-ops tags (`ProfitLossFromDiscontinuedOperationsAfterTax`), comprehensive-income tags,
@@ -330,3 +377,23 @@ context — it is a segment-disclosure total, not the P&L revenue line, and stay
   (`invalid choice: 'india'`). The handlers themselves are registered at package import
   (`ingest:india-document`, `verify:india`) and were exercised directly; see the package docstring
   for the exact one-line fixes.
+
+---
+
+# 10. IND-3 claim audit (2026-09-11, reviewer correction B)
+
+Every previously published India claim that carries financial or access consequences is
+re-audited below. Column semantics: **scope of evidence** states exactly what was tested;
+**verdict** is `verified` only when the evidence fully supports the claim as now worded.
+Claims were rescoped in place (with `CORRECTED` notes at §2 and §5) rather than silently
+rewritten, per reviewer instruction.
+
+| # | Claim (as now worded) | Supporting evidence | Scope of evidence | Verdict | Required correction (from the original claim) |
+|---|---|---|---|---|---|
+| 1 | **Quarterly cash-flow availability:** "Quarterly CF was not present in the ingested exchange sources for INFY/HUL in the acquired periods; INFY publishes a legitimate quarterly CFO in its company-IR condensed-FS PDF; HUL's Q1 ingested documents report no CF at all." | INFY Q1 FY27 consolidated instance: 0 CF facts among 89, `WhetherCashFlowStatementIsApplicableOnCompany` absent; HUL Q1 instance: 0 CF facts among 82; HUL Q1 results PDF (30 pp.): no CF statement; HUL Q1 workbook: sheets exactly `SEBI Consolidated, Segment Consolidated, SEBI Standalone, Segment Standalone`; INFY Q1 condensed-FS PDF p.6: "Net cash generated by operating activities 9,330" under "for the three months ended June 30, 2026" (extracted 93,300,000,000 with page provenance). | 2 issuers × 2 periods of exchange instances; 4 company-IR PDFs + 2 workbooks, all cached 2026-09-11. Does NOT cover: other issuers, other periods, BSE copies, or future filings. | **Verified** (as rescoped). | Original "quarterly cash flow does not exist in the exchange feed" universalized 4 instances into the whole feed; "HUL has no quarterly cash flow anywhere" was unsupported. Reworded as corpus-scoped absence with a distinct missing-data status (`not_present_in_ingested_sources`), never zero. |
+| 2 | **Half-year cash-flow support:** "No half-year CF was present in the ingested sources, and none is derivable yet; derivation annual − H1 = H2 is implemented only as a checked operation that requires both cumulative observations to exist." | No 6-month context occurs in any of the 4 committed instances (verified: only 3-month and 12-month duration contexts); no half-year CF document was acquired. `cash_flow.derive_by_subtraction` implements and tests the compatibility-checked subtraction; nothing divides. | Same 4 instances; derivation logic is synthetic-tested only (no real H1 document acquired). | **Verified** (design-level; untested against real half-year data). | IND-2 had no explicit half-year statement; the corrected contract now defines the eligible duration vocabulary (quarter/half_year/nine_month_ytd/annual/other_duration) and forbids fabrication. |
+| 3 | **Browser vs programmatic access:** "These tested URLs, accessed with plain httpx on 2026-09-11, returned 403 (Akamai) or silently dropped the connection; the same files fetched through an interactive Chromium session succeeded. Browser-assisted acquisition is a prototype; no conclusion about all automated access or redistribution rights follows." | §2 per-source table (403 refs `18.bf3b4017…`, `18.2cfed417…`; NSE silent TCP drop); manifest `fetch_methods_used` (httpx rejected; browser byte-exact, sha256-verified). | ~30 requests over ~1 hour on 2026-09-11 from one network fingerprint; headless/automation clients untested from the project runtime. | **Partially verified** — accurate for what was tested; any wider claim is unsupported. | Original "every Indian source rejects plain HTTP" conflated non-browser HTTPS clients with unencrypted HTTP, and overgeneralized. Rescoped at §2 with the correction note. |
+| 4 | **Exchange filing scope declarations:** "Consolidated vs standalone is a per-filing property (two separate instances per period), declared inside each instance by `NatureOfReportStandaloneConsolidated` and cross-checked at import." | All 4 consolidated fixtures declare `NatureOfReportStandaloneConsolidated = "Consolidated"`; NSE listing carries separate Consolidated/Standalone filings per period (12 each for both issuers, Mar-2025 → Jun-2026); `ir_documents.import_document` refuses scope mismatches. | The 4 committed consolidated instances + listing metadata; standalone instances cached but not committed. | **Verified**. | None — claim stood as scoped; now provenance-backed in the review packet. |
+| 5 | **Fiscal-year labels:** "The source's own labels (Infosys' 'IFRS/Ind AS quarterly results, June 2026 quarter' style; instance qualifiers `ReportingQuarter='First quarter'`, `TypeOfReportingPeriod='Quarterly'`) are metadata. The application's `Q1 FY2026-27` is Quarterline's own presentation layer. Exact context start/end dates are the primary truth, and the application label is derived from those dates only." | Instance qualifier facts in all 4 fixtures; Reg-33 PDF column headers ("Quarter ended June 30, 2026"); context dates verified against every mapped fact (e.g. INFY Q1 revenue context 2026-04-01..2026-06-30). | All 4 fixtures + 2 Reg-33 PDFs. | **Verified**. | IND-2 docs carried no explicit application-vs-source label separation; now stated in methodology §3 and the period-label validation table (review packet §4). |
+| 6 | **Currency/scale interpretation:** "Fact values are exact full rupees; `decimals='-7'` is the source's rounding PRECISION; `LevelOfRounding='Crores'` is presentation metadata — never a multiplier. Displayed crore values reconcile exactly at the declared precision (482110000000 → ₹48,211 Cr)." | `decimals="-7"` on every money fact and `decimals="INF"` on per-share facts in all 4 fixtures; `units.normalize_amount` passthrough; display reconciliation asserted against real fixtures; rendered statements ("In ₹ crore" / "(Rs in Crores)") match value/10^7 exactly for every agent-checked reference. | All 4 fixtures; cross-checked displays on 5 rendered PDF pages. | **Verified**. | IND-2 stated the rule but had no test proving raw values are not multiplied twice, nor exact display reconciliation; added (tests `TestFixturePrecisionReconciliation`). |
+| 7 | **Revision-selection behavior:** "Revision status exists only in the exchange listing (carried, never inferred); latest-available selection keeps history; a revised filing must not replace facts of a different period/scope/unit/concept; a later filing's comparative value is NOT a revision; duplicate copies of a document are idempotent." | Listing fields `type_Sub`/`revised_Date`/`revision_Remark` (all acquired filings `Original`); observation hash includes scope+value so a revision is a new identity while re-reports are idempotent; `revisions.classify_filing_pair` (IND-3) distinguishes duplicate_copy / original / revised / later_comparative; `select_latest` rejects mixed periods. | Selection logic synthetic-tested (no real revised submission was ever present to acquire — designed-for unknown). | **Partially verified** — logic verified; real-world revised filings untested. | IND-2 conflated "duplicate filing versions" with "revisions"; now four distinct categories with tests. |

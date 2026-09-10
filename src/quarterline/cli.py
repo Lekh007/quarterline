@@ -152,32 +152,48 @@ def build_parser() -> argparse.ArgumentParser:
     india_doc = ingest_sub.add_parser(
         "india-document", help="manually import an official Indian filing (Phase D)"
     )
-    india_doc.add_argument("--issuer", required=True, help="issuer_id from data/watchlist_india.csv")
+    india_doc.add_argument(
+        "--issuer", required=True, help="issuer_id from data/watchlist_india.csv"
+    )
     india_doc.add_argument("--file", required=True, help="path to the officially downloaded file")
     india_doc.add_argument(
         "--type",
         default="financial_results",
-        choices=["financial_results", "results_notes", "earnings_presentation",
-                 "annual_report", "management_transcript", "exchange_announcement"],
+        choices=[
+            "financial_results",
+            "results_notes",
+            "earnings_presentation",
+            "annual_report",
+            "management_transcript",
+            "exchange_announcement",
+        ],
         help="India document type",
     )
     india_doc.add_argument("--period-start", required=True, help="period start (YYYY-MM-DD)")
     india_doc.add_argument("--period-end", required=True, help="period end (YYYY-MM-DD)")
     india_doc.add_argument(
-        "--scope", default="consolidated", choices=["consolidated", "standalone"],
+        "--scope",
+        default="consolidated",
+        choices=["consolidated", "standalone"],
         help="reporting scope declared by the filing",
     )
     india_doc.add_argument("--published", required=True, help="publication date (YYYY-MM-DD)")
     india_doc.add_argument("--source-url", default=None, help="official source URL, if known")
     india_doc.add_argument("--notes", default=None, help="free-text provenance notes")
-    india_doc.add_argument("--exchange", default=None, help="declaring exchange (NSE/BSE), if known")
+    india_doc.add_argument(
+        "--exchange", default=None, help="declaring exchange (NSE/BSE), if known"
+    )
     india_doc.add_argument("--seq-id", default=None, help="exchange listing sequence id, if known")
     india_doc.add_argument(
-        "--audited", default=None, choices=["Audited", "Unaudited"],
+        "--audited",
+        default=None,
+        choices=["Audited", "Unaudited"],
         help="audit status declared by the filing",
     )
     india_doc.add_argument(
-        "--revision", default=None, choices=["Original", "Revised"],
+        "--revision",
+        default=None,
+        choices=["Original", "Revised"],
         help="revision status declared by the listing",
     )
     india_doc.set_defaults(registry_key="ingest:india-document")

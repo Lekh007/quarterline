@@ -1,4 +1,4 @@
-"""India fact-observation pipeline (IND-2): cached XBRL artifacts -> fact_observations.
+"""India fact-observation pipeline (IND-2/IND-3): cached XBRL artifacts -> fact_observations.
 
 ``ingest_observations(issuer_id)`` runs, per issuer: every registered India XBRL
 artifact (``source="india"``, matched via its ``.filing.json`` sidecar) is parsed
@@ -11,7 +11,10 @@ row written through the US-wave idempotent insert-or-skip
 - ``canonical_concept`` from the India map (US concept ids never appear);
 - ``value_decimal`` = exact full rupees from the instance (Decimal text);
 - ``unit`` = ``INR`` (money) / ``INR/share`` (per-share concepts — EPS never
-  inherits a crore/lakh multiplier);
+  inherits a crore/lakh multiplier). Since IND-3 the unit is VERIFIED against
+  the concept class, not assumed: a money concept in a non-INR unit (or a
+  per-share concept in a non per-share unit) is skipped and counted as
+  ``skipped_unknown_unit`` — an unknown unit semantic is review, never a guess;
 - rounding trait, scope, revision and audit status live in
   ``context_metadata_json``; ``source_fy``/``source_fp`` from the filing
   metadata and the date-derived fiscal calendar;
@@ -19,6 +22,18 @@ row written through the US-wave idempotent insert-or-skip
   unit, period, value) with the reporting scope in the frame slot, so re-runs
   are idempotent (0 new rows) and genuinely revised values hash differently and
   are preserved alongside the original (SPEC 2.1.10).
+
+Cash-flow frequency policy (IND-3, reviewer correction A — supersedes the IND-2
+"annual instances only" restriction, which was too strict): cash-flow concepts
+are accepted from ANY identified official document at its ACTUAL reported
+duration (quarter, half-year, 9M YTD, annual, other known duration — see
+``cash_flow.reporting_duration``). What is forbidden is FABRICATION: no dividing
+annual figures by four, no half/2, no H2-as-Q4 relabeling, no annualizing from
+incomplete coverage. Derived interval observations exist only through the
+checked ``cash_flow.derive_by_subtraction`` (annual − H1 = H2; 9M − H1 = Q3).
+When cash flow is absent for an issuer/period it is recorded as a distinct
+missing-data status (``data_status.MissingDataStatus``), never zero — e.g.
+"quarterly CF not present in the ingested sources" for HUL Q1 FY27.
 """
 
 from __future__ import annotations
@@ -31,7 +46,7 @@ from pathlib import Path
 from sqlalchemy import select
 
 from quarterline.core.normalization import observation_hash
-from quarterline.sources.india.concept_map import IN_CAPMKT_PREFIX, map_tag
+from quarterline.sources.india.concept_map import IN_CAPMKT_PREFIX, PER_SHARE_CONCEPTS, map_tag
 from quarterline.sources.india.ir_documents import (
     INDIA_XBRL_PARSER_VERSION,
     SOURCE_INDIA,
@@ -59,11 +74,30 @@ class IndiaIngestReport:
     observations_skipped: int = 0
     skipped_dimensioned: int = 0
     skipped_non_numeric: int = 0
+    skipped_unknown_unit: int = 0
     unmapped_tags: dict[str, int] = field(default_factory=dict)
     by_concept: dict[str, int] = field(default_factory=dict)
 
     def note_unmapped(self, tag: str) -> None:
         self.unmapped_tags[tag] = self.unmapped_tags.get(tag, 0 + 1)
+
+
+#: Declared XBRL unit semantics per concept class. Anything else is review,
+#: never guessed into INR (IND-3 units rule). The parser maps the instances'
+#: divided unit ``INRPerShare`` (iso4217:INR / xbrli:shares) to the logical
+#: name ``INR/shares``; the STORED normalized unit keeps the existing
+#: ``INR/share`` contract.
+_MONEY_UNIT = "INR"
+_PER_SHARE_DECLARED = "INR/shares"
+_PER_SHARE_UNIT = "INR/share"
+
+
+def _unit_for(fact: IndiaFact, concept: str) -> str | None:
+    """Verified unit for a mapped fact, or ``None`` when the unit is not a
+    known semantic for the concept class (unknown -> review, never a guess)."""
+    if concept in PER_SHARE_CONCEPTS:
+        return _PER_SHARE_UNIT if fact.unit_ref == _PER_SHARE_DECLARED else None
+    return _MONEY_UNIT if fact.unit_ref == _MONEY_UNIT else None
 
 
 def _india_artifacts(
@@ -122,7 +156,9 @@ def _observation_for(
     scope = (meta.scope if meta else None) or instance.declared_scope or "consolidated"
     revision_status = meta.revision_status if meta else None
     audited = instance.audited_status or (meta.audited_status if meta else None)
-    unit = "INR/share" if fact.is_per_share_unit else "INR"
+    unit = _unit_for(fact, concept)
+    if unit is None:  # caller counts this as skipped_unknown_unit
+        return None
 
     context_metadata = {
         "namespace": "in-capmkt",
@@ -200,6 +236,11 @@ def ingest_observations(issuer_id: str, database_url: str | None = None) -> Indi
                 result = map_tag(fact.tag)
                 if not result.mapped:
                     report.note_unmapped(fact.tag)
+                    continue
+                if _unit_for(fact, result.concept or "") is None:
+                    # Unknown unit semantics for this concept class: surface as
+                    # a counted skip (review), never silently ingest as INR.
+                    report.skipped_unknown_unit += 1
                     continue
                 observation = _observation_for(
                     issuer.isin, fact, result.concept or "", meta, instance

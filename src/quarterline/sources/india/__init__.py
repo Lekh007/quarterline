@@ -37,7 +37,9 @@ from __future__ import annotations
 
 from quarterline.sources.india import (
     bse,
+    cash_flow,
     concept_map,
+    data_status,
     errors,
     ir_documents,
     issuers,
@@ -49,20 +51,32 @@ from quarterline.sources.india import (
     units,
     xbrl_parse,
 )
+from quarterline.sources.india.cash_flow import (
+    ReportedCashFlow,
+    derive_by_subtraction,
+    reporting_duration,
+)
+from quarterline.sources.india.data_status import MissingDataStatus
 from quarterline.sources.india.ir_documents import ImportReport, import_document
 from quarterline.sources.india.pipeline import IndiaIngestReport, ingest_observations
 from quarterline.sources.india.reconcile import (
     ReconciliationRow,
     reconciliation_table,
-    write_reconciliation_csv,
+    write_supersession_note,
+    write_validation_csv,
 )
 
 __all__ = [
     "ImportReport",
     "IndiaIngestReport",
+    "MissingDataStatus",
     "ReconciliationRow",
+    "ReportedCashFlow",
     "bse",
+    "cash_flow",
     "concept_map",
+    "data_status",
+    "derive_by_subtraction",
     "errors",
     "import_document",
     "ingest_observations",
@@ -73,8 +87,10 @@ __all__ = [
     "periods",
     "reconcile",
     "reconciliation_table",
+    "reporting_duration",
     "revisions",
     "units",
-    "write_reconciliation_csv",
+    "write_supersession_note",
+    "write_validation_csv",
     "xbrl_parse",
 ]
