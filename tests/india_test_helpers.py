@@ -98,3 +98,63 @@ def create_schema(database_url: str | None = None) -> None:
     """Create all tables on the configured (or given) database."""
     engine = get_engine(database_url) if database_url else get_engine()
     Base.metadata.create_all(engine)
+
+
+def run_ind4_pipeline() -> None:
+    """Run the full IND-4 data layer for both issuers on the current store.
+
+    Observations (exchange XBRL + the reviewed INFY PDF cash flow), canonical
+    normalization, and metric computation. Assumes the fixtures are already
+    imported (``import_all_fixtures``) and the schema exists.
+    """
+    from quarterline.sources.india.metrics import compute_india_metrics
+    from quarterline.sources.india.normalization import normalize_canonical_facts
+    from quarterline.sources.india.pipeline import (
+        ingest_observations,
+        ingest_reviewed_pdf_cash_flow,
+    )
+
+    for issuer_id in ("IN-INFY", "IN-HINDUNILVR"):
+        ingest_observations(issuer_id)
+    ingest_reviewed_pdf_cash_flow("IN-INFY")
+    for issuer_id in ("IN-INFY", "IN-HINDUNILVR"):
+        normalize_canonical_facts(issuer_id)
+        compute_india_metrics(issuer_id)
+
+
+def synthetic_instance_xml(
+    *,
+    period_start: str,
+    period_end: str,
+    revenue_value: str,
+    scope: str = "consolidated",
+    context_id: str = "OneD",
+) -> bytes:
+    """A CLEARLY SYNTHETIC in-capmkt instance carrying ONE revenue fact.
+
+    Used only to prove selection-policy behaviour (latest publication wins;
+    standalone retained, never substituted) — never presented as company
+    results. ``scope="standalone"`` declares Standalone in the instance so the
+    import path's scope cross-check passes.
+    """
+    scope_word = "Consolidated" if scope == "consolidated" else "Standalone"
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        "<!-- SYNTHETIC TEST FIXTURE: clearly-labeled parser test, not a company filing -->\n"
+        '<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance"'
+        ' xmlns:in-capmkt="http://www.sebi.gov.in/xbrl/2026-01-31/in-capmkt"'
+        ' xmlns:iso4217="http://www.xbrl.org/2003/iso4217">\n'
+        f'<xbrli:context id="{context_id}">\n'
+        "  <xbrli:entity>\n"
+        '    <xbrli:identifier scheme="http://www.sebi.gov.in/in-capmkt/ScripCode">500209</xbrli:identifier>\n'
+        "  </xbrli:entity>\n"
+        f"  <xbrli:period><xbrli:startDate>{period_start}</xbrli:startDate>"
+        f"<xbrli:endDate>{period_end}</xbrli:endDate></xbrli:period>\n"
+        "</xbrli:context>\n"
+        '<xbrli:unit id="INR"><xbrli:measure>iso4217:INR</xbrli:measure></xbrli:unit>\n'
+        f'<in-capmkt:NatureOfReportStandaloneConsolidated contextRef="{context_id}">{scope_word}</in-capmkt:NatureOfReportStandaloneConsolidated>\n'
+        f'<in-capmkt:LevelOfRounding contextRef="{context_id}">Crores</in-capmkt:LevelOfRounding>\n'
+        f'<in-capmkt:RevenueFromOperations contextRef="{context_id}"'
+        f' unitRef="INR" decimals="-7">{revenue_value}</in-capmkt:RevenueFromOperations>\n'
+        "</xbrli:xbrl>\n"
+    ).encode()

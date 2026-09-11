@@ -863,6 +863,31 @@ def _build_scrambled_keys() -> None:
 
 _build_scrambled_keys()
 
+
+def review_status_for(issuer_id: str, document_id: str, context_kind: str, tag: str) -> str | None:
+    """Review status the IND-3 packet recorded for one reported fact.
+
+    ``agent_checked_against_document`` for rows whose rendered reference matched
+    (or recorded a scope/basis difference); ``human_review_pending`` for rows
+    whose rendered comparison interleaved or was never established; ``None`` when
+    the packet does not cover the fact at all (e.g. synthetic test observations).
+    Human approval is never returned — no code path records it.
+    """
+    key: ReferenceKey = (issuer_id, document_id, context_kind, tag)
+    reference = RENDERED_REFERENCES.get(key) or _RENDERED_OVERRIDES.get(key)
+    if reference is not None:
+        if reference.comparison_status in (
+            COMPARISON_MATCHED,
+            COMPARISON_WITHIN_PRECISION,
+            COMPARISON_SCOPE_BASIS,
+        ):
+            return REVIEW_AGENT_CHECKED
+        return REVIEW_HUMAN_PENDING
+    if key in _SCRAMBLED_KEYS:
+        return REVIEW_HUMAN_PENDING
+    return None
+
+
 #: Explicit rendered references that OVERRIDE the scrambled fallback with a
 #: documented (unresolved or recorded) outcome.
 _RENDERED_OVERRIDES: dict[ReferenceKey, RenderedReference] = {

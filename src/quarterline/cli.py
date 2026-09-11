@@ -211,6 +211,20 @@ def build_parser() -> argparse.ArgumentParser:
         "--issuer", required=True, help="issuer_id from data/watchlist_india.csv"
     )
     verify_india.set_defaults(registry_key="verify:india")
+    verify_india_facts = verify_sub.add_parser(
+        "india-facts", help="canonical fact card for an Indian issuer"
+    )
+    verify_india_facts.add_argument(
+        "--issuer", required=True, help="issuer_id from data/watchlist_india.csv"
+    )
+    verify_india_facts.add_argument(
+        "--scope", default="consolidated", choices=["consolidated", "standalone"],
+        help="reporting scope (default: consolidated)",
+    )
+    verify_india_facts.add_argument(
+        "--period-end", dest="period_end", default=None, help="period end (YYYY-MM-DD)"
+    )
+    verify_india_facts.set_defaults(registry_key="verify:india-facts")
 
     # index build
     index = subparsers.add_parser("index", help="retrieval index maintenance")
