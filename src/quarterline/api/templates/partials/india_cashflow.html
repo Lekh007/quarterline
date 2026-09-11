@@ -1,0 +1,68 @@
+<section class="panel" id="india-cashflow">
+  <h2>Cash flow — reported frequencies only</h2>
+  <p class="table-note muted cashflow-caption">{{ cashflow_caption }}</p>
+  <table class="data-table india-cashflow">
+    <thead>
+      <tr>
+        <th>Reported row</th>
+        <th>Period (exact dates)</th>
+        <th>Value</th>
+        <th>Provenance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in cashflow_rows %}
+      <tr data-concept="{{ row.concept }}" data-period-kind="{{ row.kind_label }}">
+        <td>{{ row.concept_label }}</td>
+        <td>{{ row.period_label }} ({{ row.kind_label }})<br>
+            <span class="muted">{{ row.dates }}</span></td>
+        <td class="{{ 'value-missing' if row.cell.missing }}">
+          {% if row.cell.missing %}
+          <span class="missing-status">{{ row.cell.missing_status }}</span>
+          <div class="table-note muted">{{ row.cell.note }}</div>
+          {% else %}
+          <span class="value" title="{{ row.cell.full }} (exact filed rupee amount)">{{ row.cell.display }}</span>
+          <div class="muted full-rupees">{{ row.cell.full }}</div>
+          {% endif %}
+        </td>
+        <td>
+          {% if not row.cell.missing %}
+          <div class="prov-line muted">{{ row.cell.provenance }}</div>
+          {% if row.cell.extraction %}<div class="prov-line muted">{{ row.cell.extraction }}</div>{% endif %}
+          {% if row.cell.tag %}<div class="prov-line muted">tag {{ row.cell.tag }}</div>{% endif %}
+          <div class="prov-links">
+            {% if row.cell.source_url %}<a href="{{ row.cell.source_url }}" rel="noopener noreferrer" target="_blank">source document</a>{% endif %}
+            {% if row.cell.filing_url %}{% if row.cell.source_url %} · {% endif %}<a href="{{ row.cell.filing_url }}">filing copy</a>{% endif %}
+          </div>
+          <div class="dq-line">
+            {% if row.cell.review_kind == 'review' %}
+            <a class="dq-badge dq-review" href="{{ review_packet_url }}"
+               title="{{ review_packet_section_note }}">{{ row.cell.review_status }}</a>
+            {% elif row.cell.review_status %}
+            <span class="dq-badge dq-checked">{{ row.cell.review_status }}</span>
+            {% else %}
+            <span class="dq-badge dq-none">no review status</span>
+            {% endif %}
+          </div>
+          {% else %}
+          <span class="muted">no reported observation</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if derivations %}
+  <h3>Blocked derivations — status only, never fabricated values</h3>
+  <ul class="derivations">
+    {% for derivation in derivations %}
+    <li>
+      <code>{{ derivation.concept }}</code> &rarr; {{ derivation.target_label }}
+      ({{ derivation.method }}):
+      <span class="missing-status">{{ derivation.status }}</span>
+      <div class="table-note muted">{{ derivation.note }}</div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>

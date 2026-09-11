@@ -20,6 +20,7 @@ from quarterline.api.routers import (
     dashboard,
     filings,
     health,
+    india,
     runs,
     screener,
 )
@@ -59,6 +60,7 @@ def create_app() -> FastAPI:
     app.include_router(companies.router)
     app.include_router(screener.router)
     app.include_router(filings.router)
+    app.include_router(india.router)
 
     # --- wave-3 router registration (F5 replaces this line) ---
     app.include_router(brief.router)

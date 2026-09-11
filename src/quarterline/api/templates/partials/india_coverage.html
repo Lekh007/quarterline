@@ -1,0 +1,31 @@
+<section class="panel" id="india-coverage">
+  <h2>Data coverage</h2>
+  <p class="table-note muted">Per concept and exact period identity: present,
+  or missing with its typed status. A missing status is a statement about the
+  ingested corpus — it is never rendered as zero and never guessed.</p>
+  {% for block in coverage_blocks %}
+  <h3>{{ block.label }} ({{ block.kind_label }}) <span class="muted">· {{ block.dates }}</span></h3>
+  <table class="data-table india-coverage">
+    <thead>
+      <tr><th>Concept</th><th>Status</th><th>Value / missing status</th><th>Note</th></tr>
+    </thead>
+    <tbody>
+      {% for cell in block.cells %}
+      <tr data-concept="{{ cell.concept }}">
+        <td><code>{{ cell.concept }}</code></td>
+        <td>{{ cell.status }}</td>
+        <td class="{{ 'value-missing' if cell.status == 'missing' }}">
+          {% if cell.status == 'missing' %}
+          <span class="missing-status">{{ cell.missing_status }}</span>
+          {% else %}
+          {{ cell.value_display or "present" }}
+          {% endif %}
+        </td>
+        <td class="table-note muted">{{ cell.note or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+  <p class="no-score-note">{{ no_score_note }}</p>
+</section>

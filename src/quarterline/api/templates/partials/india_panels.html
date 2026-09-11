@@ -1,0 +1,17 @@
+<div id="india-panels">
+{% if not has_data %}
+<section class="panel empty-state">
+  <h2>No data for this scope</h2>
+  <p>{{ empty_reason }}</p>
+  <p class="table-note muted">Missing data is never substituted with zeros, and
+  data is never silently shown under a scope it does not belong to.</p>
+  <p><a href="/in">Back to the India watchlist</a></p>
+</section>
+{% else %}
+{% include "partials/india_periods.html" %}
+{% include "partials/india_indicators.html" %}
+{% include "partials/india_metrics.html" %}
+{% include "partials/india_cashflow.html" %}
+{% include "partials/india_coverage.html" %}
+{% endif %}
+</div>

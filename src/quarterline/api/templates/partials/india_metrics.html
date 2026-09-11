@@ -1,0 +1,52 @@
+<section class="panel" id="india-metrics">
+  <h2>Computed indicators — {{ formula_version }}</h2>
+  <p class="table-note muted">Computed in code from the canonical facts above;
+  every value states its exact inputs. Growth metrics use ingested facts only
+  and are never annualized or interpolated — an unavailable comparative renders
+  as its typed missing status, never as a fabricated number and never as zero.
+  Owners' and group PAT margins are deliberately separate metrics and are never
+  conflated.</p>
+  <table class="data-table india-metrics">
+    <thead>
+      <tr>
+        <th>Metric</th>
+        {% for column in columns %}
+        <th>{{ column.label }} ({{ column.kind_label }})<br>
+            <span class="muted">{{ column.dates }}</span></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in metric_rows %}
+      <tr data-metric="{{ row.metric_id }}">
+        <td>{{ row.label }}
+          <div class="table-note muted">{{ row.formula }}</div>
+        </td>
+        {% for cell in row.cells %}
+        <td class="{{ 'value-missing' if cell.status_kind == 'missing' }}">
+          {% if cell.not_defined %}
+          <span class="muted">not defined for this period kind</span>
+          {% elif cell.status_kind == 'ok' %}
+          <span class="value" {% if cell.full %}title="{{ cell.full }} (exact filed rupee amount)"{% endif %}>{{ cell.value_text }}</span>
+          {% else %}
+          <span class="missing-status">{{ cell.status }}</span>
+          <div class="table-note muted">Not available: {{ cell.explanation }}</div>
+          {% endif %}
+          {% if cell.notes %}
+          <details class="metric-notes">
+            <summary>computation notes</summary>
+            <ul>
+              {% for note in cell.notes %}<li>{{ note }}</li>{% endfor %}
+            </ul>
+          </details>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="table-note muted">The exceptional-impact sign note travels verbatim
+  from the metric computation; stored signs are per-issuer source conventions
+  and are never normalized across issuers.</p>
+</section>

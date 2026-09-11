@@ -1,0 +1,18 @@
+<section class="panel" id="india-period-strip">
+  <h2>Period identities</h2>
+  <p class="table-note muted">Exact dates are the primary truth. The
+  application label (left) is Quarterline's own presentation, derived from the
+  dates only; the source label is the issuer's own qualifier, carried but never
+  trusted as classification.</p>
+  <ul class="period-strip">
+    {% for period in period_strip %}
+    <li>
+      <strong>{{ period.application_label }}</strong>
+      {% if period.source_label %}&middot; source label: <span class="source-label">{{ period.source_label }}</span>{% endif %}
+      {% if period.filing_identifier %}&middot; {{ period.filing_identifier }}{% endif %}
+      {% if period.published_at %}&middot; published {{ period.published_at }}{% endif %}
+      {% if period.audited_status %}&middot; {{ period.audited_status }}{% if period.revision_status %} / {{ period.revision_status }}{% endif %}{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>

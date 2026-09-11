@@ -1,0 +1,55 @@
+<section class="panel" id="india-indicators">
+  <h2>Reported indicators — {{ scope }}</h2>
+  <p class="table-note muted">Every value is a canonical fact normalized from
+  the issuer's filed sources, with provenance (source document, sequence id,
+  published date) and its data-quality status. Revenue from operations and
+  total income are separate lines and are never merged; profit after tax
+  (group) and profit attributable to owners are separate lines and are never
+  merged. Period dates in the column headers are exact.</p>
+  <table class="data-table india-indicators">
+    <thead>
+      <tr>
+        <th>Indicator</th>
+        {% for column in columns %}
+        <th>{{ column.label }} ({{ column.kind_label }})<br>
+            <span class="muted">{{ column.dates }}</span></th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in indicator_rows %}
+      <tr data-concept="{{ row.concept }}">
+        <td>{{ row.label }}</td>
+        {% for cell in row.cells %}
+        <td class="{{ 'value-missing' if cell.missing }}">
+          {% if cell.missing %}
+          <span class="missing-status">{{ cell.missing_status }}</span>
+          <div class="table-note muted">{{ cell.note }}</div>
+          {% else %}
+          <span class="value" {% if cell.full %}title="{{ cell.full }} (exact filed rupee amount)"{% endif %}>{{ cell.display }}</span>
+          {% if cell.full %}<div class="muted full-rupees">{{ cell.full }}</div>{% endif %}
+          <div class="prov-line muted">{{ cell.provenance }}</div>
+          {% if cell.tag %}<div class="prov-line muted">tag {{ cell.tag }}</div>{% endif %}
+          <div class="prov-links">
+            {% if cell.source_url %}<a href="{{ cell.source_url }}" rel="noopener noreferrer" target="_blank">source document</a>{% endif %}
+            {% if cell.filing_url %}{% if cell.source_url %} · {% endif %}<a href="{{ cell.filing_url }}">filing copy</a>{% endif %}
+          </div>
+          <div class="dq-line">
+            {% if cell.review_kind == 'review' %}
+            <a class="dq-badge dq-review" href="{{ review_packet_url }}"
+               title="{{ review_packet_section_note }}">{{ cell.review_status }}</a>
+            <span class="table-note muted">human review pending — {{ review_packet_section_note }}</span>
+            {% elif cell.review_status %}
+            <span class="dq-badge dq-checked" title="verified against the cited document">{{ cell.review_status }}</span>
+            {% else %}
+            <span class="dq-badge dq-none">no review status</span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>

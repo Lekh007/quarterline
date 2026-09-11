@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}{{ issuer.issuer_id }} — India indicators — Quarterline{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>{{ issuer.issuer_id }}{% if issuer.name %} <span class="muted">· {{ issuer.name }}</span>{% endif %}</h1>
+  <p class="muted">
+    NSE {{ issuer.ticker_nse or "—" }} · BSE {{ issuer.bse_code or "—" }} · ISIN {{ issuer.isin or "—" }}
+  </p>
+  <p class="muted">
+    Verification: <span class="dq-badge dq-checked">{{ issuer.verification_status }}</span>
+    verified via {{ issuer.verified_source or "n/a" }}
+  </p>
+  <p class="muted">{{ currency_note }}</p>
+  <p class="india-disclaimer">{{ india_disclaimer }} {{ research_disclaimer }}</p>
+</section>
+
+<section class="quarter-picker scope-picker">
+  <span class="muted">Scope:</span>
+  {% for value, label in scope_options %}
+  <a class="chip {{ 'chip-active' if value == scope }}"
+     href="/in/{{ issuer.issuer_id }}?scope={{ value }}"
+     hx-get="/in/{{ issuer.issuer_id }}?scope={{ value }}"
+     hx-target="#india-panels" hx-swap="outerHTML" hx-push-url="true">{{ label }}</a>
+  {% endfor %}
+</section>
+
+{% include "partials/india_panels.html" %}
+{% endblock %}

@@ -215,3 +215,50 @@ pre.filing-text, .evidence-text pre {
 .notes-list { font-size: 0.85rem; color: var(--muted); }
 
 .signal-table .signal-table th { width: auto; }
+
+/* India pages (IND-5) -------------------------------------------------------
+   New india-* classes only; no existing rule above is modified. */
+
+.missing-status {
+  color: var(--warn);
+  font-style: italic;
+  font-size: 0.78rem;
+  word-break: break-word;
+}
+
+.dq-badge {
+  display: inline-block;
+  border-radius: 10px;
+  padding: 0.05rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.dq-checked { background: var(--accent-soft); color: var(--accent); }
+.dq-review { background: var(--warn-bg); color: var(--warn); }
+.dq-none { background: var(--bg-soft); color: var(--muted); }
+
+.prov-line { font-size: 0.75rem; margin-top: 0.15rem; }
+.prov-links { font-size: 0.78rem; margin-top: 0.15rem; }
+.dq-line { margin-top: 0.2rem; }
+.full-rupees { font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+
+.metric-notes { margin-top: 0.2rem; }
+.metric-notes summary { cursor: pointer; font-size: 0.75rem; color: var(--muted); }
+.metric-notes li { font-size: 0.72rem; color: var(--muted); }
+
+.period-strip { list-style: none; padding-left: 0; }
+.period-strip li { margin: 0.35rem 0; }
+.source-label { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+
+.india-disclaimer {
+  border-left: 3px solid var(--warn);
+  background: var(--warn-bg);
+  color: var(--warn);
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.no-score-note { font-weight: 600; border-top: 1px solid var(--border); padding-top: 0.5rem; }
+.derivations { font-size: 0.85rem; }

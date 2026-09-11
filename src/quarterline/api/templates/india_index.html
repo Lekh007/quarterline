@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}India watchlist — Quarterline{% endblock %}
+{% block content %}
+<h1>India watchlist</h1>
+<p class="india-disclaimer">{{ india_disclaimer }}</p>
+<p class="muted">
+  The 10 tracked India issuers ({{ verified_count }} verified). Identifier
+  verification against NSE, BSE and company IR sources gates everything
+  downstream: only verified issuers have indicator pages, and only issuers with
+  ingested documents show facts. {{ research_disclaimer }}
+</p>
+<table class="data-table" id="india-issuers">
+  <thead>
+    <tr>
+      <th>Issuer</th>
+      <th>Company</th>
+      <th>Sector</th>
+      <th>Identifiers</th>
+      <th>Verification</th>
+      <th>Indicators</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr data-issuer-id="{{ row.issuer_id }}">
+      <td><code>{{ row.issuer_id }}</code></td>
+      <td>{{ row.name or "—" }}</td>
+      <td>{{ row.sector or "—" }}</td>
+      <td>{{ row.ids_text }}</td>
+      <td>
+        {% if row.verified %}
+        <span class="dq-badge dq-checked">verified</span>
+        {% else %}
+        <span class="dq-badge dq-review">{{ row.status_text }}</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if row.verified %}
+        <a href="{{ row.page_url }}">Open indicators</a>
+        {% else %}
+        <span class="muted">no page — identifiers not yet verified</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="table-note muted">{{ coverage_caveat }}</p>
+<p class="table-note muted">{{ india_disclaimer }}</p>
+{% endblock %}
