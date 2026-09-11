@@ -4,6 +4,8 @@ Status: IND-2 parsing-feasibility milestone; IND-3 (2026-09-11) financial-correc
 hardening per the reviewer corrections (claim audit:
 `docs/india_source_audit.md` §10; review packet: `docs/india_reconciliation_review.md`);
 IND-4 (2026-09-09) canonical facts, lineage, and versioned metrics.
+IND-6 (2026-09-11) extends every rule to the full 10-issuer corpus ( Millions
+display handling, real revision cases, ingested prior-year comparatives).
 This document encodes the normalization rules that the India pipeline
 (`src/quarterline/sources/india/`) implements and that later derivation/scoring
 waves MUST keep. Every rule here is traceable to observed evidence in
@@ -11,29 +13,38 @@ waves MUST keep. Every rule here is traceable to observed evidence in
 (`tests/fixtures/india/`). Nothing on this page is inferred from column labels,
 press commentary, or aggregator sites.
 
-## 1. Units and precision rules (lakh / crore, EPS exemption)
+## 1. Units and precision rules (lakh / crore / million, EPS exemption)
 
 - All SEBI `in-capmkt` fact values are **full rupees**. The instance's
-  `LevelOfRounding="Crores"` trait describes the *presentation* scale of the
+  `LevelOfRounding` trait describes the *presentation* scale of the
   human-readable rendering only; `339860000000` IS ₹33,986 Cr. The parser stores
   the value exactly as filed (`units.normalize_amount` is a passthrough) and
   carries the trait in `context_metadata_json.rounding_trait`. The trait is
   NEVER applied as a multiplier — not once, not twice.
-- **`decimals="-7"` is PRECISION, not scale**: it declares the source's own
-  rounding (values are exact to ₹1,00,00,000). Displayed crore figures must
-  reconcile EXACTLY with that precision (`482110000000` → ₹48,211 Cr, integer
-  crores). Stored facts are never changed to match a rounded display.
+- **The trait varies BY ISSUER (IND-6 corpus finding):** MARUTI and SUNPHARMA
+  declare `LevelOfRounding="Millions"`; the other eight declare `"Crores"` —
+  consistently across both periods. Nothing about the storage contract changes
+  (values are full rupees either way, e.g. MARUTI Q1 revenue `524698000000` =
+  ₹5,24,698 million = ₹52,469.8 Cr); only the DISPLAY unit mirrors the source
+  (`units.format_millions` renders `₹5,24,698 Mn` for the Millions instances,
+  mirroring their own "Rs in million" PDFs). A fixture test proves a
+  Millions-instance rupee value round-trips unscaled and displays in millions.
+- **`decimals` varies (−5/−6/−7) and is PRECISION, not scale**: it declares the
+  source's own rounding; displayed figures must reconcile EXACTLY with that
+  precision (₹48,211 Cr at `decimals="-7"`; ITC's `295233000000` renders as
+  ₹29,523.30 Cr at `decimals="-6"`). Stored facts are never changed to match a
+  rounded display. Per-share facts stay `decimals="INF"`.
 - Standard Indian units: `LAKH = 100,000`, `CRORE = 10,000,000`
   (`units.py`). Display strings are parsed only with an explicit scale
   (`"₹1,234 Cr"`) or an explicitly declared scale (from a detected
   `"Rs in Crores"` header). A display string with neither raises
   `AmbiguousScaleError` — ambiguity surfaces, never guesses.
-- **EPS and per-share values NEVER inherit a lakh/crore multiplier.** Concepts
-  `eps_basic` / `eps_diluted` carry the `per_share` flag in the concept map;
+- **EPS and per-share values NEVER inherit a lakh/crore/million multiplier.**
+  Concepts `eps_basic` / `eps_diluted` carry the `per_share` flag in the concept map;
   facts in per-share units (declared unit `INRPerShare`, logical `INR/shares`,
   `decimals="INF"`) are stored with `unit="INR/share"` and the raw per-share
-  value (`19.19` stays `19.19`). A "₹ in Crores" header on the same page as
-  EPS does not scale EPS.
+  value (`19.19` stays `19.19`). A "₹ in Crores" (or "in Million") header on the
+  same page as EPS does not scale EPS.
 - **Unit semantics are verified, not assumed (IND-3).** A mapped fact whose
   declared unit is not `INR` (money concepts) or `INR/shares` (per-share
   concepts) is skipped and counted as `skipped_unknown_unit` — share counts,
@@ -115,10 +126,14 @@ extraction to annual documents. The corrected policy:
   CF", the correct statement is "quarterly CF **not present in the ingested
   sources**" — a statement about our corpus, not about the company. Absence is
   never rendered as 0 and never raised as an error.
-- Verified availability in the acquired corpus: INFY — annual CFO/capex
-  (Q4 exchange instance) AND quarterly CFO (IR condensed-FS PDF p.6);
-  HUL — annual CFO/capex only (Q4 exchange instance); HUL Q1 has no CF in any
-  ingested source.
+- Verified availability in the acquired corpus (IND-6: all ten issuers):
+  annual CFO (and capex where reported) from every Q4 exchange instance; and a
+  REPORTED quarterly CFO only where a company-IR condensed statement carries
+  one — INFY (₹9,330 Cr, Q1 FY27, ingested) and TCS (₹12,171 Cr vs ₹11,919 Cr
+  PY, documented, ingestion left to IND-7). No other issuer's ingested Q1
+  documents contain any cash-flow statement; HUL/MARUTI/ULTRACEMCO/ITC/
+  HCLTECH/ASIANPAINT/SUNPHARMA/LT Q1 quarterly CF is
+  `not_present_in_ingested_sources`.
 - HUL's FY2025-26 includes discontinued operations (ice-cream demerger): the
   annual `ProfitLossForPeriod` (₹15,059 Cr) and
   `ProfitLossForPeriodFromContinuingOperations` (₹10,667 Cr) differ materially
@@ -130,18 +145,40 @@ extraction to annual documents. The corrected policy:
 - The revision status (`Original` / `Revised` + `revised_Date` +
   `revision_Remark`) lives in the exchange listing metadata, not in the XBRL
   instance. It is carried (`FilingMeta`, `.filing.json` sidecar) — never
-  inferred from document content. No revised submission existed in the acquired
-  filings; revised handling is designed-for and covered by clearly-synthetic
-  tests only.
+  inferred from document content. The NSE listing's own synonym (`type_Sub =
+  "Revision"`) is normalized to the package's `Revised` at the import boundary
+  (`revisions.normalize_revision_status`); unrecognized values stay verbatim
+  (unknown stays unknown).
+- **Real revision cases now exist (IND-6)** — the IND-2/IND-3 "designed-for
+  unknown" is verified against actual documents:
+  - **Asian Paints Q4 FY26 consolidated**: Original seq 163991 (29-May-2026,
+    taxonomy V2.0) superseded by Revision seq 174871 (15-Jul-2026, V2.1). Both
+    documents parsed: `classify_filing_pair` → `revised_filing` on the real
+    hashes; mapped concept/label sets identical across the taxonomy versions
+    (no match forced); the only value delta is the unmapped
+    `ReserveExcludingRevaluationReserves` (0 → ₹21,275.67 Cr) the remark names;
+    audit-declaration changed per the remark. **A revision pair can differ in
+    taxonomy version** — the version is per-instance metadata, never a
+    revision signal.
+  - **L&T Q4 FY26 standalone**: revised TWICE (155701 → 155858 → 156063) for a
+    paid-up-share-capital XBRL metadata error, "no impact on the financial
+    results"; the consolidated filing has NO revision. **Revisions are
+    scope-asymmetric and chain**: selection is per (issuer, period, scope) and
+    picks the latest revision. **A revision does not imply any financial fact
+    changed** — the cached latest revision's result lines are unaffected and
+    its capital fact is the corrected AMOUNT (₹275.13 Cr, not a share count).
 - **latest_available view:** the latest *publication* per (issuer, scope,
-  period-end) wins (`revisions.select_latest`).
+  period-end) wins (`revisions.select_latest`; for revision rows the
+  `revised_Date` timestamp is the publication).
 - **as_of view:** filings published after the as-of timestamp are excluded; the
   value in force at the timestamp is used (SPEC 10.4).
 - **Both originals and revisions are retained** in `fact_observations` — the
   same value re-reported hashes to the same observation (idempotent), a
   genuinely revised value hashes differently and is preserved alongside the
   original (SPEC 2.1.10). Selection happens at the normalized/derived layer,
-  never by deleting evidence.
+  never by deleting evidence. Import order note: when both versions of a pair
+  are available, the revision is imported first so identical re-reported values
+  retain the in-force filing's metadata.
 
 ## 6. No-EBITDA-conflation rule
 
@@ -233,22 +270,31 @@ Q4 quarter + annual share 31 March). Missing metrics are PERSISTED as
 
 | Metric | Formula (exact numerator / denominator) | Notes |
 |---|---|---|
-| `india_revenue_yoy` | revenue_from_operations(current quarter) / revenue_from_operations(matching prior-year quarter) − 1 | Ingested facts ONLY. Prior-year quarters are not ingested for either issuer, so the metric returns `status="missing"` with the explanation ("not present in ingested sources; available in the issuer's IR PDF comparative column — ingest it as an observation with pdf_text provenance"). Never a fabricated comparative. |
-| `india_revenue_qoq` | revenue_from_operations(current quarter) / revenue_from_operations(immediately preceding fiscal quarter) − 1 | Q4 FY26 → Q1 FY27 computes (INFY: 48,211/46,402 − 1). Missing when the prior quarter is not ingested; never annualized, interpolated, or annualized from incomplete coverage. |
+| `india_revenue_yoy` | revenue_from_operations(current quarter) / revenue_from_operations(matching prior-year quarter) − 1 | Ingested facts ONLY. Since IND-6 the prior-year quarter IS ingested for the seven issuers whose Q1 IR-PDF comparative column extracts deterministically (value-anchored `pdf_text` provenance: INFY, TCS, HCLTECH, ITC, ASIANPAINT, SUNPHARMA, LT), so the metric computes exactly for them; HUL (rendered-column interleaving), MARUTI (scan/OCR garble) and ULTRACEMCO (vector garble) return `status="missing"` with the explanation and the note naming what would enable it. Never a fabricated comparative. |
+| `india_revenue_qoq` | revenue_from_operations(current quarter) / revenue_from_operations(immediately preceding fiscal quarter) − 1 | Q4 FY26 → Q1 FY27 computes for every issuer with both quarters ingested (all ten; e.g. INFY: 48,211/46,402 − 1). Missing when the prior quarter is not ingested; never annualized, interpolated, or annualized from incomplete coverage. |
 | `india_pat_margin_owners` | profit_attributable_to_owners / revenue_from_operations | Labelled with both inputs. NEVER total_income; the group margin is the SEPARATE metric below. |
 | `india_pat_margin_group` | profit_after_tax / revenue_from_operations | Deliberately separate so owners' and group PAT margins are never conflated. |
 | `india_exceptional_impact_pbt` | impact = exceptional_items (= profit_before_tax − ProfitBeforeExceptionalItemsAndTax); share of PBT = impact / profit_before_tax | `value` = impact in INR; the share travels in notes. When the instance reports both variants the identity impact == PBT − PBIT is cross-checked (a failed identity is `invalid`, never forced). SIGN SEMANTICS PER ISSUER, preserved as reported and never normalized: INFY FY26 stores **−1,289 Cr** (an expense reducing PBT; the rendered Reg-33 P&L prints it as a positive 1,289 deducted from PBIT: 41,284 − 1,289 = 39,995); HUL Q4 FY26 stores **+247 Cr** (a demerger gain increasing PBT; HUL renders gains/losses with the same sign as stored). |
-| `india_eps_growth_yoy` | eps_diluted(current quarter) / eps_diluted(matching prior-year quarter) − 1 | Same ingested-facts rule as revenue YoY, applied consistently to BOTH issuers (no computing one issuer's YoY while silently reporting the other's as equivalent without its missing status). |
+| `india_eps_growth_yoy` | eps_diluted(current quarter) / eps_diluted(matching prior-year quarter) − 1 | Same ingested-facts rule as revenue YoY, applied consistently to EVERY issuer: computed for the seven issuers with ingested prior-year comparatives; the SAME typed missing status elsewhere (no computing one issuer's YoY while silently reporting the other's as equivalent without its missing status). |
 
-**Design decision (comparatives)**: prior-year comparative columns in the
-issuers' rendered PDFs are NOT ingested as observations in this milestone
-(HUL's printed comparatives were never machine-reliable to extract — the
-scrambling finding; nothing under them is ingested). Consequently ALL YoY
-metrics return the typed missing status for both issuers, with the note naming
-exactly what would enable them (comparative observations with
-`extraction_method=pdf_text`, page provenance, and
-`agent_checked_against_document` review status). If a later wave ingests them,
-it must do so for both issuers under the same provenance standard.
+**Design decision (comparatives, as extended by IND-6)**: prior-year comparative
+columns in the issuers' rendered PDFs are NOT ingested as observations UNLESS
+the linear text extraction is deterministic AND value-anchored — every
+candidate row's current-quarter (and, where printed, preceding-quarter and
+annual) values must equal the committed XBRL facts exactly, which identifies
+the row and verifies the declared display scale before the prior-year value is
+read (`pdf_results.extract_prior_year_comparatives`; two or more agreeing
+windows required; any disagreement is `requires_manual_review`). Under that
+standard the Q1 FY2025-26 comparatives of INFY, TCS, HCLTECH, ITC,
+ASIANPAINT, SUNPHARMA and LT are ingested (concepts:
+`revenue_from_operations`, `profit_after_tax`, `eps_basic`, `eps_diluted`;
+extraction `pdf_text`, page reference, `agent_checked_against_document`, live
+drift guard at ingest). HUL's printed comparatives remain
+non-machine-reliable (the scrambling finding), MARUTI's statement is a
+scan with a garbled OCR layer, ULTRACEMCO's page extracts with vector
+artifacts — nothing under them is ingested and their YoY stays a typed missing
+status. If a later wave re-acquires readable documents for the excluded three,
+it must ingest them under the same provenance standard.
 
 **Denominator rules (US convention)**: zero denominator → `value=NULL`,
 `status="invalid"`, note; negative denominator (or negative growth prior) →
@@ -256,11 +302,13 @@ it must do so for both issuers under the same provenance standard.
 input fact → `status="missing"` with the concept named.
 
 **Cash-flow cells** are coverage entries, not derived metrics: canonical CF
-facts exist only at REPORTED frequencies — currently annual CFO/capex (FY26)
-for both issuers plus INFY's reported Q1 FY27 quarterly CFO (IR condensed-FS
-PDF p.6, extraction `pdf_text`, review `agent_checked_against_document`). HUL
-quarterly CF reports `not_present_in_ingested_sources`; H2 for either issuer
-reports `source_not_ingested` (H2 = annual − H1 requires an H1 CF observation;
+facts exist only at REPORTED frequencies — annual CFO/capex (FY2025-26) for
+ALL TEN issuers (from the Q4 exchange instances, IND-6 corpus) plus INFY's
+reported Q1 FY27 quarterly CFO (IR condensed-FS PDF p.6, extraction
+`pdf_text`, review `agent_checked_against_document`). Quarterly CF for the
+other nine reports `not_present_in_ingested_sources` (TCS's is documented in
+the source audit but not yet ingested); H2 for every issuer reports
+`source_not_ingested` (H2 = annual − H1 requires an H1 CF observation;
 nothing is ever divided).
 
 ### 8.3 Fact card and coverage (IND-5 contract)

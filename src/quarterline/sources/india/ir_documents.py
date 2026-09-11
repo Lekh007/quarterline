@@ -34,7 +34,7 @@ from quarterline.sources.india.periods import (
     fiscal_year,
     fiscal_year_label,
 )
-from quarterline.sources.india.revisions import FilingMeta
+from quarterline.sources.india.revisions import FilingMeta, normalize_revision_status
 from quarterline.sources.india.xbrl_parse import IndiaInstance, parse_instance
 from quarterline.store.db import session_scope
 from quarterline.store.models import SourceArtifact
@@ -217,7 +217,9 @@ def import_document(
         period_start=period_start_d,
         period_end=period_end_d,
         published_at=published_d,
-        revision_status=revision_status,
+        # listing vocabulary normalized here ("Revision" -> "Revised");
+        # unrecognized values are kept verbatim (unknown stays unknown)
+        revision_status=normalize_revision_status(revision_status),
         audited_status=audited_status,
         doc_type=doc_type,
         exchange=exchange,

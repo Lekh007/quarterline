@@ -40,6 +40,10 @@ tested endpoints were HTTPS throughout).
 
 All four identifiers for both companies agree across exchange and company sources. The remaining 8
 proposed watchlist companies are **unverified** (`proposed` rows in `data/watchlist_india.csv`).
+>
+> **SUPERSEDED (IND-6, 2026-09-11):** all eight remaining rows are now verified against NSE/BSE/
+> instance evidence (group A + B acquisition — §11 below); `data/watchlist_india.csv` carries 10
+> `verified` rows.
 
 ---
 
@@ -397,3 +401,111 @@ rewritten, per reviewer instruction.
 | 5 | **Fiscal-year labels:** "The source's own labels (Infosys' 'IFRS/Ind AS quarterly results, June 2026 quarter' style; instance qualifiers `ReportingQuarter='First quarter'`, `TypeOfReportingPeriod='Quarterly'`) are metadata. The application's `Q1 FY2026-27` is Quarterline's own presentation layer. Exact context start/end dates are the primary truth, and the application label is derived from those dates only." | Instance qualifier facts in all 4 fixtures; Reg-33 PDF column headers ("Quarter ended June 30, 2026"); context dates verified against every mapped fact (e.g. INFY Q1 revenue context 2026-04-01..2026-06-30). | All 4 fixtures + 2 Reg-33 PDFs. | **Verified**. | IND-2 docs carried no explicit application-vs-source label separation; now stated in methodology §3 and the period-label validation table (review packet §4). |
 | 6 | **Currency/scale interpretation:** "Fact values are exact full rupees; `decimals='-7'` is the source's rounding PRECISION; `LevelOfRounding='Crores'` is presentation metadata — never a multiplier. Displayed crore values reconcile exactly at the declared precision (482110000000 → ₹48,211 Cr)." | `decimals="-7"` on every money fact and `decimals="INF"` on per-share facts in all 4 fixtures; `units.normalize_amount` passthrough; display reconciliation asserted against real fixtures; rendered statements ("In ₹ crore" / "(Rs in Crores)") match value/10^7 exactly for every agent-checked reference. | All 4 fixtures; cross-checked displays on 5 rendered PDF pages. | **Verified**. | IND-2 stated the rule but had no test proving raw values are not multiplied twice, nor exact display reconciliation; added (tests `TestFixturePrecisionReconciliation`). |
 | 7 | **Revision-selection behavior:** "Revision status exists only in the exchange listing (carried, never inferred); latest-available selection keeps history; a revised filing must not replace facts of a different period/scope/unit/concept; a later filing's comparative value is NOT a revision; duplicate copies of a document are idempotent." | Listing fields `type_Sub`/`revised_Date`/`revision_Remark` (all acquired filings `Original`); observation hash includes scope+value so a revision is a new identity while re-reports are idempotent; `revisions.classify_filing_pair` (IND-3) distinguishes duplicate_copy / original / revised / later_comparative; `select_latest` rejects mixed periods. | Selection logic synthetic-tested (no real revised submission was ever present to acquire — designed-for unknown). | **Partially verified** — logic verified; real-world revised filings untested. | IND-2 conflated "duplicate filing versions" with "revisions"; now four distinct categories with tests. |
+
+---
+
+# 11. IND-6a / IND-6b acquisition addenda (referenced; 2026-09-11)
+
+The remaining eight watchlist issuers were acquired by two group milestones whose
+full findings live in their own documents, referenced here as appendices (their
+per-file provenance is verbatim in `tests/fixtures/india/manifest_groupA.json`
+and `manifest_groupB.json`, merged verbatim into `manifest.json`):
+
+- **Group A (IND-6a): TCS, HCLTECH, ITC, ASIANPAINT** —
+  `docs/india_source_audit_addendum_groupA.md`. Key findings: identifier
+  verification for all four (NSE quote page + BSE stock-page BODY + inside the
+  instances); the **BSE title-echo trap** (a wrong scrip code in the URL still
+  echoes in the page `<title>` — body ISIN or the filing's `ScripCode` is the
+  evidence, never the title); the **first live revision** (Asian Paints Q4
+  consolidated, §12 below); taxonomy versions per filing generation; the
+  broadcast-date spread (April/May → July); cash-flow evidence per issuer.
+- **Group B (IND-6b): MARUTI, ULTRACEMCO, SUNPHARMA, LT** —
+  `docs/india_source_audit_addendum_groupB.md`. Key findings: identifiers for
+  all four (body-ISIN discipline applied); **LevelOfRounding varies by issuer**
+  (MARUTI/SUNPHARMA Millions; see §12); the **second revision case** (L&T
+  standalone, chained and scope-asymmetric, §12); MARUTI is a **single-segment**
+  issuer (no `Segment*` dimensional facts — parsers must tolerate
+  segment-less instances); retry discipline (every file from a dead earlier
+  session re-fetched and byte-verified or removed); IR-site structural variance
+  (JS-dropdown DAM, hidden server-rendered link lists, separate IR subdomain
+  with JS-onclick downloads, plain WordPress uploads).
+
+With both groups, all 10 watchlist rows are identifier-verified and
+document-proven (`data/watchlist_india.csv` now carries 10 `verified` rows).
+
+# 12. IND-6c corpus-wide findings (2026-09-11)
+
+Observed across the full 20-instance consolidated corpus (10 issuers × 2
+periods) during merge + ingestion:
+
+1. **`LevelOfRounding` varies BY ISSUER, not by period.** MARUTI and SUNPHARMA
+   declare `Millions` (both periods); the other eight declare `Crores`. Values
+   are full rupees in ALL instances (MARUTI Q1 revenue `524698000000` =
+   ₹5,24,698 million = ₹52,469.8 Cr). The trait remains presentation metadata —
+   never a multiplier; `units.format_millions` mirrors the source's display
+   unit while storage stays exact rupees.
+2. **`decimals` varies (−5/−6/−7).** Precision, not scale: ITC/ASIANPAINT/LT/
+   ULTRACEMCO/SUNPHARMA/MARUTI use −5 or −6 where INFY/HUL/TCS/HCLTECH mostly
+   use −7. Per-share facts stay `decimals="INF"`.
+3. **Taxonomy version tracks the filing generation, not the revision event.**
+   All July-filed Q1 FY27 instances carry `IFIndAs V2.1 (26-06-2026)`; all
+   April/May-filed Q4+FY26 originals carry `V2.0 (06-02-2026)`; Asian Paints'
+   Q4 REVISION (re-filed 15-Jul) carries V2.1 while its superseded original is
+   V2.0; L&T's standalone revisions (re-filed within days, 06/07-May) still
+   carry V2.0. The version is carried per instance and nothing assumes V2.1.
+4. **Revision cases (real, first in the corpus).**
+   - *Asian Paints Q4 consolidated*: Original seq 163991 (29-May, V2.0) →
+     Revision seq 174871 (15-Jul, V2.1), remark = re-filing with "Declaration
+     of Unmodified Opinion" + adding the missed reserves-excluding-revaluation
+     figure. Verified by parsing BOTH cached files: mapped tag sets identical
+     across the taxonomy versions (no concept/label differs — never forced);
+     the single value delta is the unmapped `ReserveExcludingRevaluationReserves`
+     0 → ₹21,275.67 Cr; the declaration qualifier changed as the remark states.
+     `broadcast_ist` is null on revision rows; `revised_Date` carries the
+     timestamp (the manifest records `revised_ist`).
+   - *L&T Q4 standalone*: revised TWICE (Original 155701 → 155858 → 156063) for
+     a paid-up-share-capital XBRL metadata error ("number of shares instead of
+     the corresponding amount… no impact on the financial results"); the
+     CONSOLIDATED filing has no revision — **revisions are scope-asymmetric**
+     and **chain**, so selection is per (issuer, period, scope) and must pick
+     the latest revision. Only the latest revision is cached (storage-only);
+     it parses Standalone and its capital fact is the corrected AMOUNT
+     (₹275.13 Cr). A revision does not imply any financial fact changed.
+   - Also documented (not acquired): HCLTech's standalone Q4 revision
+     (seq 152277, 23-Apr-2026) — consolidated had none.
+5. **Entity-identifier scheme variance.** 19 of 20 committed instances identify
+   the entity by BSE scrip code (`in-capmkt/ScripCode`); ULTRACEMCO's Q4
+   instance uses `in-capmkt/Symbol` with the NSE symbol instead. The parser
+   surfaces the scheme verbatim — identity joins must use the qualifier facts
+   (ISIN), never assume the scrip-code scheme.
+6. **Prior-year duration contexts: none, corpus-wide.** No Q1 FY27 instance
+   carries a Jun-2025 quarter context (and Q4 instances carry only the current
+   FY annual). The prior-year quarter is available only in rendered comparative
+   columns; IND-6 ingests it (value-anchored, `pdf_text` provenance) for the
+   seven issuers whose statements extract deterministically, and leaves typed
+   missing statuses for HUL (column interleaving), MARUTI (scan/OCR garble) and
+   ULTRACEMCO (vector-extraction garble).
+7. **Rendered-PDF extractability is per-issuer.** INFY/TCS condensed statements
+   and the HCLTECH/ITC/ASIANPAINT/SUNPHARMA/LT Reg-33 statements anchor
+   deterministically; MARUTI's results PDF is a scan whose OCR layer garbles
+   digits; ULTRACEMCO's Reg-33 page extracts with vector artifacts. pypdf also
+   inserts stray spaces inside numbers on layout-complex pages ("10,541 .94"),
+   which the anchored extractor normalizes before tokenizing (the anchor match
+   still verifies every value). No value is ever read from a page that fails
+   its anchors.
+8. **Basis difference found (ITC PBT).** ITC's rendered "Profit before tax"
+   line (₹5,860.85 Cr) INCLUDES the ₹85.91 Cr share of associates/JV while the
+   XBRL `ProfitBeforeTax` (₹5,774.94 Cr) EXCLUDES it; both identities reconcile
+   exactly (5,369.06 PBIT + 405.88 exceptional = 5,774.94; + 85.91 = 5,860.85).
+   Recorded as `scope_or_basis_difference_recorded`, never coerced.
+9. **Broadcast-date spread (Apr → Jul), corpus-wide.** March-quarter
+   consolidated filings: 09-Apr (TCS), 21-Apr (HCLTech), 23-Apr (Infosys),
+   27-Apr (UltraTech), 28-Apr (Maruti), 30-Apr (HUL), 05-May (L&T), 21-May
+   (ITC), 22-May (Sun Pharma), 29-May (Asian Paints original). June-quarter:
+   09-Jul → 31-Jul. Filing-driven discovery (not calendar windows) remains
+   mandatory.
+10. **Cash-flow pattern holds corpus-wide.** Zero cash-flow facts in all ten Q1
+    consolidated instances; full-year CFO in all ten Q4 instances. Quarterly CF
+    exists only in company-IR condensed statements (INFY ingested; TCS
+    documented — ₹12,171 Cr Q1 FY27 — available for IND-7 under the same
+    provenance standard).

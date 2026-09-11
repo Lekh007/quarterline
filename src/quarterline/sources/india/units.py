@@ -145,8 +145,23 @@ def parse_display_amount(
 
 def format_crores(value: Decimal) -> str:
     """Render full rupees in the Indian presentation scale: 339860000000 -> "₹33,986 Cr"."""
-    crores = value / CRORE
-    rounded = crores.quantize(Decimal(1))
+    return _format_indian_grouped(value / CRORE, "Cr")
+
+
+def format_millions(value: Decimal) -> str:
+    """Render full rupees in millions: 524698000000 -> "₹5,24,698 Mn".
+
+    Used for the MARUTI/SUNPHARMA instances whose ``LevelOfRounding`` trait is
+    ``Millions`` — the DISPLAY scale mirrors the source's own presentation unit
+    (their Reg-33 PDFs say "Rs in million"); the STORED value is still exact
+    full rupees and is never rescaled.
+    """
+    return _format_indian_grouped(value / ROUNDING_TRAIT_SCALES["millions"], "Mn")
+
+
+def _format_indian_grouped(amount: Decimal, suffix: str) -> str:
+    """Quantize to an integer, group Indian style, prefix sign and add suffix."""
+    rounded = amount.quantize(Decimal(1))
     # Indian digit grouping (last 3, then pairs): 178650 -> 1,78,650.
     sign = "-" if rounded < 0 else ""
     digits = str(abs(rounded))
@@ -159,4 +174,4 @@ def format_crores(value: Decimal) -> str:
         if head:
             groups.insert(0, head)
         digits = ",".join(groups + [tail])
-    return f"{sign}₹{digits} Cr"
+    return f"{sign}₹{digits} {suffix}"

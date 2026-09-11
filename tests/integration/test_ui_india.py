@@ -1,13 +1,14 @@
-"""India UI (IND-5): /in landing, /in/{issuer_id} indicator pages, coverage JSON.
+"""India UI (IND-5; IND-6 corpus): /in landing, /in/{issuer_id} pages, coverage.
 
-Honest-display contract: 10 registry rows with per-issuer verification status
-(only verified issuers link onward), period identities with source labels,
-both PAT variants co-labeled, ₹-crore display WITH the exact full-rupee
-amount, formula captions on metrics, YoY rendered as typed missing-status
-text (never a fabricated comparative, never a zero), cash flow only at
-reported frequencies (never divided), HUL review-pending cells flagged and
-linked to the review packet, and the fixed no-score note. No route imports or
-calls any LLM code; everything runs offline with Ollama unreachable.
+Honest-display contract: 10 registry rows, ALL verified since IND-6 (group A+B
+identifier evidence), each linking onward; period identities with source labels;
+both PAT variants co-labeled; ₹-crore display WITH the exact full-rupee amount;
+formula captions on metrics; YoY rendered from the ingested prior-year
+comparatives where they exist and as typed missing-status text where they do
+not (never a fabricated comparative, never a zero); cash flow only at reported
+frequencies (never divided); HUL review-pending cells flagged and linked to the
+review packet; and the fixed no-score note. No route imports or calls any LLM
+code; everything runs offline with Ollama unreachable.
 """
 
 from __future__ import annotations
@@ -38,7 +39,7 @@ REVIEW_PACKET_HREF = 'href="/in/review-packet"'
 
 @pytest.fixture
 def client(tmp_path, monkeypatch) -> TestClient:
-    """Dev-style store: the 4 committed India fixtures + the IND-4 pipeline."""
+    """Dev-style store: all 20 committed India fixtures + the full pipeline."""
     storage = tmp_path / "storage"
     monkeypatch.setenv("STORAGE_DIR", str(storage))
     monkeypatch.setenv("DATABASE_URL", f"sqlite:///{(tmp_path / 'app.db').as_posix()}")
@@ -66,19 +67,26 @@ def test_landing_lists_all_10_issuers_with_verification_statuses(client) -> None
     html = response.text
     issuer_ids = re.findall(r'data-issuer-id="(IN-[A-Z]+)"', html)
     assert len(issuer_ids) == 10, "the whole India watchlist renders"
-    assert "IN-INFY" in issuer_ids and "IN-HINDUNILVR" in issuer_ids
+    assert set(issuer_ids) == {
+        "IN-INFY",
+        "IN-HINDUNILVR",
+        "IN-TCS",
+        "IN-HCLTECH",
+        "IN-ITC",
+        "IN-ASIANPAINT",
+        "IN-MARUTI",
+        "IN-ULTRACEMCO",
+        "IN-SUNPHARMA",
+        "IN-LT",
+    }
 
-    # only the two verified issuers link onward
+    # IND-6: every issuer's identifiers are verified against NSE/BSE/instance
+    # evidence (group A + B acquisition), so ALL TEN link onward
     for issuer_id in issuer_ids:
-        linked = f'href="/in/{issuer_id}"' in html
-        if issuer_id in {"IN-INFY", "IN-HINDUNILVR"}:
-            assert linked, f"{issuer_id} is verified and must link onward"
-        else:
-            assert not linked, f"proposed {issuer_id} must NOT link to a page"
+        assert f'href="/in/{issuer_id}"' in html, f"{issuer_id} is verified and must link onward"
 
-    # proposed rows say so explicitly (8 of them)
-    assert html.count("proposed — identifiers not yet verified") == 8
-    assert html.count(">verified<") == 2
+    assert html.count(">verified<") == 10
+    assert "proposed — identifiers not yet verified" not in html
     assert INDIA_DISCLAIMER in html
     assert DISCLAIMER in html
     assert "Coverage caveat" in html
@@ -88,7 +96,6 @@ def test_landing_is_reachable_when_registry_has_only_proposed_rows(client) -> No
     """(Regression guard) the caveat text renders for verified issuers too."""
     html = client.get("/in").text
     assert "Open indicators" in html
-    assert "no page — identifiers not yet verified" in html
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +138,7 @@ def test_infy_page_pat_variants_distinct_and_scale_presentation(client) -> None:
     assert html.count("/share") >= 2
 
 
-def test_infy_page_metrics_captions_qoq_and_missing_yoy(client) -> None:
+def test_infy_page_metrics_captions_qoq_and_computed_yoy(client) -> None:
     response = client.get("/in/IN-INFY")
     assert response.status_code == 200
     text = unescaped(response.text)
@@ -146,11 +153,29 @@ def test_infy_page_metrics_captions_qoq_and_missing_yoy(client) -> None:
     expected = f"{(qoq * 100).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):,.2f}%"
     assert expected in text  # "3.90%"
 
-    # YoY: typed missing status as text — never a number, never a zero
-    assert "not present in ingested sources" in text
+    # IND-6: YoY now computes from the ingested IR-PDF comparative
+    # (48,211 / 42,279 - 1, pdf_text provenance) and renders as a percentage
+    yoy = Decimal(482110000000) / Decimal(422790000000) - 1
+    expected_yoy = f"{(yoy * 100).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):,.2f}%"
     yoy_row = re.search(r'<tr data-metric="india_revenue_yoy">.*?</tr>', text, re.DOTALL).group(0)
-    assert "Not available:" in yoy_row
-    assert not re.search(r">\s*[-+]?\d[\d,.]*%", yoy_row)
+    assert expected_yoy in yoy_row
+
+
+def test_tcs_page_renders_new_corpus_issuer(client) -> None:
+    """IND-6: the eight newly verified issuers are first-class — a TCS spot
+    check on the exact ingested headline values and the computed YoY."""
+    text = unescaped(client.get("/in/IN-TCS").text)
+
+    assert "Tata Consultancy Services Limited" in text
+    assert "₹72,275 Cr" in text  # Q1 FY27 revenue
+    assert "₹63,437 Cr" in text  # the ingested prior-year comparative
+    yoy = Decimal(722750000000) / Decimal(634370000000) - 1
+    expected = f"{(yoy * 100).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):,.2f}%"
+    assert expected in text  # "13.93%"
+    assert "₹52,094 Cr" in text  # annual CFO from the Q4 instance
+    # TCS's Q1 PDF carries a quarterly CFO but it is NOT ingested in this
+    # corpus (only its availability is documented) — no fabricated row
+    assert "12,171" not in text
 
 
 def test_infy_page_cashflow_reported_frequencies_only(client) -> None:
@@ -259,18 +284,8 @@ def test_htmx_scope_toggle_receives_panels_partial_only(client) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 404s: proposed and unknown issuers never get pages
+# 404s: unknown issuers never get pages (all registry rows are verified now)
 # ---------------------------------------------------------------------------
-
-
-def test_proposed_issuer_404_not_verified(client) -> None:
-    response = client.get("/in/IN-TCS")
-
-    assert response.status_code == 404
-    text = response.text
-    assert "proposed" in text and "not yet verified" in text
-    assert "no India indicators page exists" in text
-    assert DISCLAIMER in text  # error page keeps the research-only footer
 
 
 def test_unknown_issuer_404(client) -> None:
@@ -315,8 +330,7 @@ def test_coverage_json_matches_coverage_report(client) -> None:
     assert "not_present_in_ingested_sources" in missing
 
 
-def test_coverage_json_404_for_proposed_and_unknown_and_standalone(client) -> None:
-    assert client.get("/in/IN-TCS/coverage").status_code == 404
+def test_coverage_json_404_for_unknown_and_standalone(client) -> None:
     assert client.get("/in/IN-NOPE/coverage").status_code == 404
     standalone = client.get("/in/IN-INFY/coverage?scope=standalone")
     assert standalone.status_code == 404
@@ -335,7 +349,8 @@ def test_coverage_json_404_for_proposed_and_unknown_and_standalone(client) -> No
         ("/in/IN-INFY", 200),
         ("/in/IN-HINDUNILVR", 200),
         ("/in/IN-HINDUNILVR?scope=standalone", 200),
-        ("/in/IN-TCS", 404),
+        ("/in/IN-TCS", 200),
+        ("/in/IN-MARUTI", 200),
         ("/in/IN-NOPE", 404),
     ],
 )

@@ -1,0 +1,250 @@
+{
+  "manifest_version": "1",
+  "created": "2026-09-11",
+  "wave": "IND-6b (India acquisition - group B: Maruti Suzuki, UltraTech Cement, Sun Pharmaceutical, Larsen & Toubro)",
+  "policy": "All files listed are real, unmodified documents exactly as served by the cited official source (exchange archive or company IR site). Nothing was invented, rounded, or synthesized. No anti-bot protection was bypassed: files were fetched through a normal interactive browser session (no captchas solved, no credentials, no cookie forging, no aggregator scraping; SPEC 2.4.6). Every file listed was (re)fetched by this milestone through the browser on 2026-09-11 and verified byte-exact by sha256 after transfer. Files found already in storage from an earlier same-day session (a prior attempt of this milestone that died before documenting) were re-fetched and confirmed byte-identical before being accepted - nothing is claimed on the earlier session's word. Two unverified artifacts left by the earlier session (a rendered-HTML UltraTech press release and a BSE results-summary JSON) could NOT be byte-verified and were removed rather than accepted; see storage_cache_only notes and the addendum.",
+  "fetch_session": {
+    "fetch_date": "2026-09-11",
+    "fetch_methods_used": {
+      "browser": "real Chromium session (Playwright); same-origin page-context fetch inside the served document/origin, base64 transfer, sha256 verified after decode. NSE integrated-filing JSON API called from the www.nseindia.com page's own session."
+    },
+    "rate_limiting": "single-shot low-volume fetches spaced >= 4 s apart per host; no throttling responses or rate-limit headers encountered. One navigation to www.bseindia.com timed out at the tool's 30 s limit; the page completed loading in the background ~6 s later and verification proceeded normally (no retry storm). One same-origin fetch was attempted from the wrong origin (investors.larsentoubro.com -> nsearchives.nseindia.com) and failed with a fetch error per CORS; re-navigating to nsearchives first resolved it.",
+    "taxonomy_note": "Per-instance taxonomy versions observed: all four Q1 FY27 consolidated instances (filed Jul 2026) carry 'IFIndAs V2.1 (26-06-2026)'; all four April/May-filed Q4+FY26 consolidated originals carry 'IFIndAs V2.0 (06-02-2026)' - including L&T's Q4 consolidated Original filed 05-May-2026. The two L&T Q4 STANDALONE revisions (07-May/06-May-2026) still carry V2.0. No consolidated revision exists in this group. Namespace http://www.sebi.gov.in/xbrl/2026-01-31/in-capmkt, schemaRef in-capmkt-ent-2026-01-31.xsd (relative; schema not bundled). Issuer-level LevelOfRounding variance found: MARUTI and SUNPHARMA instances declare 'Millions', ULTRACEMCO and LT declare 'Crores' (presentation metadata only; values are full rupees in all eight instances)."
+  },
+  "issuers": {
+    "IN-MARUTI": {
+      "name": "Maruti Suzuki India Limited",
+      "isin": "INE585B01010",
+      "nse_symbol": "MARUTI",
+      "bse_code": "532500",
+      "identifier_verification": "NSE quote page heading 'Maruti Suzuki India Limited (INE585B01010)', series EQ (https://www.nseindia.com/get-quote/equity/MARUTI/Maruti-Suzuki-India-Limited); BSE stock page body 'Maruti Suzuki India Ltd ... (INE585B01010)' at code 532500 (https://www.bseindia.com/stock-share-price/maruti-suzuki-india-ltd/maruti/532500/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE585B01010, in-capmkt:Symbol=MARUTI, in-capmkt:ScripCode=532500, NameOfTheCompany='MARUTI SUZUKI INDIA LIMITED')"
+    },
+    "IN-ULTRACEMCO": {
+      "name": "UltraTech Cement Limited",
+      "isin": "INE481G01011",
+      "nse_symbol": "ULTRACEMCO",
+      "bse_code": "532538",
+      "identifier_verification": "NSE quote page heading 'UltraTech Cement Limited (INE481G01011)' (https://www.nseindia.com/get-quote/equity/ULTRACEMCO/UltraTech-Cement-Limited); BSE stock page header '(ULTRACEMCO | 532538 | INE481G01011)' in the page body (https://www.bseindia.com/stock-share-price/ultratech-cement-ltd/ultracemco/532538/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE481G01011, in-capmkt:Symbol=ULTRACEMCO, in-capmkt:ScripCode=532538)"
+    },
+    "IN-SUNPHARMA": {
+      "name": "Sun Pharmaceutical Industries Limited",
+      "isin": "INE044A01036",
+      "nse_symbol": "SUNPHARMA",
+      "bse_code": "524715",
+      "identifier_verification": "NSE quote page heading 'Sun Pharmaceutical Industries Limited (INE044A01036)' (https://www.nseindia.com/get-quote/equity/SUNPHARMA/Sun-Pharmaceutical-Industries-Limited); BSE stock page header '(SUNPHARMA | 524715 | INE044A01036)' in the page body (https://www.bseindia.com/stock-share-price/sun-pharma/sunpharma/524715/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE044A01036, in-capmkt:Symbol=SUNPHARMA, in-capmkt:ScripCode=524715)"
+    },
+    "IN-LT": {
+      "name": "Larsen & Toubro Limited",
+      "isin": "INE018A01030",
+      "nse_symbol": "LT",
+      "bse_code": "500510",
+      "identifier_verification": "NSE quote page heading 'Larsen & Toubro Limited (INE018A01030)' (https://www.nseindia.com/get-quote/equity/LT/Larsen-%26-Toubro-Limited); BSE stock page header '(LT | 500510 | INE018A01030)' in the page body (https://www.bseindia.com/stock-share-price/larsen-toubro-ltd/lt/500510/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE018A01030, in-capmkt:Symbol=LT, in-capmkt:ScripCode=500510). L&T's IR site is a separate subdomain, investors.larsentoubro.com (the main www.larsentoubro.com /corporate/investors paths return 404)."
+    }
+  },
+  "periods": {
+    "q1_fy2026-27": {
+      "label": "Q1 FY2026-27",
+      "period_start": "2026-04-01",
+      "period_end": "2026-06-30",
+      "note": "Quarter ended 30 June 2026; consolidated results broadcast 20-Jul (UltraTech), 28-Jul (L&T), 31-Jul (Maruti and Sun Pharma) 2026"
+    },
+    "q4_fy2025-26": {
+      "label": "Q4 FY2025-26 + FY full year",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "year_start": "2025-04-01",
+      "year_end": "2026-03-31",
+      "note": "Quarter AND year ended 31 March 2026 filed together; consolidated results broadcast 27-Apr (UltraTech), 28-Apr (Maruti), 05-May (L&T), 22-May (Sun Pharma) 2026"
+    }
+  },
+  "cash_flow_evidence": {
+    "IN-MARUTI": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance; WhetherCashFlowStatementIsApplicableOnCompany absent",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 190999000000, context 2025-04-01..2026-03-31, decimals=-6 (Rs 19,099.9 Cr; instance declares LevelOfRounding=Millions so the display unit is Rs million: 190,999), TypeOfCashFlowStatement='Cash Flow Indirect'",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - the Reg-33 results PDF (standalone + consolidated, quarter ended June 30, 2026) contains no cash-flow statement (zero 'cash' text mentions)",
+      "prior_year_comparative_in_q1_pdf": "YES - every statement carries a 'Quarter ended June 30, 2025' (Unaudited) column alongside June 30, 2026 (Unaudited) and March 31, 2026 (Audited); values in Rs million"
+    },
+    "IN-ULTRACEMCO": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance; WhetherCashFlowStatementIsApplicableOnCompany absent",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 153158600000, context 2025-04-01..2026-03-31, decimals=-5 (Rs 15,315.86 Cr), TypeOfCashFlowStatement='Cash Flow Indirect'",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - the IR results PDF is the joint auditors' Limited Review Report on the Unaudited Consolidated Financial Results (Reg 33 + Reg 52(4)) plus the statement itself; no cash-flow statement (zero 'cash' text mentions in extractable text)",
+      "prior_year_comparative_in_q1_pdf": "YES - statement columns: 30/06/2026 (Unaudited), 31/03/2026 (Audited), 30/06/2025 (Unaudited comparative), and Year Ended 31/03/2026 (Audited); in Crores"
+    },
+    "IN-SUNPHARMA": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance; WhetherCashFlowStatementIsApplicableOnCompany absent",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 124191800000, context 2025-04-01..2026-03-31, decimals=-5 (Rs 12,419.18 Cr; instance declares LevelOfRounding=Millions), TypeOfCashFlowStatement='Cash Flow Indirect'",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - 'Statement of Unaudited Consolidated Financial Results for the Quarter ended June 30, 2026' (P&L + OCI + EPS + segment pages) contains no cash-flow statement (zero cash-flow text mentions)",
+      "prior_year_comparative_in_q1_pdf": "YES - columns: 30.06.2026 (Unaudited), 31.03.2026 (Audited), 30.06.2025 (Unaudited comparative), Year ended 31.03.2026 (Audited); '( in Million)'"
+    },
+    "IN-LT": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance; WhetherCashFlowStatementIsApplicableOnCompany absent",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 167409700000, context 2025-04-01..2026-03-31, decimals=-5 (Rs 16,740.97 Cr), TypeOfCashFlowStatement='Cash Flow Indirect'",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - 'Statement of Unaudited Consolidated Financial Results for the Quarter Ended June 30, 2026' (P&L + OCI + EPS) contains no cash-flow statement (zero cash-flow text mentions)",
+      "prior_year_comparative_in_q1_pdf": "YES - columns: June 30, 2026 [Reviewed], March 31, 2026 [Audited], June 30, 2025 [Reviewed comparative], Year ended March 31, 2026 [Audited]; in Rs Crore"
+    }
+  },
+  "committed_fixtures": [
+    {
+      "file": "MARUTI-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-MARUTI",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1706229_31072026062708_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "181271", "broadcast_ist": "2026-07-31 18:27:07", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "7fb5064437eeed84893a8cd813cf4406f101b177bd6ebea49a04c6ba46856893",
+      "size_bytes": 16554,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/maruti_suzuki/q1_fy2026-27/exchange_nse/MARUTI-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Unaudited). Reg-33 minimum set only (P&L, OCI, EPS, identifiers); NO cash-flow and NO balance-sheet facts. Maruti declares itself a SINGLE-SEGMENT issuer (DescriptionOfSingleSegment narrative fact; no Segment* dimensional facts). LevelOfRounding=Millions. Also carries 'DisclosureOfNotesOnFinancialResultsExplanatoryTextBlock' pointing readers to the PDF for notes due to the character limit."
+    },
+    {
+      "file": "MARUTI-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-MARUTI",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1660590_28042026074740_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "153810", "broadcast_ist": "2026-04-28 19:47:40", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "e3930de091a3efe1c1bd994d33c58dadae8cbfb8afcd4f637f83485b37eb7702",
+      "size_bytes": 65791,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/maruti_suzuki/q4_fy2025-26/exchange_nse/MARUTI-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026, Audited. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 190999000000 for 2025-04-01..2026-03-31, decimals=-6). LevelOfRounding=Millions."
+    },
+    {
+      "file": "ULTRACEMCO-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-ULTRACEMCO",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1697527_20072026075845_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "176208", "broadcast_ist": "2026-07-20 19:58:45", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "8b19da5c20e39179a33a1211ea5e07ee846868f80048df1000977fbe81e2e92c",
+      "size_bytes": 16083,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/ultratech_cement/q1_fy2026-27/exchange_nse/ULTRACEMCO-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Unaudited). Reg-33 minimum set only; no cash-flow or balance-sheet facts. LevelOfRounding=Crores."
+    },
+    {
+      "file": "ULTRACEMCO-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-ULTRACEMCO",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1659760_27042026081814_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "153313", "broadcast_ist": "2026-04-27 20:18:12", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "48970feff6d0e0b6a0dbd3a3e5fb35d98746a4883991fa80237f8b83794d4ef3",
+      "size_bytes": 62418,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/ultratech_cement/q4_fy2025-26/exchange_nse/ULTRACEMCO-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026, Audited. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 153158600000 for 2025-04-01..2026-03-31, decimals=-5). LevelOfRounding=Crores."
+    },
+    {
+      "file": "SUNPHARMA-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-SUNPHARMA",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1706221_31072026062408_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "181265", "broadcast_ist": "2026-07-31 18:24:07", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "9fd3435e3a3c4e16c8eff2749425f136354dac7243722f071b055b31f06757ad",
+      "size_bytes": 15226,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/sun_pharmaceutical/q1_fy2026-27/exchange_nse/SUNPHARMA-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Unaudited). Reg-33 minimum set only; no cash-flow or balance-sheet facts. LevelOfRounding=Millions."
+    },
+    {
+      "file": "SUNPHARMA-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-SUNPHARMA",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1671527_22052026063920_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "160266", "broadcast_ist": "2026-05-22 18:39:14", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "6e96cf3f1355210f3dfbecb5ab982828dc06fa4ae0bccfc64001cf74803a362d",
+      "size_bytes": 62447,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/sun_pharmaceutical/q4_fy2025-26/exchange_nse/SUNPHARMA-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026, Audited. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 124191800000 for 2025-04-01..2026-03-31, decimals=-5). LevelOfRounding=Millions. Sun Pharma broadcasts its March-quarter consolidated results on 22-May, the latest of this group."
+    },
+    {
+      "file": "LT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-LT",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1703294_28072026061959_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "179377", "broadcast_ist": "2026-07-28 18:17:12", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "50737f577af7a44d6fea51e824e497ce43867c9ccee2586ad7e779f9fab8daaf",
+      "size_bytes": 83029,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/larsen_toubro/q1_fy2026-27/exchange_nse/LT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Unaudited). Largest Q1 instance of the group (83 KB; multi-segment engineering conglomerate). Reg-33 minimum set only; no cash-flow or balance-sheet facts. LevelOfRounding=Crores."
+    },
+    {
+      "file": "LT-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-LT",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1663820_05052026073236_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "155661", "broadcast_ist": "2026-05-05 19:30:17", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "235f96d9a3998a78588465e852eee10420ea67b0774de257b3ae919db1ef80c9",
+      "size_bytes": 149489,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/larsen_toubro/q4_fy2025-26/exchange_nse/LT-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026, Audited. Largest instance of the group (149 KB). Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 167409700000 for 2025-04-01..2026-03-31, decimals=-5). LevelOfRounding=Crores. NOTE: the CONSOLIDATED Q4 filing has no revision; L&T's Q4 REVISIONS exist only for the STANDALONE filing (two of them, seq 155858 and 156063) - see storage_cache_only."
+    }
+  ],
+  "storage_cache_only": [
+    {"path": "storage/raw/india/maruti_suzuki/q1_fy2026-27/maruti-q1fy27-unaudited-financial-results.pdf", "issuer_id": "IN-MARUTI", "period": "q1_fy2026-27", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.marutisuzuki.com/content/dam/arena-eds/corporate/pdf/company-reports/2026-2027/Unaudited-financial-results-for-the-quarter-ended-30th-June-2026.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "3b30f5505021d785c2006f6e08d407a6e695d143527621cb535c22a62246fcb7", "size_bytes": 1533467, "description": "Reg-33 Statement of Standalone AND Consolidated Unaudited Financial Results, quarter ended June 30, 2026, with March 31, 2026 (Audited) and June 30, 2025 (Unaudited) comparative columns; values in Rs million. Limited review of consolidated results by statutory auditors (unmodified report). Consolidated section notes 2 subsidiaries, 14 associates, 3 joint ventures. NO cash-flow statement. Discovered via marutisuzuki.com/corporate/investors/company-updates > Quarterly Reports > 2026-2027 (JS dropdown listing; DAM path /content/dam/arena-eds/corporate/pdf/company-reports/<FY>/)."},
+    {"path": "storage/raw/india/maruti_suzuki/q1_fy2026-27/maruti-q1fy27-investor-presentation.pdf", "issuer_id": "IN-MARUTI", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "results_presentation", "format": "pdf", "source_url": "https://www.marutisuzuki.com/content/dam/arena-eds/corporate/pdf/company-reports/2026-2027/Investor-Presentation-Q1FY27.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "bcc231d87d1807c5ea4e3243ddc1df7315c721f32293851cfd2466efe61f6a45", "size_bytes": 445755, "description": "Q1 FY27 investor presentation (RAG corpus, optional item)."},
+    {"path": "storage/raw/india/ultratech_cement/q1_fy2026-27/ultratech-q1fy27-results.pdf", "issuer_id": "IN-ULTRACEMCO", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.ultratechcement.com/content/dam/ultratechcementwebsite/pdf/financials/financial-results/fy27/q1/q1fy27-results.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "a402f6b63c6e3eaf1a06c27f01aeb5bf941e979dcad6af5967e67ebb177fb790", "size_bytes": 5614883, "description": "Joint auditors' (Deloitte Haskins & Sells LLP + KKC & Associates LLP) Limited Review Report on the Statement of Unaudited Consolidated Financial Results for the quarter ended 30 June 2026, pursuant to Reg 33 and Reg 52(4) read with Reg 63 of SEBI LODR, plus the statement (Three Months Ended 30/06/2026, 31/03/2026, 30/06/2025; Year Ended 31/03/2026; in Crores). Above the 5 MB fixture limit; storage-only. NO cash-flow statement."},
+    {"path": "storage/raw/india/ultratech_cement/q1_fy2026-27/ultratech-q1fy27-results-presentation.pdf", "issuer_id": "IN-ULTRACEMCO", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "results_presentation", "format": "pdf", "source_url": "https://www.ultratechcement.com/content/dam/ultratechcementwebsite/pdf/financials/investor-update/results-presentation-q1fy27.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "213291043b3b9d1e384576ed49d4282c38a021fb11e317996f2897ac1efb1446", "size_bytes": 21104239, "description": "Q1 FY27 results presentation, 21.1 MB (RAG corpus, optional item; far above the 5 MB fixture limit)."},
+    {"path": "storage/raw/india/sun_pharmaceutical/q1_fy2026-27/sunpharma-q1fy27-financial-results.pdf", "issuer_id": "IN-SUNPHARMA", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://sunpharma.com/wp-content/uploads/2026/07/Q1FY27-SPIL-Financial-Results.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "8565330c70826dd8801e08e1280ccab063e2115bec87fe1db71ce22fdd85ac66", "size_bytes": 592712, "description": "Statement of Unaudited Consolidated Financial Results for the Quarter ended June 30, 2026, columns 30.06.2026 (Unaudited) / 31.03.2026 (Audited) / 30.06.2025 (Unaudited) / Year ended 31.03.2026 (Audited); '( in Million)'. NO cash-flow statement."},
+    {"path": "storage/raw/india/sun_pharmaceutical/q1_fy2026-27/sunpharma-q1fy27-financial-press-release.pdf", "issuer_id": "IN-SUNPHARMA", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://sunpharma.com/wp-content/uploads/2026/07/Press-Release-Sun-Pharma-Q1FY27-Financial-Result.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "2b9b4d98e84238bc9cdc0cbeaa5e035d726b0ffa498ce2ffea849b04e6d847f4", "size_bytes": 345137, "description": "Q1 FY27 financial press release with management commentary (RAG corpus, optional item)."},
+    {"path": "storage/raw/india/larsen_toubro/q1_fy2026-27/lt-q1fy27-financial-results.pdf", "issuer_id": "IN-LT", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://investors.larsentoubro.com/upload/Quarterly/FY2027QuarterlyLTJune2026-website.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "a71aadd8b8470e680dde7e455d58595a014344bad7488495f34bd9b2eb5338b3", "size_bytes": 499433, "description": "Statement of Unaudited Consolidated Financial Results for the Quarter Ended June 30, 2026, columns June 30, 2026 [Reviewed] / March 31, 2026 [Audited] / June 30, 2025 [Reviewed] / Year ended March 31, 2026 [Audited]; in Rs Crore. Discovered via investors.larsentoubro.com/Quarterly-Results-Archives.aspx (download link is built by JS onclick handler: upload/Quarterly/<FY>QuarterlyLT<Month><Year>-website.pdf). NO cash-flow statement."},
+    {"path": "storage/raw/india/larsen_toubro/q4_fy2025-26/exchange_nse/LT-Q4FY26-standalone-nse-integrated-filing-xbrl-REVISION.xml", "issuer_id": "IN-LT", "period": "q4_fy2025-26", "scope": "standalone", "doc_type": "financial_results", "format": "xbrl", "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1664542_07052026062845_WEB.xml", "source_tier": "exchange", "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "156063", "broadcast_ist": null, "revised_ist": "2026-05-07 18:28:47", "audited_status": "Audited", "revision": "Revision", "revision_remark": "The amount reported under Paid_up Share Capital in the XBRL filing _Financial Results Section_ was inadvertently mentioned as number of shares instead of the corresponding amount_ The same has now been corrected_ There is no impact on the financial results_"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "22ee5f334fa358ca9e83c6863d5a6793305793d0dbb0150ac12f6599456649dc", "size_bytes": 2946994, "taxonomy": "IFIndAs V2.0 (06-02-2026)", "note": "Storage-only revision evidence (LATEST of two standalone Q4 FY26 revisions; superseded standalone Original seq 155701 broadcast 2026-05-05 21:48:59 IST, first revision seq 155858 revised 2026-05-06 19:29:57 IST with remark 'Share Capital number updated in the required format_'). Out of required scope (this milestone requires consolidated); retained to document the corpus's second real revision case: scope-ASYMMETRIC revision (standalone revised, consolidated not), revision reason = XBRL metadata error (paid-up share capital reported as share COUNT instead of amount) with explicitly 'no impact on the financial results'. DeclarationOfUnmodifiedOpinionOrStatementOnImpactOfAuditQualification='Not applicable'; NatureOfReportStandaloneConsolidated='Standalone'."}
+  ]
+}

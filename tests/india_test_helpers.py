@@ -21,13 +21,27 @@ TESTS_DIR = Path(__file__).resolve().parent
 INDIA_FIXTURES_DIR = TESTS_DIR / "fixtures" / "india"
 INDIA_MANIFEST_PATH = INDIA_FIXTURES_DIR / "manifest.json"
 
-#: The four committed consolidated XBRL fixtures.
+#: The four IND-1 committed consolidated XBRL fixtures (original IND-2 corpus).
 INFY_Q1 = "INFY-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml"
 INFY_Q4 = "INFY-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml"
 HUL_Q1 = "HUL-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml"
 HUL_Q4 = "HUL-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml"
 
-COMMITTED_FIXTURES = (INFY_Q1, INFY_Q4, HUL_Q1, HUL_Q4)
+COMMITTED_FIXTURES_IND1 = (INFY_Q1, INFY_Q4, HUL_Q1, HUL_Q4)
+
+#: All 10 India watchlist issuer ids (IND-6 corpus).
+ALL_ISSUER_IDS = (
+    "IN-INFY",
+    "IN-HINDUNILVR",
+    "IN-TCS",
+    "IN-HCLTECH",
+    "IN-ITC",
+    "IN-ASIANPAINT",
+    "IN-MARUTI",
+    "IN-ULTRACEMCO",
+    "IN-SUNPHARMA",
+    "IN-LT",
+)
 
 
 def load_india_manifest() -> dict:
@@ -47,11 +61,36 @@ def period_bounds(manifest: dict, period_key: str) -> tuple[date | None, date]:
     )
 
 
+def write_all_proposed_watchlist(tmp_path) -> Path:
+    """A temp registry in the pre-IND-6 state (10 rows, none verified).
+
+    The live registry verified all 10 issuers in IND-6 (group A/B acquisition
+    evidence); the not-verified guard is still contract, exercised against this
+    synthetic registry file instead.
+    """
+    header = "issuer_id,ticker_nse,bse_code,isin,name,sector,verification_status,verified_source\n"
+    rows = []
+    for issuer_id in ALL_ISSUER_IDS:
+        symbol = issuer_id.removeprefix("IN-")
+        rows.append(f"{issuer_id},{symbol},,,Test Issuer {symbol},Other,proposed,\n")
+    path = tmp_path / "watchlist_india_all_proposed.csv"
+    path.write_text(header + "".join(rows), encoding="utf-8")
+    return path
+
+
+def _published_date(filing: dict) -> date:
+    """Broadcast date, falling back to the revised date for revision rows."""
+    stamp = filing.get("broadcast_ist") or filing.get("revised_ist")
+    assert stamp, "manifest filing metadata must carry broadcast_ist or revised_ist"
+    return date.fromisoformat(str(stamp).split(" ")[0])
+
+
 def import_all_fixtures() -> list:
-    """Import the 4 committed fixtures through the real manual-import path.
+    """Import every committed fixture through the real manual-import path.
 
     Requires the offline_env fixture (storage/database pointed at tmp) and the
-    schema created. Returns the ImportReports in manifest order.
+    schema created. Returns the ImportReports in manifest order (20 fixtures:
+    2 periods x 10 issuers consolidated, IND-6 corpus).
     """
     from quarterline.sources.india.ir_documents import import_document
 
@@ -69,7 +108,7 @@ def import_all_fixtures() -> list:
                 period_start=period_start,
                 period_end=period_end,
                 scope=entry["scope"],
-                published_at=date.fromisoformat(filing["broadcast_ist"].split(" ")[0]),
+                published_at=_published_date(filing),
                 source_url=entry["source_url"],
                 exchange="NSE",
                 seq_id=filing.get("seq_id"),
@@ -100,24 +139,28 @@ def create_schema(database_url: str | None = None) -> None:
     Base.metadata.create_all(engine)
 
 
-def run_ind4_pipeline() -> None:
-    """Run the full IND-4 data layer for both issuers on the current store.
+def run_ind4_pipeline(issuer_ids: tuple[str, ...] = ALL_ISSUER_IDS) -> None:
+    """Run the full data layer for the given issuers on the current store.
 
-    Observations (exchange XBRL + the reviewed INFY PDF cash flow), canonical
-    normalization, and metric computation. Assumes the fixtures are already
-    imported (``import_all_fixtures``) and the schema exists.
+    Observations (exchange XBRL + the reviewed INFY PDF cash flow + the IND-6
+    reviewed prior-year PDF comparatives), canonical normalization, and metric
+    computation. Assumes the fixtures are already imported
+    (``import_all_fixtures``) and the schema exists.
     """
     from quarterline.sources.india.metrics import compute_india_metrics
     from quarterline.sources.india.normalization import normalize_canonical_facts
     from quarterline.sources.india.pipeline import (
         ingest_observations,
         ingest_reviewed_pdf_cash_flow,
+        ingest_reviewed_pdf_comparatives,
     )
 
-    for issuer_id in ("IN-INFY", "IN-HINDUNILVR"):
+    for issuer_id in issuer_ids:
         ingest_observations(issuer_id)
     ingest_reviewed_pdf_cash_flow("IN-INFY")
-    for issuer_id in ("IN-INFY", "IN-HINDUNILVR"):
+    for issuer_id in issuer_ids:
+        ingest_reviewed_pdf_comparatives(issuer_id)
+    for issuer_id in issuer_ids:
         normalize_canonical_facts(issuer_id)
         compute_india_metrics(issuer_id)
 

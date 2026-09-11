@@ -25,7 +25,7 @@ from quarterline.store.repositories.companies import CompaniesRepo
 class TestImportDocument:
     def test_import_fixture_reports_parse(self, india_imported):
         _, reports = india_imported
-        assert len(reports) == 4
+        assert len(reports) == 20  # 2 periods x 10 issuers (IND-6 corpus)
         infy_q1 = reports[0]
         assert infy_q1.issuer_id == "IN-INFY"
         assert infy_q1.parsed is True
@@ -49,7 +49,7 @@ class TestImportDocument:
             artifacts = list(
                 session.scalars(select(SourceArtifact).where(SourceArtifact.source == SOURCE_INDIA))
             )
-            assert len(artifacts) == 4
+            assert len(artifacts) == 20
             first = artifacts[0]
             assert first.content_type == "xbrl"
             assert first.parser_version == "india-xbrl-1"
@@ -91,7 +91,16 @@ class TestImportDocument:
                 published_at=date(2026, 7, 23),
             )
 
-    def test_unverified_issuer_refused(self, india_store):
+    def test_unverified_issuer_refused(self, india_store, tmp_path, monkeypatch):
+        """Guard exercised against a synthetic all-proposed registry (the live
+        registry verified all 10 rows in IND-6)."""
+        from india_test_helpers import write_all_proposed_watchlist
+
+        from quarterline.sources.india import issuers as issuers_module
+
+        monkeypatch.setattr(
+            issuers_module, "DEFAULT_WATCHLIST_PATH", write_all_proposed_watchlist(tmp_path)
+        )
         with pytest.raises(ValueError, match="not verified"):
             import_document(
                 issuer_id="IN-TCS",

@@ -144,13 +144,25 @@ class TestFilingVersionsVsRevisions:
         standalone = self.version("b", date(2026, 6, 30), date(2026, 7, 23), scope="standalone")
         assert classify_filing_pair(consolidated, standalone) == VERSION_LATER_COMPARATIVE
 
-    def test_real_fixture_filings_are_all_originals(self):
-        """The four acquired filings classify as originals; none is a revision."""
+    @staticmethod
+    def _published(entry: dict) -> date:
+        stamp = entry["exchange_filing"].get("broadcast_ist") or entry["exchange_filing"].get(
+            "revised_ist"
+        )
+        assert stamp
+        return date.fromisoformat(str(stamp).split(" ")[0])
+
+    def test_real_fixture_filings_classify_with_one_revision_pair(self):
+        """The 20 committed filings classify as originals/later-comparatives —
+        EXCEPT the real Asian Paints Q4 pair: the committed fixture IS the
+        revision (seq 174871) and the cached superseded original (seq 163991,
+        manifest storage_cache_only) classifies the pair as revised_filing."""
         from india_test_helpers import load_india_manifest
 
         from quarterline.sources.india.revisions import (
             VERSION_LATER_COMPARATIVE,
             VERSION_ORIGINAL,
+            VERSION_REVISED,
             classify_filing_pair,
         )
 
@@ -159,7 +171,7 @@ class TestFilingVersionsVsRevisions:
             self.version(
                 entry["sha256"],
                 date.fromisoformat(manifest["periods"][entry["period"]]["period_end"]),
-                date.fromisoformat(entry["exchange_filing"]["broadcast_ist"].split(" ")[0]),
+                self._published(entry),
                 revision=entry["exchange_filing"].get("revision"),
                 scope=entry["scope"],
             )
@@ -168,3 +180,34 @@ class TestFilingVersionsVsRevisions:
         for other in versions[1:]:
             relationship = classify_filing_pair(versions[0], other)
             assert relationship in (VERSION_ORIGINAL, VERSION_LATER_COMPARATIVE)
+
+        ap_fixture = next(
+            e for e in manifest["committed_fixtures"] if e["file"].startswith("ASIANPAINT-Q4")
+        )
+        ap_original = next(
+            e
+            for e in manifest["storage_cache_only"]
+            if e["path"].endswith(
+                "ASIANPAINT-Q4FY26-consolidated-nse-integrated-filing-xbrl-ORIGINAL.xml"
+            )
+        )
+        from quarterline.sources.india.revisions import normalize_revision_status
+
+        original_version = self.version(
+            ap_original["sha256"],
+            date.fromisoformat(manifest["periods"][ap_fixture["period"]]["period_end"]),
+            date.fromisoformat(ap_original["exchange_filing"]["broadcast_ist"].split(" ")[0]),
+            revision=normalize_revision_status(ap_original["exchange_filing"].get("revision")),
+            scope=ap_original["scope"],
+        )
+        revised_version = self.version(
+            ap_fixture["sha256"],
+            date.fromisoformat(manifest["periods"][ap_fixture["period"]]["period_end"]),
+            date.fromisoformat(ap_fixture["exchange_filing"]["revised_ist"].split(" ")[0]),
+            revision=normalize_revision_status(ap_fixture["exchange_filing"].get("revision")),
+            scope=ap_fixture["scope"],
+        )
+        # REAL content hashes (both cached documents, sha256-verified in IND-6)
+        assert original_version.content_hash != revised_version.content_hash
+        assert classify_filing_pair(original_version, revised_version) == VERSION_REVISED
+        assert classify_filing_pair(revised_version, original_version) == VERSION_REVISED

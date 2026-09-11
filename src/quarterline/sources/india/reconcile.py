@@ -357,6 +357,14 @@ REF_INFY_CONSO_Q1 = "INFY-IR-consol-fy27-q1-finstatement.pdf"
 REF_INFY_CONSO_Q4 = "INFY-IR-consol-fy26-q4-and-12m-finstatement.pdf"
 REF_HUL_Q4_PDF = "HUL-IR-hul-mq26-financial-results.pdf"
 REF_HUL_Q1_PDF = "HUL-IR-hul-jq26-financial-results.pdf"
+REF_TCS_CONSO_Q1 = "TCS-IR-tcs-q1fy27-consolidated-indas-finstatement.pdf"
+REF_HCLTECH_REG33_Q1 = "HCLTECH-IR-hcltech-q1fy27-unaudited-financial-results.pdf"
+REF_ITC_CFS_Q1 = "ITC-IR-itc-q1fy27-financial-result-cfs.pdf"
+REF_ASIANPAINT_RESULTS_Q1 = "ASIANPAINT-IR-asianpaints-q1fy27-results.pdf"
+REF_MARUTI_RESULTS_Q1 = "MARUTI-IR-maruti-q1fy27-unaudited-financial-results.pdf"
+REF_ULTRACEMCO_RESULTS_Q1 = "ULTRACEMCO-IR-ultratech-q1fy27-results.pdf"
+REF_SUNPHARMA_RESULTS_Q1 = "SUNPHARMA-IR-sunpharma-q1fy27-financial-results.pdf"
+REF_LT_RESULTS_Q1 = "LT-IR-lt-q1fy27-financial-results.pdf"
 
 _INFY_P12_NOTE = (
     "Reg-33 consolidated P&L page 12; columns: Q1 FY27 (Jun-30-2026), Q4 FY26 (Mar-31-2026), "
@@ -818,6 +826,474 @@ RENDERED_REFERENCES: dict[ReferenceKey, RenderedReference] = {
         + "; XBRL continuing PAT 10,667 vs letter 10,652 — same 15 Cr equity-accounted presentation "
         "difference; recorded, never forced",
     ),
+    # -------------------------------------------------------------------
+    # IND-6 group A/B issuers: Q1 FY27 consolidated rows whose CURRENT-quarter
+    # column was verified against the issuer's own rendered Q1 statement
+    # (value-anchored extraction, pdf_results.extract_prior_year_comparatives:
+    # the displayed current value equals the XBRL fact exactly, which also
+    # verifies the declared display scale). Prior-year columns from the same
+    # rows are carried in REVIEWED_PDF_COMPARATIVES below.
+    # -------------------------------------------------------------------
+}
+
+#: Notes for the IND-6 rendered references (shared per issuer).
+_TCS_P2_NOTE = (
+    "TCS condensed consolidated Ind AS statement p.2; two columns: 'Three months ended "
+    "June 30, 2026' then 'Three months ended June 30, 2025'; '(₹ crore)' header; linear "
+    "extraction preserves row-label/value adjacency"
+)
+_HCLTECH_P2_NOTE = (
+    "HCLTech Reg-33 consolidated results p.2; columns: three months ended 30-June-2026 "
+    "(Unaudited), 31-March-2026 (Audited), 30-June-2025 (Unaudited); ₹ in crores; row-major "
+    "three-value blocks"
+)
+_ITC_P1_NOTE = (
+    "ITC consolidated results (cfs) p.1; columns: 3 months ended 30.06.2026 (Unaudited), "
+    "30.06.2025 (Unaudited), 31.03.2026 (Audited), twelve months ended 31.03.2026 (Audited); "
+    "'(₹ in Crores)' header"
+)
+_ASIANPAINT_P10_NOTE = (
+    "Asian Paints Reg-33 consolidated results p.10; quarter block columns: 30.06.2026 "
+    "(Unaudited), 31.03.2026 (Audited), 30.06.2025 (Unaudited) with the year column in a "
+    "separate block; '(₹ in Crores)'; row identity verified by the internal identity "
+    "(a) + (b) = (1) across all three columns plus the XBRL anchors"
+)
+_SUNPHARMA_P1_NOTE = (
+    "Sun Pharma consolidated results statement p.1; columns: 30.06.2026 (Unaudited), "
+    "31.03.2026 (Audited), 30.06.2025 (Unaudited), year ended 31.03.2026 (Audited); "
+    "declared display unit is ₹ MILLION (the instance declares LevelOfRounding=Millions)"
+)
+_LT_P1_NOTE = (
+    "L&T consolidated results statement p.1; columns: June 30, 2026 (Reviewed), March 31, "
+    "2026 (Audited), June 30, 2025 (Reviewed), year ended March 31, 2026 (Audited); ₹ Crore"
+)
+_ITC_PBT_BASIS_NOTE = (
+    "BASIS DIFFERENCE recorded, never forced: ITC's rendered 'Profit before tax' line "
+    "(5,860.85) INCLUDES the 85.91 share of profit/loss of associates and JV, while the XBRL "
+    "ProfitBeforeTax fact (5,774.94) EXCLUDES it: rendered 5,369.06 (before exceptional, "
+    "before associate share) + 405.88 exceptional gain + 85.91 associate share = 5,860.85; "
+    "XBRL: 5,369.06 + 405.88 = 5,774.94. Both identities reconcile exactly"
+)
+
+_Q1_DOC_IDS = {
+    "IN-TCS": "TCS-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+    "IN-HCLTECH": "HCLTECH-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+    "IN-ITC": "ITC-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+    "IN-ASIANPAINT": "ASIANPAINT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+    "IN-SUNPHARMA": "SUNPHARMA-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+    "IN-LT": "LT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+}
+
+#: (issuer, Q1 XBRL doc, "quarter", tag) -> rendered current-quarter cross-check.
+_INDUCE6_RENDERED: dict[ReferenceKey, RenderedReference] = {
+    ("IN-TCS", _Q1_DOC_IDS["IN-TCS"], "quarter", "RevenueFromOperations"): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2 (Condensed Consolidated Statement of Profit and Loss)",
+        "72,275",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE,
+    ),
+    (
+        "IN-TCS",
+        _Q1_DOC_IDS["IN-TCS"],
+        "quarter",
+        "ProfitBeforeExceptionalItemsAndTax",
+    ): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2",
+        "18,612",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE,
+    ),
+    ("IN-TCS", _Q1_DOC_IDS["IN-TCS"], "quarter", "ProfitBeforeTax"): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2",
+        "17,944",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE + "; 18,612 - 668 exceptional (legal claim) = 17,944",
+    ),
+    ("IN-TCS", _Q1_DOC_IDS["IN-TCS"], "quarter", "ProfitLossForPeriod"): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2",
+        "13,420",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE,
+    ),
+    (
+        "IN-TCS",
+        _Q1_DOC_IDS["IN-TCS"],
+        "quarter",
+        "ProfitOrLossAttributableToOwnersOfParent",
+    ): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2",
+        "13,349",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE + "; 'Profit for the period attributable to: Shareholders of the Company'",
+    ),
+    (
+        "IN-TCS",
+        _Q1_DOC_IDS["IN-TCS"],
+        "quarter",
+        "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2 (EPS table)",
+        "36.90",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE + "; TCS prints one 'Basic and diluted' row (identical values)",
+    ),
+    (
+        "IN-TCS",
+        _Q1_DOC_IDS["IN-TCS"],
+        "quarter",
+        "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_TCS_CONSO_Q1,
+        "PDF p.2 (EPS table)",
+        "36.90",
+        COMPARISON_MATCHED,
+        _TCS_P2_NOTE,
+    ),
+    (
+        "IN-HCLTECH",
+        _Q1_DOC_IDS["IN-HCLTECH"],
+        "quarter",
+        "RevenueFromOperations",
+    ): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2 (consolidated Reg-33 statement)",
+        "34,579",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE,
+    ),
+    (
+        "IN-HCLTECH",
+        _Q1_DOC_IDS["IN-HCLTECH"],
+        "quarter",
+        "ProfitBeforeExceptionalItemsAndTax",
+    ): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2",
+        "6,108",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE + "; exceptional items nil in Q1 FY27, PBT equals PBIT",
+    ),
+    ("IN-HCLTECH", _Q1_DOC_IDS["IN-HCLTECH"], "quarter", "ProfitBeforeTax"): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2",
+        "6,108",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE,
+    ),
+    ("IN-HCLTECH", _Q1_DOC_IDS["IN-HCLTECH"], "quarter", "ProfitLossForPeriod"): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2",
+        "4,626",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE,
+    ),
+    (
+        "IN-HCLTECH",
+        _Q1_DOC_IDS["IN-HCLTECH"],
+        "quarter",
+        "ProfitOrLossAttributableToOwnersOfParent",
+    ): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2",
+        "4,624",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE,
+    ),
+    (
+        "IN-HCLTECH",
+        _Q1_DOC_IDS["IN-HCLTECH"],
+        "quarter",
+        "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2 (EPS table)",
+        "17.09",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE,
+    ),
+    (
+        "IN-HCLTECH",
+        _Q1_DOC_IDS["IN-HCLTECH"],
+        "quarter",
+        "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_HCLTECH_REG33_Q1,
+        "PDF p.2 (EPS table)",
+        "17.06",
+        COMPARISON_MATCHED,
+        _HCLTECH_P2_NOTE,
+    ),
+    ("IN-ITC", _Q1_DOC_IDS["IN-ITC"], "quarter", "RevenueFromOperations"): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1 (consolidated results statement)",
+        "29,523.30",
+        COMPARISON_MATCHED,
+        _ITC_P1_NOTE,
+    ),
+    (
+        "IN-ITC",
+        _Q1_DOC_IDS["IN-ITC"],
+        "quarter",
+        "ProfitBeforeExceptionalItemsAndTax",
+    ): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1",
+        "5,369.06",
+        COMPARISON_MATCHED,
+        _ITC_P1_NOTE,
+    ),
+    ("IN-ITC", _Q1_DOC_IDS["IN-ITC"], "quarter", "ProfitBeforeTax"): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1",
+        "5,860.85 (rendered, incl. 85.91 associate share) vs 5,774.94 (XBRL, excl.)",
+        COMPARISON_SCOPE_BASIS,
+        _ITC_P1_NOTE + "; " + _ITC_PBT_BASIS_NOTE,
+    ),
+    ("IN-ITC", _Q1_DOC_IDS["IN-ITC"], "quarter", "ProfitLossForPeriod"): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1",
+        "4,508.79",
+        COMPARISON_MATCHED,
+        _ITC_P1_NOTE,
+    ),
+    (
+        "IN-ITC",
+        _Q1_DOC_IDS["IN-ITC"],
+        "quarter",
+        "ProfitOrLossAttributableToOwnersOfParent",
+    ): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1",
+        "4,394.13",
+        COMPARISON_MATCHED,
+        _ITC_P1_NOTE,
+    ),
+    (
+        "IN-ITC",
+        _Q1_DOC_IDS["IN-ITC"],
+        "quarter",
+        "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1 (EPS table)",
+        "3.51",
+        COMPARISON_MATCHED,
+        _ITC_P1_NOTE,
+    ),
+    (
+        "IN-ITC",
+        _Q1_DOC_IDS["IN-ITC"],
+        "quarter",
+        "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_ITC_CFS_Q1,
+        "PDF p.1 (EPS table)",
+        "3.51",
+        COMPARISON_MATCHED,
+        _ITC_P1_NOTE,
+    ),
+    (
+        "IN-ASIANPAINT",
+        _Q1_DOC_IDS["IN-ASIANPAINT"],
+        "quarter",
+        "RevenueFromOperations",
+    ): RenderedReference(
+        REF_ASIANPAINT_RESULTS_Q1,
+        "PDF p.10 (consolidated Reg-33 statement)",
+        "10,541.94",
+        COMPARISON_MATCHED,
+        _ASIANPAINT_P10_NOTE,
+    ),
+    (
+        "IN-ASIANPAINT",
+        _Q1_DOC_IDS["IN-ASIANPAINT"],
+        "quarter",
+        "ProfitBeforeTax",
+    ): RenderedReference(
+        REF_ASIANPAINT_RESULTS_Q1,
+        "PDF p.10",
+        "2,095.75",
+        COMPARISON_MATCHED,
+        _ASIANPAINT_P10_NOTE,
+    ),
+    (
+        "IN-ASIANPAINT",
+        _Q1_DOC_IDS["IN-ASIANPAINT"],
+        "quarter",
+        "ProfitLossForPeriod",
+    ): RenderedReference(
+        REF_ASIANPAINT_RESULTS_Q1,
+        "PDF p.10",
+        "1,559.45",
+        COMPARISON_MATCHED,
+        _ASIANPAINT_P10_NOTE,
+    ),
+    (
+        "IN-ASIANPAINT",
+        _Q1_DOC_IDS["IN-ASIANPAINT"],
+        "quarter",
+        "ProfitOrLossAttributableToOwnersOfParent",
+    ): RenderedReference(
+        REF_ASIANPAINT_RESULTS_Q1,
+        "PDF p.10",
+        "1,539.25",
+        COMPARISON_MATCHED,
+        _ASIANPAINT_P10_NOTE,
+    ),
+    (
+        "IN-ASIANPAINT",
+        _Q1_DOC_IDS["IN-ASIANPAINT"],
+        "quarter",
+        "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_ASIANPAINT_RESULTS_Q1,
+        "PDF p.10 (EPS table)",
+        "16.06",
+        COMPARISON_MATCHED,
+        _ASIANPAINT_P10_NOTE,
+    ),
+    (
+        "IN-ASIANPAINT",
+        _Q1_DOC_IDS["IN-ASIANPAINT"],
+        "quarter",
+        "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_ASIANPAINT_RESULTS_Q1,
+        "PDF p.10 (EPS table)",
+        "16.05",
+        COMPARISON_MATCHED,
+        _ASIANPAINT_P10_NOTE,
+    ),
+    (
+        "IN-SUNPHARMA",
+        _Q1_DOC_IDS["IN-SUNPHARMA"],
+        "quarter",
+        "RevenueFromOperations",
+    ): RenderedReference(
+        REF_SUNPHARMA_RESULTS_Q1,
+        "PDF p.1 (consolidated results statement)",
+        "152,998.8 (₹ million)",
+        COMPARISON_MATCHED,
+        _SUNPHARMA_P1_NOTE,
+    ),
+    ("IN-SUNPHARMA", _Q1_DOC_IDS["IN-SUNPHARMA"], "quarter", "ProfitBeforeTax"): RenderedReference(
+        REF_SUNPHARMA_RESULTS_Q1,
+        "PDF p.1",
+        "40,988.1 (₹ million)",
+        COMPARISON_MATCHED,
+        _SUNPHARMA_P1_NOTE,
+    ),
+    (
+        "IN-SUNPHARMA",
+        _Q1_DOC_IDS["IN-SUNPHARMA"],
+        "quarter",
+        "ProfitLossForPeriod",
+    ): RenderedReference(
+        REF_SUNPHARMA_RESULTS_Q1,
+        "PDF p.1",
+        "29,012.3 (₹ million)",
+        COMPARISON_MATCHED,
+        _SUNPHARMA_P1_NOTE,
+    ),
+    (
+        "IN-SUNPHARMA",
+        _Q1_DOC_IDS["IN-SUNPHARMA"],
+        "quarter",
+        "ProfitOrLossAttributableToOwnersOfParent",
+    ): RenderedReference(
+        REF_SUNPHARMA_RESULTS_Q1,
+        "PDF p.1",
+        "28,947.9 (₹ million)",
+        COMPARISON_MATCHED,
+        _SUNPHARMA_P1_NOTE,
+    ),
+    (
+        "IN-SUNPHARMA",
+        _Q1_DOC_IDS["IN-SUNPHARMA"],
+        "quarter",
+        "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_SUNPHARMA_RESULTS_Q1,
+        "PDF p.1 (EPS table)",
+        "12.1",
+        COMPARISON_MATCHED,
+        _SUNPHARMA_P1_NOTE,
+    ),
+    (
+        "IN-SUNPHARMA",
+        _Q1_DOC_IDS["IN-SUNPHARMA"],
+        "quarter",
+        "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_SUNPHARMA_RESULTS_Q1,
+        "PDF p.1 (EPS table)",
+        "12.1",
+        COMPARISON_MATCHED,
+        _SUNPHARMA_P1_NOTE,
+    ),
+    ("IN-LT", _Q1_DOC_IDS["IN-LT"], "quarter", "RevenueFromOperations"): RenderedReference(
+        REF_LT_RESULTS_Q1,
+        "PDF p.1 (consolidated results statement)",
+        "67,941.74",
+        COMPARISON_MATCHED,
+        _LT_P1_NOTE,
+    ),
+    ("IN-LT", _Q1_DOC_IDS["IN-LT"], "quarter", "ProfitBeforeTax"): RenderedReference(
+        REF_LT_RESULTS_Q1,
+        "PDF p.1",
+        "6,922.26",
+        COMPARISON_MATCHED,
+        _LT_P1_NOTE,
+    ),
+    ("IN-LT", _Q1_DOC_IDS["IN-LT"], "quarter", "ProfitLossForPeriod"): RenderedReference(
+        REF_LT_RESULTS_Q1,
+        "PDF p.1",
+        "4,988.03",
+        COMPARISON_MATCHED,
+        _LT_P1_NOTE,
+    ),
+    (
+        "IN-LT",
+        _Q1_DOC_IDS["IN-LT"],
+        "quarter",
+        "ProfitOrLossAttributableToOwnersOfParent",
+    ): RenderedReference(
+        REF_LT_RESULTS_Q1,
+        "PDF p.1",
+        "4,122.85",
+        COMPARISON_MATCHED,
+        _LT_P1_NOTE,
+    ),
+    (
+        "IN-LT",
+        _Q1_DOC_IDS["IN-LT"],
+        "quarter",
+        "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_LT_RESULTS_Q1,
+        "PDF p.1 (EPS table)",
+        "29.97",
+        COMPARISON_MATCHED,
+        _LT_P1_NOTE,
+    ),
+    (
+        "IN-LT",
+        _Q1_DOC_IDS["IN-LT"],
+        "quarter",
+        "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+    ): RenderedReference(
+        REF_LT_RESULTS_Q1,
+        "PDF p.1 (EPS table)",
+        "29.96",
+        COMPARISON_MATCHED,
+        _LT_P1_NOTE,
+    ),
 }
 
 #: HUL Q4 P&L rows and all HUL Q1 rows except revenue: rendered pages 6/8
@@ -859,6 +1335,20 @@ def _build_scrambled_keys() -> None:
         for tag in hul_pnl_tags:
             _SCRAMBLED_KEYS.add(("IN-HINDUNILVR", _DOC_HUL_Q4, context_kind, tag))
             _SCRAMBLED_KEYS.add(("IN-HINDUNILVR", _DOC_HUL_Q1, context_kind, tag))
+    # IND-6: HUL's scrambling is not unique. Maruti's Q1 results PDF is a scan
+    # whose OCR text layer garbles the consolidated statement (rows like
+    # "<24 60R", "1*11 r6n" where 524,608 / 1,871,617 would be); UltraTech's
+    # Reg-33 page extracts with vector artifacts ("130E....i.-", detached value
+    # blocks) so row/column association is not machine-reliable for either.
+    for issuer_id, document_id in (
+        ("IN-MARUTI", "MARUTI-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml"),
+        ("IN-MARUTI", "MARUTI-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml"),
+        ("IN-ULTRACEMCO", "ULTRACEMCO-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml"),
+        ("IN-ULTRACEMCO", "ULTRACEMCO-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml"),
+    ):
+        for context_kind in ("quarter", "annual"):
+            for tag in hul_pnl_tags:
+                _SCRAMBLED_KEYS.add((issuer_id, document_id, context_kind, tag))
 
 
 _build_scrambled_keys()
@@ -874,7 +1364,9 @@ def review_status_for(issuer_id: str, document_id: str, context_kind: str, tag: 
     Human approval is never returned — no code path records it.
     """
     key: ReferenceKey = (issuer_id, document_id, context_kind, tag)
-    reference = RENDERED_REFERENCES.get(key) or _RENDERED_OVERRIDES.get(key)
+    reference = (
+        RENDERED_REFERENCES.get(key) or _INDUCE6_RENDERED.get(key) or _RENDERED_OVERRIDES.get(key)
+    )
     if reference is not None:
         if reference.comparison_status in (
             COMPARISON_MATCHED,
@@ -902,6 +1394,18 @@ RENDERED_DOCUMENT_STORAGE: dict[str, str] = {
     REF_INFY_CONSO_Q4: "infosys/q4_fy2025-26/consol-fy26-q4-and-12m-finstatement.pdf",
     REF_HUL_Q4_PDF: "hindustan_unilever/q4_fy2025-26/hul-mq26-financial-results.pdf",
     REF_HUL_Q1_PDF: "hindustan_unilever/q1_fy2026-27/hul-jq26-financial-results.pdf",
+    REF_TCS_CONSO_Q1: "tcs/q1_fy2026-27/tcs-q1fy27-consolidated-indas-finstatement.pdf",
+    REF_HCLTECH_REG33_Q1: (
+        "hcltech/q1_fy2026-27/hcltech-q1fy27-unaudited-financial-results-qe-june-30-2026.pdf"
+    ),
+    REF_ITC_CFS_Q1: "itc/q1_fy2026-27/itc-q1fy27-financial-result-cfs.pdf",
+    REF_ASIANPAINT_RESULTS_Q1: "asianpaints/q1_fy2026-27/asianpaints-q1fy27-results.pdf",
+    REF_MARUTI_RESULTS_Q1: "maruti_suzuki/q1_fy2026-27/maruti-q1fy27-unaudited-financial-results.pdf",
+    REF_ULTRACEMCO_RESULTS_Q1: "ultratech_cement/q1_fy2026-27/ultratech-q1fy27-results.pdf",
+    REF_SUNPHARMA_RESULTS_Q1: (
+        "sun_pharmaceutical/q1_fy2026-27/sunpharma-q1fy27-financial-results.pdf"
+    ),
+    REF_LT_RESULTS_Q1: "larsen_toubro/q1_fy2026-27/lt-q1fy27-financial-results.pdf",
 }
 
 
@@ -1022,7 +1526,11 @@ def _validation_rows_for_instance(
             raw_unit, normalized_unit = "INR", "INR"
             presentation_scale = f"LevelOfRounding={instance.rounding_trait} (presentation only)"
         key: ReferenceKey = (provenance.issuer_id, provenance.document_id, kind, fact.tag)
-        reference = RENDERED_REFERENCES.get(key) or _RENDERED_OVERRIDES.get(key)
+        reference = (
+            RENDERED_REFERENCES.get(key)
+            or _INDUCE6_RENDERED.get(key)
+            or _RENDERED_OVERRIDES.get(key)
+        )
         if reference is None:
             reference = _SCRAMBLED if key in _SCRAMBLED_KEYS else _UNAVAILABLE
         review_status = (
@@ -1063,6 +1571,381 @@ def _validation_rows_for_instance(
     rows.sort(key=lambda r: (r.period_end, r.original_tag_or_label))
     return rows
 
+
+#: Agent-verified PRIOR-YEAR QUARTER comparatives (IND-6) extracted from the
+#: issuers' own Q1 FY27 rendered statements — the exchange Q1 instances carry NO
+#: prior-year duration contexts (verified for all 10 issuers), so this rendered
+#: comparative column is the only clean route to a prior-year quarter.
+#: Extraction is VALUE-ANCHORED (pdf_results.extract_prior_year_comparatives):
+#: the current-quarter / preceding-quarter / annual values of the same row are
+#: known exactly from the committed XBRL instances, so a matching page token
+#: window identifies the row AND verifies the declared display scale; the
+#: remaining column is the prior-year quarter (2025-04-01..2025-06-30, Q1 FY26).
+#: Three issuers were excluded because their Q1 statements do NOT extract
+#: deterministically: HUL (column interleaving, IND-3 §7), MARUTI (scan with a
+#: garbled OCR text layer), ULTRACEMCO (vector artifacts) — their YoY stays a
+#: typed missing status, never guessed. When the cached PDF is present, the
+#: ingestion re-extracts live and REFUSES on any drift from these records.
+REVIEWED_PDF_COMPARATIVES: tuple[dict[str, object], ...] = (
+    {
+        "issuer_id": "IN-INFY",
+        "reference_document_id": REF_INFY_CONSO_Q1,
+        "source_document": "consol-fy27-q1-finstatement.pdf",
+        "page": "PDF p.3 (Condensed Consolidated Statement of Profit and Loss)",
+        "page_number": 3,
+        "declared_scale_label": "'(In ₹ crore, except equity share and per equity share data)' page header",
+        "scale_multiplier": "10000000",
+        "filed_at": "2026-07-23",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "INFY-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, prior_year (condensed two-column; row-major label adjacency)",
+        "anchor_preceding_quarter": None,
+        "anchor_annual": None,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "42,279",
+                "prior_value": "422790000000",
+                "anchor_current": "48211",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "6,924",
+                "prior_value": "69240000000",
+                "anchor_current": "7775",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "16.70",
+                "prior_value": "16.70",
+                "anchor_current": "19.19",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "16.68",
+                "prior_value": "16.68",
+                "anchor_current": "19.17",
+            },
+        },
+        "note": (
+            "Prior-year quarter (three months ended June 30, 2025) comparatives from the same "
+            "deterministic condensed statement IND-3 verified; current-column values equal the "
+            "XBRL facts exactly (scale verified by the anchor match)."
+        ),
+    },
+    {
+        "issuer_id": "IN-TCS",
+        "reference_document_id": REF_TCS_CONSO_Q1,
+        "source_document": "tcs-q1fy27-consolidated-indas-finstatement.pdf",
+        "page": "PDF p.2 (Condensed Consolidated Statement of Profit and Loss)",
+        "page_number": 2,
+        "declared_scale_label": "'(₹ crore)' page header",
+        "scale_multiplier": "10000000",
+        "filed_at": "2026-07-09",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "TCS-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, prior_year (condensed two-column; row-major label adjacency)",
+        "anchor_preceding_quarter": None,
+        "anchor_annual": None,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "63,437",
+                "prior_value": "634370000000",
+                "anchor_current": "72275",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "12,819",
+                "prior_value": "128190000000",
+                "anchor_current": "13420",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "35.27",
+                "prior_value": "35.27",
+                "anchor_current": "36.90",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "35.27",
+                "prior_value": "35.27",
+                "anchor_current": "36.90",
+            },
+        },
+        "note": (
+            "TCS prints one 'Basic and diluted (₹)' EPS row (identical values, 36.90 / 35.27); "
+            "both concepts are carried from the same verified row."
+        ),
+    },
+    {
+        "issuer_id": "IN-HCLTECH",
+        "reference_document_id": REF_HCLTECH_REG33_Q1,
+        "source_document": "hcltech-q1fy27-unaudited-financial-results-qe-june-30-2026.pdf",
+        "page": "PDF p.2 (Consolidated Reg-33 statement)",
+        "page_number": 2,
+        "declared_scale_label": "Reg-33 statement, ₹ in crores",
+        "scale_multiplier": "10000000",
+        "filed_at": "2026-07-13",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "HCLTECH-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, preceding_quarter, prior_year (three-column quarter block)",
+        "anchor_preceding_quarter": True,
+        "anchor_annual": None,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "30,349",
+                "prior_value": "303490000000",
+                "anchor_current": "34579",
+                "anchor_preceding": "33981",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "3,844",
+                "prior_value": "38440000000",
+                "anchor_current": "4626",
+                "anchor_preceding": "4490",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "14.18",
+                "prior_value": "14.18",
+                "anchor_current": "17.09",
+                "anchor_preceding": "16.59",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "14.17",
+                "prior_value": "14.17",
+                "anchor_current": "17.06",
+                "anchor_preceding": "16.56",
+            },
+        },
+        "note": (
+            "HCLTech's Reg-33 prints three quarter columns (30-June-2026 / 31-March-2026 / "
+            "30-June-2025); both known columns of each row match the XBRL facts before the "
+            "prior-year value is read."
+        ),
+    },
+    {
+        "issuer_id": "IN-ITC",
+        "reference_document_id": REF_ITC_CFS_Q1,
+        "source_document": "itc-q1fy27-financial-result-cfs.pdf",
+        "page": "PDF p.1 (consolidated results statement)",
+        "page_number": 1,
+        "declared_scale_label": "'(₹ in Crores)' page header",
+        "scale_multiplier": "10000000",
+        "filed_at": "2026-07-31",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "ITC-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, prior_year, preceding_quarter, annual (four columns)",
+        "anchor_preceding_quarter": True,
+        "anchor_annual": True,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "23,129.35",
+                "prior_value": "231293500000",
+                "anchor_current": "29523.30",
+                "anchor_preceding": "23821.48",
+                "anchor_annual": "89913.33",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "5,343.41",
+                "prior_value": "53434100000",
+                "anchor_current": "4508.79",
+                "anchor_preceding": "5469.74",
+                "anchor_annual": "21018.15",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "4.19",
+                "prior_value": "4.19",
+                "anchor_current": "3.51",
+                "anchor_preceding": "4.30",
+                "anchor_annual": "16.52",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "4.18",
+                "prior_value": "4.18",
+                "anchor_current": "3.51",
+                "anchor_preceding": "4.30",
+                "anchor_annual": "16.51",
+            },
+        },
+        "note": (
+            "Three of the four columns of every anchored row equal the XBRL facts (Q1 FY27, "
+            "Q4 FY26 quarter, FY26 annual) before the prior-year quarter value is read."
+        ),
+    },
+    {
+        "issuer_id": "IN-ASIANPAINT",
+        "reference_document_id": REF_ASIANPAINT_RESULTS_Q1,
+        "source_document": "asianpaints-q1fy27-results.pdf",
+        "page": "PDF p.10 (consolidated Reg-33 statement)",
+        "page_number": 10,
+        "declared_scale_label": "'(₹ in Crores)' page footer",
+        "scale_multiplier": "10000000",
+        "filed_at": "2026-07-29",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "ASIANPAINT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, preceding_quarter, prior_year (three-column quarter block)",
+        "anchor_preceding_quarter": True,
+        "anchor_annual": None,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "8,938.55",
+                "prior_value": "89385500000",
+                "anchor_current": "10541.94",
+                "anchor_preceding": "9246.70",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "1,117.05",
+                "prior_value": "11170500000",
+                "anchor_current": "1559.45",
+                "anchor_preceding": "1185.49",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "11.47",
+                "prior_value": "11.47",
+                "anchor_current": "16.06",
+                "anchor_preceding": "12.23",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "11.47",
+                "prior_value": "11.47",
+                "anchor_current": "16.05",
+                "anchor_preceding": "12.22",
+            },
+        },
+        "note": (
+            "The rendered page's header labels extract out of visual order, so identification "
+            "is purely value-anchored: the internal identity 'revenue from sales + other "
+            "operating revenue = revenue from operations' holds in all three columns and two "
+            "known columns per row equal the XBRL facts. Page-10 linear text only."
+        ),
+    },
+    {
+        "issuer_id": "IN-SUNPHARMA",
+        "reference_document_id": REF_SUNPHARMA_RESULTS_Q1,
+        "source_document": "sunpharma-q1fy27-financial-results.pdf",
+        "page": "PDF p.1 (consolidated results statement)",
+        "page_number": 1,
+        "declared_scale_label": "declared display unit ₹ MILLION (instance LevelOfRounding=Millions)",
+        "scale_multiplier": "1000000",
+        "filed_at": "2026-07-31",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "SUNPHARMA-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, preceding_quarter, prior_year, annual (four columns)",
+        "anchor_preceding_quarter": True,
+        "anchor_annual": True,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "138,514.0",
+                "prior_value": "138514000000",
+                "anchor_current": "152998.8",
+                "anchor_preceding": "146117.9",
+                "anchor_annual": "584620.4",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "22,928.7",
+                "prior_value": "22928700000",
+                "anchor_current": "29012.3",
+                "anchor_preceding": "27096.6",
+                "anchor_annual": "115086.5",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "9.5",
+                "prior_value": "9.5",
+                "anchor_current": "12.1",
+                "anchor_preceding": "11.3",
+                "anchor_annual": "47.8",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "9.5",
+                "prior_value": "9.5",
+                "anchor_current": "12.1",
+                "anchor_preceding": "11.3",
+                "anchor_annual": "47.8",
+            },
+        },
+        "note": (
+            "Sun Pharma displays in ₹ MILLION (revenue 152,998.8 Mn = ₹15,299.88 Cr); the "
+            "stored prior-year values are full rupees as everywhere else."
+        ),
+    },
+    {
+        "issuer_id": "IN-LT",
+        "reference_document_id": REF_LT_RESULTS_Q1,
+        "source_document": "lt-q1fy27-financial-results.pdf",
+        "page": "PDF p.1 (consolidated results statement)",
+        "page_number": 1,
+        "declared_scale_label": "'₹ Crore' statement header",
+        "scale_multiplier": "10000000",
+        "filed_at": "2026-07-28",
+        "period_start": "2025-04-01",
+        "period_end": "2025-06-30",
+        "source_xbrl_document": "LT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+        "column_order": "current, preceding_quarter, prior_year, annual (four columns)",
+        "anchor_preceding_quarter": True,
+        "anchor_annual": True,
+        "concepts": {
+            "revenue_from_operations": {
+                "tag": "RevenueFromOperations",
+                "prior_display": "63,678.92",
+                "prior_value": "636789200000",
+                "anchor_current": "67941.74",
+                "anchor_preceding": "82762.16",
+                "anchor_annual": "285874.36",
+            },
+            "profit_after_tax": {
+                "tag": "ProfitLossForPeriod",
+                "prior_display": "4,318.17",
+                "prior_value": "43181700000",
+                "anchor_current": "4988.03",
+                "anchor_preceding": "6133.06",
+                "anchor_annual": "18953.88",
+            },
+            "eps_basic": {
+                "tag": "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "26.30",
+                "prior_value": "26.30",
+                "anchor_current": "29.97",
+                "anchor_preceding": "38.71",
+                "anchor_annual": "116.93",
+            },
+            "eps_diluted": {
+                "tag": "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+                "prior_display": "26.29",
+                "prior_value": "26.29",
+                "anchor_current": "29.96",
+                "anchor_preceding": "38.70",
+                "anchor_annual": "116.88",
+            },
+        },
+        "note": (
+            "The same anchored row repeats on p.4 (segment-total revenue) with the identical "
+            "prior-year value — an internal consistency cross-check, recorded here from p.1."
+        ),
+    },
+)
 
 #: Agent-verified reported cash flow extracted from the cached company-IR PDFs
 #: on 2026-09-11 (extraction: quarterline.sources.india.pdf_results.
@@ -1176,6 +2059,54 @@ def write_validation_csv(
             review_notes=quarterly["note"],
         )
     )
+    # IND-6 prior-year quarter comparatives (PDF-sourced, value-anchored).
+    for record in REVIEWED_PDF_COMPARATIVES:
+        concepts: dict[str, dict[str, str]] = record["concepts"]  # type: ignore[assignment]
+        document = documents.get(str(record["source_document"]))
+        for concept, entry in sorted(concepts.items()):
+            rows.append(
+                ValidationRow(
+                    issuer_id=str(record["issuer_id"]),
+                    source_document_id=str(record["source_document"]),
+                    source_url=document.source_url if document else "",
+                    document_hash=document.sha256 if document else "",
+                    filing_identifier=(
+                        f"company-ir (accompanies NSE seq of {record['source_xbrl_document']})"
+                    ),
+                    filed_at=str(record["filed_at"]),
+                    period_start=str(record["period_start"]),
+                    period_end=str(record["period_end"]),
+                    fiscal_label=_application_fiscal_label(
+                        date.fromisoformat(str(record["period_start"])),
+                        date.fromisoformat(str(record["period_end"])),
+                        "quarter",
+                    ),
+                    reporting_scope="consolidated",
+                    concept=concept,
+                    original_tag_or_label=(
+                        f"{entry['tag']} (rendered prior-year comparative column)"
+                    ),
+                    context_id=f"{record['page']} (value-anchored text extraction)",
+                    raw_value=str(entry["prior_display"]),
+                    raw_unit="INR (displayed declared scale)",
+                    source_precision=(
+                        f"declared display scale verified by anchor match; "
+                        f"multiplier {record['scale_multiplier']} to full rupees"
+                    ),
+                    presentation_scale=str(record["declared_scale_label"]),
+                    normalized_value=str(entry["prior_value"]),
+                    normalized_unit="INR/share" if concept.startswith("eps_") else "INR",
+                    reference_document_id=str(record["reference_document_id"]),
+                    reference_page_or_location=str(record["page"]),
+                    reference_display_value=(
+                        f"current {entry['anchor_current']} (== XBRL) -> "
+                        f"prior-year {entry['prior_display']}"
+                    ),
+                    comparison_status=COMPARISON_MATCHED,
+                    review_status=REVIEW_AGENT_CHECKED,
+                    review_notes=(f"{record['column_order']}; {record['note']}"),
+                )
+            )
     rows.sort(
         key=lambda r: (r.issuer_id, r.source_document_id, r.period_end, r.original_tag_or_label)
     )

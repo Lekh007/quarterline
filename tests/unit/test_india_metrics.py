@@ -1,12 +1,13 @@
-"""India metric tests (IND-4, india-metrics-v1) on REAL fixture data.
+"""India metric tests (IND-4, india-metrics-v1; IND-6 YoY corpus) on REAL data.
 
 QoQ revenue Q4 FY26 -> Q1 FY27 computes the exact Decimal; PAT margins are the
 owners'/group's PAT over revenue (never total_income); the exceptional impact
 preserves each issuer's source sign (INFY FY26 -1,289 Cr expense; HUL Q4 +247 Cr
-gain); YoY metrics report the typed missing status with an explanation while the
-prior-year quarters are un-ingested — never fabricated. Denominator rules follow
-the US convention. Quarter and annual metric rows coexist at the same
-period_end via the store-key suffix.
+gain); YoY computes where the prior-year quarter is ingested (IND-6: INFY + six
+more issuers' IR-PDF comparatives) and reports the typed missing status where it
+is not (HUL/MARUTI/ULTRACEMCO) — never fabricated. Denominator rules follow the
+US convention. Quarter and annual metric rows coexist at the same period_end via
+the store-key suffix.
 """
 
 from __future__ import annotations
@@ -96,34 +97,50 @@ class TestGrowthMetrics:
         # HUL P&L facts carry the IND-3 pending status; the metric notes it
         assert any("requires_manual_review" in note for note in result.notes)
 
-    def test_yoy_missing_with_explanation_both_issuers(self, india_imported):
-        """Prior-year quarters are NOT ingested: typed missing status with what
-        would be needed — for BOTH issuers, never one computed and one faked."""
+    def test_infy_yoy_computes_from_ingested_ir_pdf_comparative(self, india_imported):
+        """IND-6: Infosys' prior-year quarter IS ingested (value-anchored
+        extraction from its own condensed-FS comparative column, pdf_text
+        provenance) — the same policy as before, now with the observation
+        present: YoY computes exactly."""
         _, _ = india_imported
         run_ind4_pipeline()
-        for issuer in ("IN-INFY", "IN-HINDUNILVR"):
-            result = _result_for(issuer, "india_revenue_yoy", date(2026, 6, 30))
-            assert result.status == "missing"
-            assert result.value is None
-            assert any(
-                "not present in ingested sources" in note
-                and "pdf_text" in note
-                and "IR PDF comparative column" in note
-                for note in result.notes
-            ), result.notes
-            # the current-quarter fact is still referenced as the input
-            assert result.input_fact_ids
+        result = _result_for("IN-INFY", "india_revenue_yoy", date(2026, 6, 30))
+        expected = Decimal(482110000000) / Decimal(422790000000) - 1
+        assert result.status == "ok"
+        assert result.value == expected
+        assert len(result.input_fact_ids) == 2
+        assert any("prior" in note for note in result.notes)
 
-    def test_eps_growth_yoy_missing_consistently(self, india_imported):
+    def test_yoy_missing_with_explanation_where_no_comparative_ingested(self, india_imported):
+        """HUL's rendered comparatives interleave under linear extraction
+        (IND-3 §7), so no prior-year observation exists: typed missing status
+        with what would be needed — never a fabricated comparative."""
         _, _ = india_imported
         run_ind4_pipeline()
-        statuses = set()
-        for issuer in ("IN-INFY", "IN-HINDUNILVR"):
-            result = _result_for(issuer, "india_eps_growth_yoy", date(2026, 6, 30))
-            assert result.status == "missing"
-            assert result.value is None
-            statuses.add(result.status)
-        assert statuses == {"missing"}
+        result = _result_for("IN-HINDUNILVR", "india_revenue_yoy", date(2026, 6, 30))
+        assert result.status == "missing"
+        assert result.value is None
+        assert any(
+            "not present in ingested sources" in note
+            and "pdf_text" in note
+            and "IR PDF comparative column" in note
+            for note in result.notes
+        ), result.notes
+        # the current-quarter fact is still referenced as the input
+        assert result.input_fact_ids
+
+    def test_eps_growth_yoy_same_rule_for_both_issuers(self, india_imported):
+        """The SAME ingested-facts rule for every issuer: INFY computes from
+        its ingested comparative; HUL reports the typed missing status."""
+        _, _ = india_imported
+        run_ind4_pipeline()
+        infy = _result_for("IN-INFY", "india_eps_growth_yoy", date(2026, 6, 30))
+        expected = Decimal("19.17") / Decimal("16.68") - 1
+        assert infy.status == "ok"
+        assert infy.value == expected
+        hul = _result_for("IN-HINDUNILVR", "india_eps_growth_yoy", date(2026, 6, 30))
+        assert hul.status == "missing"
+        assert hul.value is None
 
     def test_growth_is_quarter_only(self, india_imported):
         """No YoY/QoQ row is produced for the annual identity (growth metrics
@@ -249,7 +266,11 @@ class TestExceptionalImpact:
             )
         infy = _infy_id()
         hul = _hul_id()
-        by_key = {(r.company_id, r.metric, r.period_end): Decimal(r.value_decimal) for r in rows}
+        by_key = {
+            (r.company_id, r.metric, r.period_end): Decimal(r.value_decimal)
+            for r in rows
+            if r.value_decimal is not None  # missing rows persist value=NULL
+        }
         march = date(2026, 3, 31)
         june = date(2026, 6, 30)
         assert by_key[(infy, "india_exceptional_impact_pbt@annual", march)] == Decimal(-12890000000)

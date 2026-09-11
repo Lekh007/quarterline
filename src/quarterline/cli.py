@@ -218,7 +218,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--issuer", required=True, help="issuer_id from data/watchlist_india.csv"
     )
     verify_india_facts.add_argument(
-        "--scope", default="consolidated", choices=["consolidated", "standalone"],
+        "--scope",
+        default="consolidated",
+        choices=["consolidated", "standalone"],
         help="reporting scope (default: consolidated)",
     )
     verify_india_facts.add_argument(

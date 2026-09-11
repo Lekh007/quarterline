@@ -224,10 +224,12 @@ class TestCoverageReport:
         with session_scope() as session:
             report = coverage_report(session, "IN-INFY")
         labels = [identity.application_label for identity in report.identities]
-        assert len(report.identities) == 3  # FY26 annual, Q4 FY26, Q1 FY27
+        assert len(report.identities) == 4  # FY26 annual, Q4 FY26, Q1 FY27, Q1 FY26
         assert any("FY2025-26 annual" in label for label in labels)
         assert any(label.startswith("Q4 FY2025-26") for label in labels)
         assert any(label.startswith("Q1 FY2026-27") for label in labels)
+        # IND-6: the ingested prior-year comparative adds the Q1 FY26 identity
+        assert any(label.startswith("Q1 FY2025-26") for label in labels)
         # each identity covers every canonical concept
         assert all(len(identity.cells) == 10 for identity in report.identities)
         annual = next(i for i in report.identities if "annual" in i.application_label)

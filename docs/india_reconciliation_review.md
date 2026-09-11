@@ -1,12 +1,15 @@
-# India reconciliation review packet (IND-3)
+# India reconciliation review packet (IND-3; extended to the full 10-issuer corpus in IND-6)
 
 Status: ready for human review, 2026-09-11. Scope: **Infosys (`IN-INFY`) and
-Hindustan Unilever (`IN-HINDUNILVR`) only** — the two issuers whose identifiers
-are verified and whose filings are acquired. This packet accompanies
-`data/validation/india_reconciliation.csv` (79 rows, 25-column contract) and the
-corrected methodology (`docs/india_financial_methodology.md` §4). Claim-audit
-corrections with their rationale are recorded in `docs/india_source_audit.md`
-§2, §5, §9.1 and §10 — nothing was silently edited.
+Hindustan Unilever (`IN-HINDUNILVR`)** as acquired in IND-1 (§§1–10 below), and
+— since IND-6 — the **full 10-issuer watchlist** whose identifiers were verified
+and filings acquired by the group A/B acquisition milestones (§11: TCS,
+HCLTECH, ITC, ASIANPAINT, MARUTI, ULTRACEMCO, SUNPHARMA, LT). This packet
+accompanies `data/validation/india_reconciliation.csv` (419 rows, 25-column
+contract) and the corrected methodology
+(`docs/india_financial_methodology.md` §4). Claim-audit corrections with their
+rationale are recorded in `docs/india_source_audit.md` §2, §5, §9.1, §10 and
+§11–12 — nothing was silently edited.
 
 Machine-readable artifact: `data/validation/india_reconciliation.csv`
 (regenerate with `quarterline.sources.india.reconcile.write_validation_csv()`).
@@ -234,3 +237,171 @@ uv run pytest tests/unit/test_india_reconcile.py tests/unit/test_india_cash_flow
 The live-PDF drift tests re-extract the cached `storage/raw/india/` PDFs and
 fail if any recorded page reference or displayed value stops matching the
 document.
+
+---
+
+# 11. IND-6 extension — the full 10-issuer corpus (2026-09-11)
+
+The group A/B acquisition milestones (IND-6a/IND-6b; see
+`docs/india_source_audit_addendum_groupA.md` / `..._groupB.md`) verified the
+remaining eight issuers' identifiers and acquired both target periods for each.
+IND-6c merged the manifests, ingested the full corpus through the manual-import
+path, and extended this packet. The committed CSV now carries 419 rows (112
+`agent_checked_against_document`, 307 `human_review_pending`); human approval
+remains unset by code.
+
+## 11.1 New revision cases (real ones — both verified against cached documents)
+
+**Asian Paints Q4+FY26 consolidated — genuine revised filing (fact-neutral on
+every mapped concept).** Original seq 163991 (broadcast 29-May-2026, taxonomy
+**V2.0**) was superseded by revision seq 174871 (re-filed 15-Jul-2026, taxonomy
+**V2.1**) — the committed fixture is the revision. Both files are cached and
+were parsed: (1) `classify_filing_pair` returns `revised_filing` on the pair's
+REAL content hashes; (2) `select_latest` keeps the revision as latest while an
+as-of before 15-Jul keeps the original; (3) the **mapped** undimensioned tag
+sets are IDENTICAL across V2.0/V2.1 — no concept or label differs, and the
+taxonomy-version difference is recorded per instance, never forced; (4) the one
+value-level difference is exactly the line the listing remark names:
+`ReserveExcludingRevaluationReserves` 0 (original) → ₹21,275.67 Cr (revision),
+an UNMAPPED balance-sheet instant, so both mapped P&L series are unaffected;
+(5) the audit-qualification declaration changed "Not applicable" → "Declaration
+of unmodified opinion", also per the remark. Import order note: the revision was
+imported before the original, so the original's byte-identical mapped values are
+idempotent re-reports of the SAME observation identities (retained, carrying the
+in-force filing's seq/published metadata) while both documents remain registered
+artifacts.
+
+**L&T Q4+FY26 standalone — scope-asymmetric chained revision (metadata-only
+cause).** Chain per the NSE listing: Original seq 155701 (05-May-2026) →
+Revision seq 155858 (06-May-2026, "Share Capital number updated in the required
+format_") → Revision seq 156063 (07-May-2026: paid-up share capital "mentioned
+as number of shares instead of the corresponding amount_ … There is no impact on
+the financial results_"). The consolidated Q4 filing has NO revision — revision
+selection is per (issuer, period, SCOPE), never per issuer-period. Only the
+latest revision is cached (storage-only, 2.9 MB; the superseded original and
+first revision were never acquired), so the chain is DOCUMENTED from the listing
+metadata while the cached document itself is verified: it parses as Standalone
+and its `PaidUpValueOfEquityShareCapital` = ₹2,751,300,000 (₹275.13 Cr — the
+AMOUNT, not the ~1,375,650,000 share count the remark says was corrected);
+headline standalone facts (revenue ₹47,190.86 Cr, PAT ₹3,560.92 Cr for the
+March-2026 quarter) parse and are retained under the standalone scope, never
+mixed into the consolidated series. Classification nuance recorded honestly:
+the chain's last hop classifies `revised_filing` while being **fact-neutral for
+every financial result line** per the exchange's own remark — "revised" here
+means a superseding XBRL submission, not a changed result. The 155858→156063
+fact-equality assertion cannot be made against real files (155858 not cached);
+it is pinned mechanically by a clearly-synthetic pair test instead.
+
+The listing vocabulary note: NSE `type_Sub` says "Revision"; the package's
+canonical vocabulary is "Revised" — `revisions.normalize_revision_status()`
+maps at the import boundary, unrecognized values stay verbatim.
+
+## 11.2 Per-issuer reconciliation — group A + B (Q1 FY27 consolidated headline rows)
+
+Current-quarter column cross-checked against each issuer's own rendered Q1
+statement (value-anchored: the displayed current value equals the XBRL fact
+exactly, which also verifies the declared display scale). Full-rupee values and
+raw/normalized pairs are in the CSV.
+
+| Issuer | Q1 revenue | Q1 PBT | Q1 PAT (group) | Q1 EPS basic | Rendered cross-check | Status |
+|---|---|---|---|---|---|---|
+| TCS | 72,275 | 17,944 (PBIT 18,612 − 668 exceptional) | 13,420 | 36.90 | condensed-FS PDF p.2, two-column (Jun-2026/Jun-2025), ₹ crore | matched (agent-checked) |
+| HCLTECH | 34,579 | 6,108 (exceptional nil) | 4,626 | 17.09 | Reg-33 PDF p.2, three quarter columns | matched |
+| ITC | 29,523.30 | **5,774.94 (XBRL) vs 5,860.85 rendered** | 4,508.79 | 3.51 | cfs PDF p.1 | **scope_or_basis_difference_recorded**: ITC's rendered "Profit before tax" INCLUDES the 85.91 share of associates/JV; the XBRL `ProfitBeforeTax` excludes it (5,369.06 + 405.88 exceptional gain = 5,774.94; + 85.91 = 5,860.85). Both identities reconcile exactly. |
+| ASIANPAINT | 10,541.94 | 2,095.75 | 1,559.45 | 16.06 | results PDF p.10 (value-anchored; the page's header labels extract out of visual order, so identification is by the internal identity (a)+(b)=(1) across all three columns plus the XBRL anchors) | matched |
+| MARUTI (₹ Mn) | 5,24,698 Mn | 43,435 Mn | 34,469 Mn | 109.63 | Reg-33 PDF p.3 is a scan with a garbled OCR layer ("<24 60R") | **extraction_scrambled** → human_review_pending (never guessed) |
+| ULTRACEMCO | 24,648.20 | 3,479.03 | 2,603.72 | 88.36 | results PDF p.5 extracts with vector artifacts ("130E....i.-", detached value blocks) | **extraction_scrambled** → human_review_pending |
+
+Both scrambled rows state the RAW XBRL values (the ingested truth); the rendered
+documents await human reading.
+
+| Issuer | Q1 revenue | Q1 PBT | Q1 PAT (group) | Q1 EPS basic | Rendered cross-check | Status |
+|---|---|---|---|---|---|---|
+| SUNPHARMA (₹ Mn) | 152,998.8 Mn | 40,988.1 Mn | 29,012.3 Mn | 12.1 | results PDF p.1, four columns (30.06.2026/31.03.2026/30.06.2025/FY26), declared display unit ₹ MILLION | matched |
+| LT | 67,941.74 | 6,922.26 | 4,988.03 | 29.97 | results PDF p.1, four columns (30.06.2026 Reviewed / 31.03.2026 Audited / 30.06.2025 Reviewed / FY26), ₹ Crore | matched |
+| INFY / HUL | — see §2/§3 (unchanged) | | | | | |
+
+Annual CFO rows (FY2025-26) for the eight new issuers exist as raw XBRL
+observations with normalized values preserved (§11.4) but **no rendered
+comparison**: no Q4 Reg-33/annual PDFs were acquired for group A/B, so those
+rows are `no_rendered_comparison_available` / `human_review_pending`.
+
+## 11.3 Prior-year comparatives and YoY (IND-6 headline work)
+
+None of the ten Q1 FY27 consolidated instances carries a prior-year duration
+context (verified per instance), so the only clean route to a prior-year quarter
+is the issuers' own rendered comparative column. Extraction is VALUE-ANCHORED
+(`pdf_results.extract_prior_year_comparatives`): the current-quarter,
+preceding-quarter and annual values of the same row are known exactly from the
+committed XBRL instances, so a page token window matching all known anchors
+identifies the row, verifies the declared display scale, and the remaining
+column is the prior-year quarter. Ingested only where deterministic; `pdf_text`
+provenance + page reference + `agent_checked_against_document` on every row;
+a live drift guard re-extracts against the cached PDF at ingest time and
+refuses on any mismatch.
+
+| Issuer | PY Q1 (Jun-30-2025 quarter) ingested | PY revenue | PY PAT | PY EPS basic/diluted | india_revenue_yoy | india_eps_growth_yoy |
+|---|---|---|---|---|---|---|
+| INFY | yes (condensed-FS p.3, ₹ crore) | 42,279 | 6,924 | 16.70 / 16.68 | **ok: +14.03%** | ok: +14.93% |
+| TCS | yes (condensed-FS p.2, ₹ crore) | 63,437 | 12,819 | 35.27 / 35.27 (one printed row) | **ok: +13.93%** | ok: +4.62% |
+| HCLTECH | yes (Reg-33 p.2, ₹ crore) | 30,349 | 3,844 | 14.18 / 14.17 | **ok: +13.94%** | ok: +20.40% |
+| ITC | yes (cfs p.1, ₹ crore) | 23,129.35 | 5,343.41 | 4.19 / 4.18 | **ok: +27.64%** | ok: −16.03% |
+| ASIANPAINT | yes (results p.10, ₹ crore) | 8,938.55 | 1,117.05 | 11.47 / 11.47 | **ok: +17.94%** | ok: +39.93% |
+| SUNPHARMA | yes (results p.1, ₹ Mn) | 138,514.0 Mn | 22,928.7 Mn | 9.5 / 9.5 | **ok: +10.46%** | ok: +27.37% |
+| LT | yes (results p.1, ₹ crore) | 63,678.92 | 4,318.17 | 26.30 / 26.29 | **ok: +6.69%** | ok: +13.96% |
+| HUL | **NO** — 4-column rendering interleaves (§7.1, unchanged) | — | — | — | missing (typed) | missing (typed) |
+| MARUTI | **NO** — scan/OCR garble | — | — | — | missing (typed) | missing (typed) |
+| ULTRACEMCO | **NO** — vector-extraction garble | — | — | — | missing (typed) | missing (typed) |
+
+The missing statuses name exactly what would enable the metric; nothing is
+interpolated, and the SAME ingested-facts rule applies to every issuer.
+
+## 11.4 Cash-flow availability matrix (corpus update — supersedes §5's two-issuer scope)
+
+| Company | Q1 FY27 exchange XBRL | FY26 annual CFO (Q4 exchange XBRL) | Q1 IR PDF | Status in corpus |
+|---|---|---|---|---|
+| INFY | no CF facts | ₹33,986 Cr (+ capex 2,727 + 0) | quarterly CFO ₹9,330 Cr (p.6, ingested IND-3) | annual + reported quarterly |
+| TCS | no CF facts | ₹52,094 Cr | **quarterly CFO present**: ₹12,171 Cr vs ₹11,919 Cr PY (condensed-FS p.6) — documented, NOT ingested this wave | annual ingested; quarterly available (IND-7 candidate) |
+| HUL | no CF facts | ₹10,999 Cr (+ capex 1,258 + 103) | no CF statement | annual only |
+| HCLTECH | no CF facts | ₹19,975 Cr | no CF statement (20-pp results PDF) | annual only |
+| ITC | no CF facts | ₹1,84,643.1 Cr | no CF statement (4-pp cfs; XLSX not acquired) | annual only |
+| ASIANPAINT | no CF facts | ₹7,088.18 Cr (identical in original and revision) | no CF statement | annual only |
+| MARUTI | no CF facts | ₹19,099.9 Cr (decimals −6; instance declares Millions → display 190,999 Mn) | no CF statement | annual only |
+| ULTRACEMCO | no CF facts | ₹15,315.86 Cr | no CF statement | annual only |
+| SUNPHARMA | no CF facts | ₹12,419.18 Cr (instance declares Millions) | no CF statement | annual only |
+| LT | no CF facts | ₹16,740.97 Cr | no CF statement | annual only |
+
+Quarterly cash flow is therefore documented for INFY and TCS only (company-IR
+condensed statements), ingested for INFY; annual CFO is ingested for all ten
+issuers from the Q4 instances. The no-fabrication rules are unchanged.
+
+## 11.5 Updated review checklist items (for Lekhraj)
+
+- [ ] §11.2: read MARUTI `maruti-q1fy27-unaudited-financial-results.pdf` p.3
+      (consolidated statement; scan) and ULTRACEMCO `ultratech-q1fy27-results.pdf`
+      p.5, and confirm the raw XBRL values recorded in the CSV (the machine
+      extraction of both pages is garbled — the XBRL remains the ingested truth).
+- [ ] §11.2: confirm the ITC PBT basis difference reading (rendered line includes
+      the 85.91 Cr associate share; XBRL excludes it) is how we want the two
+      series documented.
+- [ ] §11.1: confirm the two revision-case treatments — Asian Paints (import
+      order retains the in-force filing's metadata; unmapped reserve delta
+      recorded) and L&T (chain documented from listing metadata; cached latest
+      revision verified as fact-neutral-for-results).
+- [ ] §11.3: confirm the seven-issuer comparative ingestions (display-scale
+      anchors listed per row in the CSV) and that HUL/MARUTI/ULTRACEMCO YoY
+      stay typed-missing until their documents are human-read or re-acquired.
+- [ ] §11.4: confirm annual CFO rows (raw + normalized) for the eight new
+      issuers may stay `human_review_pending` until Q4 rendered documents are
+      acquired, and whether to ingest TCS's reported quarterly CFO (₹12,171 Cr)
+      under the same provenance standard as INFY's.
+
+## 11.6 Corpus counts
+
+`data/validation/india_reconciliation.csv`: 419 rows — 112
+`agent_checked_against_document` (matched or recorded basis difference), 307
+`human_review_pending` (202 `no_rendered_comparison_available`, 105
+`extraction_scrambled`, plus pending notes), 4
+`scope_or_basis_difference_recorded` (INFY exceptional sign, HUL PBT/continuing
+basis, ITC PBT associate-share basis), 0 `mismatch_flagged_do_not_force`, 0
+`human_approved` (never set by code).

@@ -414,6 +414,201 @@ def ingest_reviewed_pdf_cash_flow(
     return report
 
 
+# ---------------------------------------------------------------------------
+# Reported PDF prior-year comparatives (IND-6): the exchange Q1 instances carry
+# NO prior-year duration contexts (verified for all 10 issuers), so the only
+# clean route to a prior-year quarter is the issuer's own rendered comparative
+# column, ingested ONLY where value-anchored extraction is deterministic.
+# ---------------------------------------------------------------------------
+
+#: The prior-year quarter identity every comparative below belongs to
+#: (Q1 FY2025-26: three months ended 30 June 2025).
+_COMPARATIVE_PERIOD_START = date(2025, 4, 1)
+_COMPARATIVE_PERIOD_END = date(2025, 6, 30)
+
+#: Rendered-line provenance tag per canonical concept (distinct from any XBRL
+#: tag so the observation identity never collides with a real instance fact).
+_COMPARATIVE_TAG_BY_CONCEPT = {
+    "revenue_from_operations": "RevenueFromOperationsRenderedPriorYearComparative",
+    "profit_after_tax": "ProfitLossForPeriodRenderedPriorYearComparative",
+    "eps_basic": "BasicEarningsLossPerShareRenderedPriorYearComparative",
+    "eps_diluted": "DilutedEarningsLossPerShareRenderedPriorYearComparative",
+}
+
+
+def _comparative_anchor_set(record: dict, entry: dict) -> list:
+    """Build the pdf_results anchors for one recorded concept row."""
+    from decimal import Decimal
+
+    from quarterline.sources.india.pdf_results import ComparativeAnchor
+
+    return [
+        ComparativeAnchor(
+            concept=str(entry["tag"]),
+            tag=str(entry["tag"]),
+            current=Decimal(str(entry["anchor_current"])),
+            preceding_quarter=(
+                Decimal(str(entry["anchor_preceding"])) if entry.get("anchor_preceding") else None
+            ),
+            annual=Decimal(str(entry["anchor_annual"])) if entry.get("anchor_annual") else None,
+        )
+    ]
+
+
+def _verify_comparative_against_cached_pdf(record: dict) -> str | None:
+    """Live drift guard: the cached document must still reproduce every recorded
+    prior-year value via the anchored extraction, or nothing is ingested."""
+    import hashlib
+    from decimal import Decimal
+
+    from quarterline.sources.india.pdf_results import extract_prior_year_comparatives
+    from quarterline.sources.india.reconcile import RENDERED_DOCUMENT_STORAGE
+
+    storage_relative = RENDERED_DOCUMENT_STORAGE.get(str(record["reference_document_id"]))
+    if not storage_relative:
+        raise ValueError(
+            f"comparative reference {record['reference_document_id']} has no storage mapping"
+        )
+    cached_pdf = (
+        Path(__file__).resolve().parents[4] / "storage" / "raw" / "india" / storage_relative
+    )
+    sha256: str | None = None
+    if cached_pdf.is_file():
+        content = cached_pdf.read_bytes()
+        sha256 = hashlib.sha256(content).hexdigest()
+        from quarterline.ingest.pdf_extract import extract_pdf
+
+        pages = extract_pdf(content).pages
+        page = next((p for p in pages if p.page_number == int(record["page_number"])), None)
+        if page is None:
+            raise ValueError(
+                f"cached PDF {storage_relative} no longer has a page "
+                f"{record['page_number']}; refusing to ingest stale comparatives"
+            )
+        concepts: dict[str, dict] = record["concepts"]  # type: ignore[assignment]
+        for concept, entry in concepts.items():
+            extractions = extract_prior_year_comparatives(
+                page.text,
+                page.page_number,
+                str(record["source_document"]),
+                _comparative_anchor_set(record, entry),
+            )
+            live = next((e for e in extractions if e.ok), None)
+            if live is None or live.prior_year_display != Decimal(
+                str(entry["prior_display"]).replace(",", "")
+            ):
+                raise ValueError(
+                    f"reviewed PDF comparative for {record['issuer_id']} {concept} no longer "
+                    f"matches the cached document ({record['page']}); refusing to ingest a "
+                    "stale value — re-run the IND-6 reconciliation"
+                )
+    return sha256
+
+
+def ingest_reviewed_pdf_comparatives(
+    issuer_id: str, database_url: str | None = None
+) -> IndiaIngestReport:
+    """Carry the agent-verified PRIOR-YEAR QUARTER comparatives (IR PDF) as
+    observations with full provenance.
+
+    Only issuers whose Q1 rendered statements extract deterministically have
+    records here (HUL/MARUTI/ULTRACEMCO are excluded — column interleaving and
+    scan/vector garbling; their YoY stays a typed missing status). When the
+    cached PDF is present the recorded values are re-extracted live and any
+    drift REFUSES the ingest (never a stale constant). Idempotent via the
+    observation hash.
+    """
+    from quarterline.sources.india.reconcile import (
+        REVIEW_AGENT_CHECKED,
+        REVIEWED_PDF_COMPARATIVES,
+    )
+
+    records = [r for r in REVIEWED_PDF_COMPARATIVES if r["issuer_id"] == issuer_id]
+    issuer = require_verified(issuer_id)
+    report = IndiaIngestReport(issuer_id=issuer.issuer_id)
+    if not records:
+        return report
+
+    document_sha256s: dict[str, str | None] = {}
+    for record in records:
+        document_sha256s[str(record["source_document"])] = _verify_comparative_against_cached_pdf(
+            record
+        )
+
+    with session_scope(database_url) as session:
+        companies_repo = _companies_repo(session)
+        company = companies_repo.get_by_ticker(issuer.ticker_nse or issuer.issuer_id)
+        if company is None:
+            raise LookupError(
+                f"no company for {issuer.issuer_id} — import a document first "
+                "(`quarterline ingest india-document`)"
+            )
+        facts_repo = FactsRepo(session)
+        for record in records:
+            concepts: dict[str, dict] = record["concepts"]  # type: ignore[assignment]
+            period_start = date.fromisoformat(str(record["period_start"]))
+            period_end = date.fromisoformat(str(record["period_end"]))
+            for concept in sorted(concepts):
+                entry = concepts[concept]
+                value = Decimal(str(entry["prior_value"]))
+                metadata = {
+                    "namespace": "in-capmkt",
+                    "extraction_method": "pdf_text",
+                    "reference_document_id": record["reference_document_id"],
+                    "source_document": record["source_document"],
+                    "source_document_sha256": document_sha256s[str(record["source_document"])],
+                    "page": record["page"],
+                    "display_value": entry["prior_display"],
+                    "declared_scale": record["declared_scale_label"],
+                    "column_order": record["column_order"],
+                    "anchor_current_display": entry["anchor_current"],
+                    "period_source": "rendered comparative column (prior-year quarter)",
+                    "review_status": REVIEW_AGENT_CHECKED,
+                    "reporting_scope": "consolidated",
+                    "revision_status": None,
+                    "audited_status": None,
+                    "note": record["note"],
+                }
+                digest = observation_hash(
+                    issuer.isin,
+                    "in-capmkt",
+                    _COMPARATIVE_TAG_BY_CONCEPT[concept],
+                    "INR/share" if concept.startswith("eps_") else "INR",
+                    period_start,
+                    period_end,
+                    value,
+                    "consolidated",
+                )
+                observation = FactObservation(
+                    company_id=company.id,
+                    source_artifact_id=None,
+                    accession=None,
+                    form=FORM_PDF,
+                    filed_at=date.fromisoformat(str(record["filed_at"])),
+                    taxonomy="in-capmkt",
+                    original_tag=_COMPARATIVE_TAG_BY_CONCEPT[concept],
+                    canonical_concept=concept,
+                    value_decimal=decimal_to_text(value),
+                    unit="INR/share" if concept.startswith("eps_") else "INR",
+                    currency="INR",
+                    period_start=period_start,
+                    period_end=period_end,
+                    period_kind="quarter",
+                    source_fy=fiscal_year(period_end),
+                    source_fp=source_fp(period_start, period_end, "quarter"),
+                    reporting_scope="consolidated",
+                    context_metadata_json=json.dumps(metadata, sort_keys=True),
+                    observation_hash=digest,
+                )
+                _, inserted = facts_repo.insert_observation_skip_duplicate(observation)
+                if inserted:
+                    report.observations_inserted += 1
+                    report.by_concept[concept] = report.by_concept.get(concept, 0) + 1
+                else:
+                    report.observations_skipped += 1
+    return report
+
+
 __all__ = [
     "FORM_INTEGRATED_FILING",
     "FORM_PDF",
@@ -421,4 +616,5 @@ __all__ = [
     "IndiaIngestReport",
     "ingest_observations",
     "ingest_reviewed_pdf_cash_flow",
+    "ingest_reviewed_pdf_comparatives",
 ]

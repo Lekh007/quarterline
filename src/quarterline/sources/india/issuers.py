@@ -21,11 +21,19 @@ DEFAULT_WATCHLIST_PATH = _REPO_ROOT / "data" / "watchlist_india.csv"
 STATUS_VERIFIED = "verified"
 STATUS_PROPOSED = "proposed"
 
-#: Storage directory slugs matching the IND-1 cache layout
-#: (``storage/raw/india/infosys/...``, ``storage/raw/india/hindustan_unilever/...``).
+#: Storage directory slugs matching the IND-1 + IND-6a/6b cache layout
+#: (``storage/raw/india/infosys/...``, ``storage/raw/india/maruti_suzuki/...``).
 _STORAGE_SLUGS: dict[str, str] = {
     "IN-INFY": "infosys",
     "IN-HINDUNILVR": "hindustan_unilever",
+    "IN-TCS": "tcs",
+    "IN-HCLTECH": "hcltech",
+    "IN-ITC": "itc",
+    "IN-ASIANPAINT": "asianpaints",
+    "IN-MARUTI": "maruti_suzuki",
+    "IN-ULTRACEMCO": "ultratech_cement",
+    "IN-SUNPHARMA": "sun_pharmaceutical",
+    "IN-LT": "larsen_toubro",
 }
 
 

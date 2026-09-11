@@ -1,0 +1,250 @@
+{
+  "manifest_version": "1",
+  "created": "2026-09-11",
+  "wave": "IND-6a (India acquisition - group A: TCS, HCLTech, ITC, Asian Paints)",
+  "policy": "All files listed are real, unmodified documents exactly as served by the cited official source (exchange archive or company IR site). Nothing was invented, rounded, or synthesized. No anti-bot protection was bypassed: files were fetched through a normal interactive browser session (no captchas solved, no credentials, no cookie forging, no aggregator scraping; SPEC 2.4.6). Every exchange XBRL and every PDF listed was (re)fetched by this milestone through the browser on 2026-09-11 and verified byte-exact by sha256 after transfer. Files found already in storage from an earlier same-day session were re-fetched and confirmed identical before being accepted.",
+  "fetch_session": {
+    "fetch_date": "2026-09-11",
+    "fetch_methods_used": {
+      "browser": "real Chromium session (Playwright); same-origin page-context fetch inside the served document/origin, base64 transfer, sha256 verified after decode. NSE integrated-filing JSON API called from the www.nseindia.com page's own session."
+    },
+    "rate_limiting": "single-shot low-volume fetches spaced >= 4-5 s apart per host; no throttling responses or rate-limit headers encountered. A parallel acquisition agent shared the browser intermittently; a tab was navigated away mid-fetch once (recovered by re-navigating; no data corruption - the failed cross-origin fetch returned a fetch error and was retried after re-navigation).",
+    "taxonomy_note": "Per-instance taxonomy versions observed: all four Q1 FY27 consolidated instances carry 'IFIndAs V2.1 (26-06-2026)'; the April/May-filed Q4+FY26 consolidated originals carry 'IFIndAs V2.0 (06-02-2026)'; the Asian Paints Q4 consolidated REVISION (re-filed 15-Jul-2026) carries V2.1 - i.e. the taxonomy version varies per instance AND within one issuer-period across an original/revision pair. Namespace http://www.sebi.gov.in/xbrl/2026-01-31/in-capmkt, schemaRef in-capmkt-ent-2026-01-31.xsd (relative; schema not bundled)."
+  },
+  "issuers": {
+    "IN-TCS": {
+      "name": "Tata Consultancy Services Limited",
+      "isin": "INE467B01029",
+      "nse_symbol": "TCS",
+      "bse_code": "532540",
+      "identifier_verification": "NSE quote page heading 'Tata Consultancy Services Limited (INE467B01029)' (https://www.nseindia.com/get-quote/equity/TCS/Tata-Consultancy-Services-Limited); BSE stock page 'Tata Consultancy Services Ltd' with code 532540 in URL/title and ISIN INE467B01029 in page (https://www.bseindia.com/stock-share-price/tcs/tata-consultancy-services-ltd/532540/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE467B01029, in-capmkt:Symbol=TCS, in-capmkt:ScripCode=532540)"
+    },
+    "IN-HCLTECH": {
+      "name": "HCL Technologies Limited",
+      "isin": "INE860A01027",
+      "nse_symbol": "HCLTECH",
+      "bse_code": "532281",
+      "identifier_verification": "NSE quote page heading 'HCL Technologies Limited (INE860A01027)' (https://www.nseindia.com/get-quote/equity/HCLTECH/HCL-Technologies-Limited); BSE stock page header '(HCLTECH | 532281 | INE860A01027)' (https://www.bseindia.com/stock-share-price/hcl-technologies/hcltech/532281/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE860A01027, in-capmkt:Symbol=HCLTECH, in-capmkt:ScripCode=532281). Caution: a BSE URL with a wrong scrip code (7229) still renders a page whose title echoes the requested code - BSE code verification must come from the page body/ISIN or the filing, never from the title alone."
+    },
+    "IN-ITC": {
+      "name": "ITC Limited",
+      "isin": "INE154A01025",
+      "nse_symbol": "ITC",
+      "bse_code": "500875",
+      "identifier_verification": "NSE quote page heading 'ITC Limited (INE154A01025)' (https://www.nseindia.com/get-quote/equity/ITC/ITC-Limited); BSE stock page header '(ITC | 500875 | INE154A01025)' (https://www.bseindia.com/stock-share-price/itc-ltd/itc/500875/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE154A01025, in-capmkt:Symbol=ITC, in-capmkt:ScripCode=500875)"
+    },
+    "IN-ASIANPAINT": {
+      "name": "Asian Paints Limited",
+      "isin": "INE021A01026",
+      "nse_symbol": "ASIANPAINT",
+      "bse_code": "500820",
+      "identifier_verification": "NSE quote page heading 'Asian Paints Limited (INE021A01026)' (https://www.nseindia.com/get-quote/equity/ASIANPAINT/Asian-Paints-Limited); BSE stock page 'Asian Paints Ltd' with code 500820 in URL/title and ISIN INE021A01026 in page (https://www.bseindia.com/stock-share-price/asian-paints-ltd/asianpaint/500820/); and inside the NSE XBRL instance itself (in-capmkt:ISIN=INE021A01026, in-capmkt:Symbol=ASIANPAINT, in-capmkt:ScripCode=500820)"
+    }
+  },
+  "periods": {
+    "q1_fy2026-27": {
+      "label": "Q1 FY2026-27",
+      "period_start": "2026-04-01",
+      "period_end": "2026-06-30",
+      "note": "Quarter ended 30 June 2026; results broadcast 09-Jul (TCS), 13-Jul (HCLTech), 29-Jul (Asian Paints), 31-Jul (ITC) 2026"
+    },
+    "q4_fy2025-26": {
+      "label": "Q4 FY2025-26 + FY full year",
+      "period_start": "2026-01-01",
+      "period_end": "2026-03-31",
+      "year_start": "2025-04-01",
+      "year_end": "2026-03-31",
+      "note": "Quarter AND year ended 31 March 2026 filed together; consolidated results broadcast 09-Apr (TCS), 21-Apr (HCLTech), 29-May (Asian Paints), 21-May (ITC) 2026"
+    }
+  },
+  "cash_flow_evidence": {
+    "IN-TCS": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance; WhetherCashFlowStatementIsApplicableOnCompany absent",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 520940000000, context 2025-04-01..2026-03-31 (Rs 52,094 Cr at LevelOfRounding=Crores)",
+      "q1_ir_pdf_cash_flow": "QUARTERLY cash flow PRESENT: 'Consolidated Interim Statement of Cash Flows' (page 6 of tcs-q1fy27-consolidated-indas-finstatement.pdf) headed 'Three months ended June 30, 2026 / Three months ended June 30, 2025' - Net cash flows generated from operating activities Rs 12,171 Cr (Q1 FY27) vs Rs 11,919 Cr (Q1 FY26 comparative column). TCS joins Infosys as an issuer whose company-IR condensed statements publish quarter-granularity cash flow.",
+      "prior_year_comparative_in_q1_pdf": "YES - every statement carries a 'Three months ended June 30, 2025' column"
+    },
+    "IN-HCLTECH": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 199750000000, context 2025-04-01..2026-03-31 (Rs 19,975 Cr)",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - the 20-page Un-audited Financial Results PDF contains no cash-flow statement (zero cash-flow text mentions)",
+      "prior_year_comparative_in_q1_pdf": "YES - statements headed 'Three months ended' with 30 June 2026 and 2025 columns"
+    },
+    "IN-ITC": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement: CashFlowsFromUsedInOperatingActivities = 184643100000, context 2025-04-01..2026-03-31 (Rs 1,84,643.1 Cr)",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - the 4-page consolidated results PDF (cfs) contains no cash-flow statement (zero cash-flow text mentions); ITC does offer a results XLSX workbook (not acquired) that may carry CF sheets",
+      "prior_year_comparative_in_q1_pdf": "YES - columns for 'quarter ended 30th June, 2026' and 30th June, 2025"
+    },
+    "IN-ASIANPAINT": {
+      "q1_exchange_xbrl_cash_flow_facts": "NONE - zero cash-flow concepts in the consolidated Q1 instance",
+      "q4_exchange_xbrl_cash_flow": "FULL ANNUAL cash-flow statement in BOTH the original and the revised consolidated instance: CashFlowsFromUsedInOperatingActivities = 70881800000, context 2025-04-01..2026-03-31 (Rs 7,088.18 Cr)",
+      "q1_ir_pdf_cash_flow": "NOT PRESENT - the 13-page Q1 results PDF contains no cash-flow statement (zero cash-flow text mentions)",
+      "prior_year_comparative_in_q1_pdf": "YES - statements headed 'Quarter Ended 30th June, 2026' with 30th June 2025 comparative columns"
+    }
+  },
+  "committed_fixtures": [
+    {
+      "file": "TCS-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-TCS",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1690004_09072026063620_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "173420", "broadcast_ist": "2026-07-09 18:36:12", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "ef4034549b7f3acd942b08e89dff3df11eed3a9174fb720cfbc5e4a759925c60",
+      "size_bytes": 45281,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/tcs/q1_fy2026-27/exchange_nse/TCS-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026. Reg-33 minimum set: P&L, EPS, OCI, segments, audit status, identifiers. NO cash-flow and NO balance-sheet facts."
+    },
+    {
+      "file": "TCS-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-TCS",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1648408_09042026114218_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "150312", "broadcast_ist": "2026-04-09 23:42:16", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "17d9c6bb6ac7de632e5558dc2442cbb509b978cce481ff1ed8362b8a8f557cc9",
+      "size_bytes": 109844,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/tcs/q4_fy2025-26/exchange_nse/TCS-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 520940000000 for 2025-04-01..2026-03-31)."
+    },
+    {
+      "file": "HCLTECH-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-HCLTECH",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1691776_13072026072058_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "174185", "broadcast_ist": "2026-07-13 19:17:07", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "1c80d808b8223f12ffe47224196da583f1b0f803950d019276a7f78db029c2b9",
+      "size_bytes": 34782,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/hcltech/q1_fy2026-27/exchange_nse/HCLTECH-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Un-Audited). Reg-33 minimum set only; no cash-flow or balance-sheet facts. Carries 'Declaration of unmodified opinion' declaration even in the Q1 instance."
+    },
+    {
+      "file": "HCLTECH-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-HCLTECH",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1656676_21042026070943_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "151938", "broadcast_ist": "2026-04-21 19:09:44", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "f2fa3b023c43e37532a2dbc693d736c184d9c8da3f09d96329de1b06966f2bcc",
+      "size_bytes": 88846,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/hcltech/q4_fy2025-26/exchange_nse/HCLTECH-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 199750000000 for 2025-04-01..2026-03-31). Note: HCLTech's STANDALONE Q4 was revised (seq 152277, 23-Apr-2026); this consolidated instance has no revision."
+    },
+    {
+      "file": "ITC-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-ITC",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1706108_31072026052353_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "181205", "broadcast_ist": "2026-07-31 17:23:53", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "251a20e96060a164871536fcf2b0bebfc5a0d76dc6faa35245fbb187eae4b06c",
+      "size_bytes": 40157,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/itc/q1_fy2026-27/exchange_nse/ITC-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Un-Audited). Reg-33 minimum set only; no cash-flow or balance-sheet facts."
+    },
+    {
+      "file": "ITC-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-ITC",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1670766_21052026063229_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "159756", "broadcast_ist": "2026-05-21 18:32:29", "audited_status": "Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "366b95ff7cc75b499c447ad0852d8d02233cd290ad4d0fad06b4269480fb23c7",
+      "size_bytes": 101253,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.0 (06-02-2026)",
+      "storage_copy": "storage/raw/india/itc/q4_fy2025-26/exchange_nse/ITC-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026. Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 184643100000 for 2025-04-01..2026-03-31). ITC broadcasts its March-quarter results in late May, ~6 weeks after the IT companies."
+    },
+    {
+      "file": "ASIANPAINT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-ASIANPAINT",
+      "period": "q1_fy2026-27",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1704404_29072026065419_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "180064", "broadcast_ist": "2026-07-29 18:54:04", "audited_status": "Un-Audited", "revision": "Original"},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "7855266114cb80b59641426c7d6cac3d7a25f3d31c1f5e77658ec568a0e39551",
+      "size_bytes": 15408,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/asianpaints/q1_fy2026-27/exchange_nse/ASIANPAINT-Q1FY27-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, quarter ended 30-Jun-2026, limited review (Un-Audited). Smallest instance of the group (15 KB; fewer segments). Reg-33 minimum set only; no cash-flow or balance-sheet facts."
+    },
+    {
+      "file": "ASIANPAINT-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "issuer_id": "IN-ASIANPAINT",
+      "period": "q4_fy2025-26",
+      "scope": "consolidated",
+      "doc_type": "financial_results",
+      "format": "xbrl",
+      "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1693690_15072026083521_WEB.xml",
+      "source_tier": "exchange",
+      "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "174871", "broadcast_ist": null, "revised_ist": "2026-07-15 20:33:14", "audited_status": "Audited", "revision": "Revision", "revision_remark": "The revised consolidated Integrated Financial Statements are being re-filed in XBRL by selecting 'Declaration of Unmodified Opinion' in the General Information section, pursuant to the BSE communication dated 10th July 2026. Additionally, during the review, it was noted that the figure for reserves excluding revaluation reserves was inadvertently missed; the XBRL filing has been updated accordingly."},
+      "fetch_method": "browser",
+      "fetched_at": "2026-09-11",
+      "sha256": "ba770bf8ee2060008dbb1ad32f7dd68f7c69bac4111c251fd99a24662c3a5340",
+      "size_bytes": 59433,
+      "excerpted": false,
+      "taxonomy": "IFIndAs V2.1 (26-06-2026)",
+      "storage_copy": "storage/raw/india/asianpaints/q4_fy2025-26/exchange_nse/ASIANPAINT-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml",
+      "description": "NSE Integrated Filing (Finance) XBRL instance, consolidated, Q4 + year ended 31-Mar-2026 - the REVISED instance (latest available, supersedes seq 163991). Includes balance sheet and annual cash flow (CashFlowsFromUsedInOperatingActivities = 70881800000 for 2025-04-01..2026-03-31) and DeclarationOfUnmodifiedOpinionOrStatementOnImpactOfAuditQualification = 'Declaration of unmodified opinion'. Re-filed under taxonomy V2.1 whereas the superseded original is V2.0. The original instance is cached storage-only as ASIANPAINT-Q4FY26-consolidated-nse-integrated-filing-xbrl-ORIGINAL.xml."
+    }
+  ],
+  "storage_cache_only": [
+    {"path": "storage/raw/india/asianpaints/q4_fy2025-26/exchange_nse/ASIANPAINT-Q4FY26-consolidated-nse-integrated-filing-xbrl-ORIGINAL.xml", "issuer_id": "IN-ASIANPAINT", "period": "q4_fy2025-26", "scope": "consolidated", "doc_type": "financial_results", "format": "xbrl", "source_url": "https://nsearchives.nseindia.com/corporate/xbrl/INTEGRATED_FILING_INDAS_1676549_29052026075148_WEB.xml", "source_tier": "exchange", "exchange_filing": {"module": "NSE Integrated Filing- Financials", "seq_id": "163991", "broadcast_ist": "2026-05-29 19:51:48", "audited_status": "Audited", "revision": "Original"}, "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "d63ea07699b82e3884d6fd08df5eec4512582f313cdf3691be51cc855f95dec8", "size_bytes": 58120, "taxonomy": "IFIndAs V2.0 (06-02-2026)", "note": "Superseded original of the revised committed fixture; retained to document the revision pair. Its DeclarationOfUnmodifiedOpinionOrStatementOnImpactOfAuditQualification = 'Not applicable'."},
+    {"path": "storage/raw/india/tcs/q1_fy2026-27/tcs-q1fy27-consolidated-indas-finstatement.pdf", "issuer_id": "IN-TCS", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.tcs.com/content/dam/tcs/investor-relations/financial-statements/2026-27/q1/IND%20AS/Consolidated.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "87b3c84815de15f59aa0a33b0f3ed2fb594a5802b471f532856c25d342b1213d", "size_bytes": 761871, "description": "TCS Condensed Consolidated Ind AS financial statements, 55 pp., three months ended June 30, 2026 with June 30, 2025 comparative columns. Page 6 carries a QUARTERLY cash-flow statement ('Consolidated Interim Statement of Cash Flows'; Net cash flows generated from operating activities Rs 12,171 Cr vs Rs 11,919 Cr prior-year quarter)."},
+    {"path": "storage/raw/india/tcs/q1_fy2026-27/tcs-q1fy27-press-release-inr.pdf", "issuer_id": "IN-TCS", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://www.tcs.com/content/dam/tcs/investor-relations/financial-statements/2026-27/q1/IND%20AS/Press%20Release%20-%20INR.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "80ce98d2c228fefd9301150a93e8663f1960c203d097c6272932ba67d9f352e5", "size_bytes": 510766, "description": "Q1 FY27 INR press release with management commentary (RAG corpus)"},
+    {"path": "storage/raw/india/hcltech/q1_fy2026-27/hcltech-q1fy27-unaudited-financial-results-qe-june-30-2026.pdf", "issuer_id": "IN-HCLTECH", "period": "q1_fy2026-27", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.hcltech.com/sites/default/files/documents/investor-reports/Un-audited-Financial-Results-for-the-quarter-ended-June-30-2026.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "ebd29de8acc56b98e6b1c91cfd43b57f310b31d084e5a226d9d19e72a7188be2", "size_bytes": 5325815, "description": "Un-audited financial results (Reg-33 format, consolidated + standalone + segments), quarter ended June 30, 2026, with 2025 comparatives. Above the 5 MB fixture limit; storage-only. NO cash-flow statement."},
+    {"path": "storage/raw/india/hcltech/q1_fy2026-27/hcltech-q1fy27-investor-release.pdf", "issuer_id": "IN-HCLTECH", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://www.hcltech.com/sites/default/files/documents/investor-reports/HCLTech_Q1_FY27_Investor_Release.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "0cfa589ce8a1f18771f10bb55ed79a685a8f2ddcf1e8d5237f5007d563889334", "size_bytes": 4258196, "description": "Investor release with management commentary (RAG corpus)"},
+    {"path": "storage/raw/india/itc/q1_fy2026-27/itc-q1fy27-financial-result-cfs.pdf", "issuer_id": "IN-ITC", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "financial_results", "format": "pdf", "source_url": "https://itcportal.com/content/dam/itc-corporate/pdfs/financial-result/quarterly-results-2026-2027/june-2026/ITC-Financial-Result-Q1-FY2027-cfs.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "012dd4036b08936f45dedbfaf0c2a11691ff78c71ade71d026b1d99972d428bd", "size_bytes": 253464, "description": "ITC Financial Result Q1 FY2027, consolidated financial statements (cfs), 4 pp., quarter ended 30th June 2026 with 30th June 2025 comparatives. NO cash-flow statement. ITC also publishes a same-slug XLSX workbook (not acquired)."},
+    {"path": "storage/raw/india/itc/q1_fy2026-27/itc-q1fy27-press-release.pdf", "issuer_id": "IN-ITC", "period": "q1_fy2026-27", "scope": "consolidated", "doc_type": "press_release", "format": "pdf", "source_url": "https://itcportal.com/content/dam/itc-corporate/pdfs/financial-result/quarterly-results-2026-2027/june-2026/ITC-Press-Release-Q1-FY2027.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "4b501d6aaf49f6f8babf94b7b7cd07664a42b8cb46fd63567d42848a790adb0f", "size_bytes": 464394, "description": "Q1 FY27 press release with management commentary (RAG corpus)"},
+    {"path": "storage/raw/india/asianpaints/q1_fy2026-27/asianpaints-q1fy27-results.pdf", "issuer_id": "IN-ASIANPAINT", "period": "q1_fy2026-27", "scope": "consolidated+standalone", "doc_type": "financial_results", "format": "pdf", "source_url": "https://www.asianpaints.com/content/dam/asianpaints/website/secondary-navigation/investors/financial-results-2/2026-2027/Q1/APL-Q1FY27-Results.pdf", "source_tier": "company_ir", "fetch_method": "browser", "fetched_at": "2026-09-11", "sha256": "3b11c119e70ec1f6d8b2e56b40b602269cb4d9b2cf6b49a7bd347d45876abd47", "size_bytes": 5817492, "description": "APL Q1 FY27 results (audited-standalone/unaudited-consolidated results announcement, consolidated + standalone with segments and analyst-call materials), 13 pp., Quarter Ended 30th June 2026 with 30th June 2025 comparatives. Above the 5 MB fixture limit; storage-only. NO cash-flow statement."}
+  ]
+}

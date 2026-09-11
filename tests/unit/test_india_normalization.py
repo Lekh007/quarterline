@@ -44,6 +44,13 @@ from quarterline.store.models import (
 )
 
 
+def _published_from_filing(filing: dict) -> date:
+    """Broadcast date, falling back to the revised date for revision rows."""
+    stamp = filing.get("broadcast_ist") or filing.get("revised_ist")
+    assert stamp
+    return date.fromisoformat(str(stamp).split(" ")[0])
+
+
 def _india_company_ids() -> list[int]:
     with session_scope() as session:
         ids = list(
@@ -574,16 +581,22 @@ class TestIdempotency:
                 period_start=start,
                 period_end=end,
                 scope=entry["scope"],
-                published_at=date.fromisoformat(
-                    entry["exchange_filing"]["broadcast_ist"].split(" ")[0]
-                ),
+                published_at=_published_from_filing(entry["exchange_filing"]),
                 seq_id=entry["exchange_filing"].get("seq_id"),
             )
         assert artifact_count() == before
 
 
-def test_unverified_issuer_refused():
+def test_unverified_issuer_refused(tmp_path, monkeypatch):
+    """Guard exercised against a synthetic all-proposed registry (the live
+    registry verified all 10 rows in IND-6)."""
+    from india_test_helpers import write_all_proposed_watchlist
+
+    from quarterline.sources.india import issuers as issuers_module
     from quarterline.sources.india.normalization import normalize_canonical_facts
 
+    monkeypatch.setattr(
+        issuers_module, "DEFAULT_WATCHLIST_PATH", write_all_proposed_watchlist(tmp_path)
+    )
     with pytest.raises(ValueError, match="not verified"):
         normalize_canonical_facts("IN-TCS")  # proposed, never verified

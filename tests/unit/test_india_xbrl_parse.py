@@ -1,9 +1,9 @@
-"""XBRL parse tests on the REAL committed in-capmkt fixtures (IND-2).
+"""XBRL parse tests on the REAL committed in-capmkt fixtures (IND-2, IND-6 corpus).
 
 Offline: parses tests/fixtures/india/*.xml with stdlib ElementTree only. Asserts,
-for BOTH issuers and BOTH periods, the extracted consolidated P&L values, the
-quarter vs cumulative classification, the declared scope and the captured
-LevelOfRounding trait.
+for ALL TEN issuers and BOTH periods, the declared scope, the captured
+LevelOfRounding trait (Crores AND Millions — per issuer, IND-6) and the
+per-instance taxonomy version, plus the IND-2-era extracted-value spot checks.
 """
 
 from __future__ import annotations
@@ -12,19 +12,44 @@ from decimal import Decimal
 
 import pytest
 from india_test_helpers import (
-    COMMITTED_FIXTURES,
     HUL_Q1,
     HUL_Q4,
     INDIA_FIXTURES_DIR,
     INFY_Q1,
     INFY_Q4,
+    load_india_manifest,
 )
 
 from quarterline.sources.india.xbrl_parse import parse_instance
 
+ALL_FIXTURES = tuple(entry["file"] for entry in load_india_manifest()["committed_fixtures"])
+
 
 def parse(fixture: str):
     return parse_instance((INDIA_FIXTURES_DIR / fixture).read_bytes())
+
+
+def manifest_expectations() -> dict[str, dict]:
+    """{file: {taxonomy, rounding, scope}} declared per fixture by the manifest.
+
+    The manifest is the provenance record (IND-1/IND-6a/IND-6b acquisition, all
+    entries sha256-verified against the committed files), so the expected
+    per-instance taxonomy version and LevelOfRounding trait come from it rather
+    than being restated here.
+    """
+    expectations: dict[str, dict] = {}
+    for entry in load_india_manifest()["committed_fixtures"]:
+        # IND-1 entries predate the per-entry taxonomy field; the documented
+        # corpus rule applies (July Q1 filings V2.1, April/May Q4 filings V2.0).
+        default = "V2.0 (06-02-2026)" if entry["period"] == "q4_fy2025-26" else "V2.1 (26-06-2026)"
+        taxonomy = entry.get("taxonomy", default)
+        expectations[entry["file"]] = {
+            # manifest stores the full comment ("IFIndAs V2.1 (...)"); the
+            # parser returns the version fragment without the scheme name.
+            "taxonomy": taxonomy.removeprefix("IFIndAs "),
+            "scope": entry["scope"],
+        }
+    return expectations
 
 
 def undim_value(instance, tag: str, context_id: str) -> Decimal:
@@ -39,11 +64,12 @@ def undim_value(instance, tag: str, context_id: str) -> Decimal:
     return value
 
 
-#: FINDING (IND-2): the taxonomy version VARIES per filing — the Q1 filings
-#  (broadcast July 2026) carry IFIndAs V2.1 (26-06-2026), but both Q4+FY26
-#  instances (filed April 2026) still carry V2.0 (06-02-2026), which predates
-#  the V2.1 release. The parser carries the per-instance version; nothing may
-#  assume V2.1 (this refines IND-1's manifest note).
+#: FINDING (IND-2, corpus-wide since IND-6): the taxonomy version VARIES per
+#: filing generation — July-filed Q1 FY27 instances carry IFIndAs V2.1
+#: (26-06-2026), April/May-filed Q4+FY26 instances carry V2.0 (06-02-2026),
+#: and the Asian Paints Q4 REVISION (re-filed 15-Jul-2026) carries V2.1 while
+#: its superseded original is V2.0. The parser carries the per-instance
+#: version; nothing may assume V2.1.
 EXPECTED_TAXONOMY_VERSIONS = {
     INFY_Q1: "V2.1 (26-06-2026)",
     INFY_Q4: "V2.0 (06-02-2026)",
@@ -51,18 +77,52 @@ EXPECTED_TAXONOMY_VERSIONS = {
     HUL_Q4: "V2.0 (06-02-2026)",
 }
 
+#: FINDING (IND-6, group B): LevelOfRounding varies BY ISSUER, not by period:
+#: MARUTI and SUNPHARMA declare Millions; the other eight declare Crores.
+#: Values are full rupees either way (presentation metadata only).
+EXPECTED_ROUNDING_TRAITS = {
+    "IN-MARUTI": "Millions",
+    "IN-SUNPHARMA": "Millions",
+}
+
 
 class TestInstanceQualifiers:
     """Scope/audit/rounding qualifiers are declared IN the instance and surfaced."""
 
-    @pytest.mark.parametrize("fixture", COMMITTED_FIXTURES)
+    @pytest.mark.parametrize("fixture", ALL_FIXTURES)
     def test_common_qualifiers(self, fixture):
+        expectations = manifest_expectations()
         inst = parse(fixture)
-        assert inst.taxonomy_version == EXPECTED_TAXONOMY_VERSIONS[fixture]
-        assert inst.declared_scope == "consolidated"
-        assert inst.rounding_trait == "Crores"
-        assert inst.schema_ref == "in-capmkt-ent-2026-01-31.xsd"
-        assert inst.entity_scheme == "http://www.sebi.gov.in/in-capmkt/ScripCode"
+        expected_tax = expectations[fixture]["taxonomy"]
+        assert inst.taxonomy_version == expected_tax, fixture
+        assert inst.declared_scope == expectations[fixture]["scope"] == "consolidated", fixture
+        assert inst.schema_ref == "in-capmkt-ent-2026-01-31.xsd", fixture
+        expected_scheme = (
+            "http://www.sebi.gov.in/in-capmkt/Symbol"
+            if fixture.startswith("ULTRACEMCO-Q4")
+            else "http://www.sebi.gov.in/in-capmkt/ScripCode"
+        )
+        assert inst.entity_scheme == expected_scheme, fixture
+
+    def test_rounding_trait_varies_by_issuer_and_is_carried(self):
+        from india_test_helpers import fixture_entries
+
+        entries = fixture_entries()
+        for file, entry in entries.items():
+            expected = EXPECTED_ROUNDING_TRAITS.get(entry["issuer_id"], "Crores")
+            inst = parse(file)
+            assert inst.rounding_trait == expected, file
+
+    def test_ultracemco_q4_entity_scheme_variance_is_carried(self):
+        """FINDING (IND-6): 19 of 20 committed instances identify the entity by
+        BSE scrip code; ULTRACEMCO's Q4 instance uses the in-capmkt/Symbol
+        scheme with the NSE symbol instead. The parser surfaces the scheme
+        verbatim — identity joins must use the qualifier facts (ISIN), never
+        assume the scrip-code scheme."""
+        inst = parse("ULTRACEMCO-Q4FY26-consolidated-nse-integrated-filing-xbrl.xml")
+        assert inst.entity_scheme == "http://www.sebi.gov.in/in-capmkt/Symbol"
+        assert inst.entity_identifier == "ULTRACEMCO"
+        assert inst.isin == "INE481G01011"  # qualifier facts remain the identity
 
     def test_entity_identifiers_are_bse_scrip_codes(self):
         assert parse(INFY_Q1).entity_identifier == "500209"
@@ -123,7 +183,7 @@ class TestPeriodClassificationFromContexts:
 
         from quarterline.sources.india.periods import _month_span
 
-        for fixture in COMMITTED_FIXTURES:
+        for fixture in ALL_FIXTURES:
             inst = parse(fixture)
             for ctx in inst.contexts.values():
                 if ctx.is_dimensioned or ctx.period_start is None:
@@ -235,7 +295,7 @@ class TestUnitsAndDecimals:
         assert all(f.context.dimensions for f in segment)
 
     def test_all_committed_fixtures_parse(self):
-        for fixture in COMMITTED_FIXTURES:
+        for fixture in ALL_FIXTURES:
             inst = parse(fixture)
             assert len(inst.facts) > 50
             assert inst.qualifiers.get("DescriptionOfPresentationCurrency") == "INR"

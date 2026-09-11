@@ -38,6 +38,29 @@ from datetime import date
 REVISION_ORIGINAL = "Original"
 REVISION_REVISED = "Revised"
 
+#: The NSE listing's own synonym for a revised submission (``type_Sub`` carries
+#: "Revision"; this package's canonical vocabulary is "Revised"). Carried
+#: metadata is normalized at the import boundary so sidecars, observations and
+#: classifications all speak one vocabulary; anything unrecognized is kept
+#: verbatim (unknown stays unknown, never guessed into a known value).
+_LISTING_REVISION_SYNONYMS: dict[str, str] = {
+    "original": REVISION_ORIGINAL,
+    "revised": REVISION_REVISED,
+    "revision": REVISION_REVISED,
+}
+
+
+def normalize_revision_status(value: str | None) -> str | None:
+    """Map the exchange listing's revision vocabulary onto the package's.
+
+    ``None`` stays ``None`` (unknown); an unrecognized non-empty value is kept
+    verbatim so the listing's own wording is never silently discarded.
+    """
+    if value is None:
+        return None
+    mapped = _LISTING_REVISION_SYNONYMS.get(value.strip().lower())
+    return mapped if mapped is not None else value
+
 
 @dataclass(frozen=True)
 class FilingMeta:

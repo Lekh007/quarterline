@@ -25,12 +25,13 @@ from quarterline.sources.india.reconcile import (
 
 
 class TestLegacyRowsFromFixtures:
-    def test_rows_generated_for_both_issuers_and_periods(self):
+    def test_rows_generated_for_all_issuers_and_periods(self):
         rows = rows_from_fixture_dir(INDIA_FIXTURES_DIR)
         documents = {row.document for row in rows}
-        assert len(documents) == 4
+        assert len(documents) == 20  # 2 periods x 10 issuers (IND-6 corpus)
         issuers = {row.issuer_id for row in rows}
-        assert issuers == {"IN-INFY", "IN-HINDUNILVR"}
+        assert len(issuers) == 10
+        assert {"IN-INFY", "IN-HINDUNILVR"} <= issuers
 
     def test_expected_core_rows_present(self):
         rows = rows_from_fixture_dir(INDIA_FIXTURES_DIR)
@@ -124,8 +125,10 @@ class TestValidationCsv:
             "review_notes",
         ]
 
-    def test_covers_both_issuers_all_ten_concepts(self):
-        assert {r["issuer_id"] for r in self.rows} == {"IN-INFY", "IN-HINDUNILVR"}
+    def test_covers_all_ten_issuers_all_ten_concepts(self):
+        from india_test_helpers import ALL_ISSUER_IDS
+
+        assert {r["issuer_id"] for r in self.rows} == set(ALL_ISSUER_IDS)
         assert {r["concept"] for r in self.rows} == {
             "revenue_from_operations",
             "total_income",

@@ -236,7 +236,7 @@ class TestIngestObservations:
         ingest_observations("IN-INFY")
         ingest_observations("IN-HINDUNILVR")
         cfo = _observations("cash_flow_operations")
-        assert len(cfo) == 2  # one per issuer; the Q1 exchange instances carry none
+        assert len(cfo) == 2  # one per ingested issuer; Q1 exchange instances carry none
         for row in cfo:
             assert row.period_kind == "annual"
             assert (row.period_start, row.period_end) == (date(2025, 4, 1), date(2026, 3, 31))
@@ -409,8 +409,16 @@ class TestIngestObservations:
         assert pat[(INFY_Q1_SEQ, "quarter", date(2026, 6, 30))] == Decimal(77750000000)
         assert owners[(INFY_Q1_SEQ, "quarter", date(2026, 6, 30))] == Decimal(77690000000)
 
-    def test_unverified_issuer_never_ingests(self, india_imported):
-        _, _ = india_imported
+    def test_unverified_issuer_never_ingests(self, india_imported, tmp_path, monkeypatch):
+        """Guard exercised against a synthetic all-proposed registry (the live
+        registry verified all 10 rows in IND-6)."""
+        from india_test_helpers import write_all_proposed_watchlist
+
+        from quarterline.sources.india import issuers as issuers_module
+
+        monkeypatch.setattr(
+            issuers_module, "DEFAULT_WATCHLIST_PATH", write_all_proposed_watchlist(tmp_path)
+        )
         with pytest.raises(ValueError, match="not verified"):
             require_verified("IN-TCS")
 

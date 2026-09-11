@@ -383,3 +383,185 @@ def extract_cash_flow_from_pdf(
         extract_cash_flow_statement(page_number, text, source_document_id, title_context)
         for page_number, text in pages
     ]
+
+
+# ---------------------------------------------------------------------------
+# Prior-year comparative column extraction (IND-6)
+#
+# The exchange Q1 instances carry NO prior-year duration contexts (verified for
+# all 10 issuers), so the only clean-XBRL-provenance route to a prior-year
+# quarter is the issuer's own rendered comparative column. Extraction is
+# VALUE-ANCHORED: the current-quarter, preceding-quarter (where printed) and
+# annual (where printed) values of the same row are known exactly from the
+# committed XBRL instances; a page token window that matches ALL known anchors
+# identifies the row and its remaining column IS the prior-year quarter. Two
+# independently-known anchors are required wherever the layout provides them;
+# a two-column condensed statement (current, prior-year) relies on row-label
+# adjacency plus window uniqueness. Anything ambiguous is
+# ``requires_manual_review`` — never a guess.
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ComparativeAnchor:
+    """Known display-unit values for one statement row, from the XBRL instances.
+
+    ``current`` / ``preceding_quarter`` / ``annual`` are the DISPLAY-unit values
+    (e.g. ₹ crore) computed from the committed instances; a match against them
+    simultaneously verifies column identity AND the declared display scale.
+    """
+
+    concept: str
+    tag: str
+    current: Decimal
+    preceding_quarter: Decimal | None = None
+    annual: Decimal | None = None
+
+
+@dataclass(frozen=True)
+class ComparativeExtraction:
+    """Typed result of one prior-year comparative extraction attempt."""
+
+    source_document_id: str
+    page_number: int
+    concept: str
+    status: str  # STATUS_EXTRACTED | STATUS_MANUAL_REVIEW
+    reason: str | None
+    prior_year_display: Decimal | None = None
+    column_order: str | None = None  # recorded provenance of the column choice
+    matched_windows: int = 0  # agreeing windows on the page (>= 2 means repeated rows)
+
+    @property
+    def ok(self) -> bool:
+        return self.status == STATUS_EXTRACTED
+
+
+#: pypdf sometimes inserts a stray space INSIDE a number on layout-complex
+#: pages ("10,541 .94", "9 ,228.46"). Joining digit-to-punctuation gaps is safe:
+#: no real column value begins with "," or ".", and the anchored anchors still
+#: verify every merged token's identity.
+_WHITESPACE_IN_NUMBER = re.compile(r"(?<=\d)[ \u00a0]+(?=[.,]\d)")
+
+
+def _page_number_tokens(text: str) -> list[Decimal]:
+    values: list[Decimal] = []
+    cleaned = _WHITESPACE_IN_NUMBER.sub("", text)
+    for match in _NUMBER_TOKEN.finditer(cleaned):
+        digits = match.group(0).strip("()").replace(",", "")
+        try:
+            values.append(Decimal(digits))
+        except ArithmeticError:  # pragma: no cover - malformed token
+            continue
+    return values
+
+
+def _review(concept, page_number, document_id, reason) -> ComparativeExtraction:
+    return ComparativeExtraction(
+        source_document_id=document_id,
+        page_number=page_number,
+        concept=concept,
+        status=STATUS_MANUAL_REVIEW,
+        reason=reason,
+    )
+
+
+def extract_prior_year_comparatives(
+    page_text: str,
+    page_number: int,
+    source_document_id: str,
+    anchors: list[ComparativeAnchor],
+) -> list[ComparativeExtraction]:
+    """Extract prior-year quarter values for anchored rows from one page's text.
+
+    Accepted window shapes (in token order on the page):
+
+    - four consecutive tokens matching ``current, X, Y, annual`` where
+      ``{X, Y}`` contains ``preceding_quarter``: column order
+      ``current, prior_year, preceding_quarter, annual`` or
+      ``current, preceding_quarter, prior_year, annual`` (recorded);
+    - three consecutive tokens matching ``current, preceding_quarter, X``:
+      order ``current, preceding_quarter, prior_year`` (Reg-33 quarter block
+      without a year column on the same row);
+    - two consecutive tokens ``current, X`` (condensed two-column statements):
+      order ``current, prior_year`` — accepted only when every such window on
+      the page agrees on ``X``.
+
+    A prior-year value equal to a known anchor value, or windows that disagree,
+    are ambiguous and yield ``requires_manual_review``.
+    """
+    tokens = _page_number_tokens(page_text)
+    results: list[ComparativeExtraction] = []
+    for anchor in anchors:
+        # Shape 1: four-token window with the annual anchor.
+        found: list[tuple[Decimal, str]] = []
+        if anchor.annual is not None:
+            for i in range(len(tokens) - 3):
+                a, b, c, d = tokens[i], tokens[i + 1], tokens[i + 2], tokens[i + 3]
+                if a != anchor.current or d != anchor.annual:
+                    continue
+                if anchor.preceding_quarter is not None:
+                    if b == c:  # columns indistinguishable -> ambiguous
+                        continue
+                    if b == anchor.preceding_quarter:
+                        found.append((c, "current, prior_year, preceding_quarter, annual"))
+                    elif c == anchor.preceding_quarter:
+                        found.append((b, "current, preceding_quarter, prior_year, annual"))
+                # Without a preceding-quarter anchor a four-token window has two
+                # unknown middle columns -> not deterministic; skipped.
+        # Shape 2: three-token Reg-33 quarter block.
+        if not found and anchor.preceding_quarter is not None:
+            for i in range(len(tokens) - 2):
+                a, b, c = tokens[i], tokens[i + 1], tokens[i + 2]
+                if a == anchor.current and b == anchor.preceding_quarter:
+                    found.append((c, "current, preceding_quarter, prior_year"))
+        # Shape 3: condensed two-column statement (label-adjacency documents).
+        if not found and anchor.preceding_quarter is None and anchor.annual is None:
+            for i in range(len(tokens) - 1):
+                if tokens[i] == anchor.current:
+                    found.append((tokens[i + 1], "current, prior_year"))
+        if not found:
+            results.append(
+                _review(
+                    anchor.concept,
+                    page_number,
+                    source_document_id,
+                    "no token window matches the known XBRL anchor values on this page",
+                )
+            )
+            continue
+        distinct = {value for value, _ in found}
+        if len(distinct) > 1:
+            results.append(
+                _review(
+                    anchor.concept,
+                    page_number,
+                    source_document_id,
+                    f"agreeing windows disagree on the prior-year column: {sorted(distinct)}",
+                )
+            )
+            continue
+        value, order = found[0]
+        if value in (anchor.current, anchor.preceding_quarter, anchor.annual):
+            results.append(
+                _review(
+                    anchor.concept,
+                    page_number,
+                    source_document_id,
+                    "extracted prior-year value equals a known anchor value; row identity "
+                    "not separable from the anchors",
+                )
+            )
+            continue
+        results.append(
+            ComparativeExtraction(
+                source_document_id=source_document_id,
+                page_number=page_number,
+                concept=anchor.concept,
+                status=STATUS_EXTRACTED,
+                reason=None,
+                prior_year_display=value,
+                column_order=order,
+                matched_windows=len(found),
+            )
+        )
+    return results
