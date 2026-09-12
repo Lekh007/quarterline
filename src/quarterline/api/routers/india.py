@@ -19,6 +19,15 @@ network call anywhere — SPEC §25 graceful degradation):
   ``requires_manual_review`` badges link to (plain text; repo doc, not
   filing content, served verbatim).
 
+IND-8 generation routes (lazy LLM imports; degraded modes per SPEC §25):
+
+- ``POST /in/{issuer_id}/brief`` — grounded India brief (validated prose,
+  page-level citations, India metric-reference allowlist, honest
+  insufficient-evidence, advice refusal; no scores, no recommendations).
+- ``POST /api/india-memos`` / ``GET /api/india-memos/{run_id}`` /
+  ``POST /api/india-memos/{run_id}/approve-export`` — the US memo workflow
+  with the India tool bindings (identical budgets and gates).
+
 Honest display: missing is never zero (typed statuses render as text),
 review-pending facts are flagged and link to the review packet, every money
 value carries ₹-crore display plus the exact full-rupee amount, both PAT
@@ -38,7 +47,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.templating import Jinja2Templates
 
-from quarterline.api.routers.companies import render_error
+from quarterline.api.routers.companies import _parse_period_end, render_error
+from quarterline.api.routers.memo import _parse_body  # same JSON/urlencoded body parser
 from quarterline.sources.india.concept_map import INDIA_CONCEPTS, PER_SHARE_CONCEPTS
 from quarterline.sources.india.factcard import (
     FORMULA_VERSION_INDIA_METRICS,
@@ -740,3 +750,229 @@ async def india_coverage_json(issuer_id: str, scope: str = "consolidated"):
         )
     # model_dump(mode="json"): Decimal -> canonical string, dates -> ISO.
     return JSONResponse(content=report.model_dump(mode="json"))
+
+
+# ---------------------------------------------------------------------------
+# IND-8: India brief + memo generation routes
+#
+# Same guardrails as the US side: official facts + retrieved evidence in,
+# constrained validated prose out, page-level citations, honest
+# insufficient-evidence, advice refusal; no scores, no recommendations. The
+# generation modules are imported LAZILY so the deterministic India pages keep
+# working with the provider down (SPEC §25); degraded responses carry facts
+# and evidence with a banner — never unvalidated prose.
+# ---------------------------------------------------------------------------
+
+_BANNER_DEGRADED = "generation unavailable — showing facts and evidence, not generated prose"
+
+RESEARCH_DISCLAIMER_BRIEF = "Research and education only. Not investment advice."
+
+
+def _wants_html(request: Request) -> bool:
+    if request.headers.get("HX-Request", "").lower() == "true":
+        return True
+    accept = request.headers.get("accept", "")
+    return "text/html" in accept and "application/json" not in accept.split(",")[0]
+
+
+@router.post("/in/{issuer_id}/brief")
+async def generate_issuer_brief(request: Request, issuer_id: str):
+    """POST /in/{issuer_id}/brief — grounded India brief (IND-8).
+
+    JSON/urlencoded body ``{"period_end"?: YYYY-MM-DD, "scope"?: ...
+    "focus"?: str}``; HTML (HTMX) requests get the
+    :template:`partials/india_brief.html` partial, others JSON.
+    """
+    from quarterline.sources.india.brief import generate_india_brief  # lazy: LLM stack
+
+    try:
+        issuer = get_issuer(issuer_id.strip().upper())
+    except LookupError as exc:
+        return _error(request, 404, f"Unknown India issuer {issuer_id!r}. {exc}")
+    if issuer.verification_status != STATUS_VERIFIED:
+        return _error(
+            request,
+            404,
+            f"{issuer.issuer_id} is listed as {issuer.verification_status!r} — "
+            f"{PROPOSED_TEXT}, so no brief can be generated for it.",
+        )
+
+    payload, parse_error = await _parse_body(request)
+    if parse_error:
+        return _error(request, 400, parse_error)
+    unknown = sorted(set(payload) - {"period_end", "scope", "focus"})
+    if unknown:
+        return _error(request, 400, f"unknown field(s): {', '.join(unknown)}")
+    scope = payload.get("scope") or "consolidated"
+    if scope not in {"consolidated", "standalone"}:
+        return _error(request, 400, f"unknown scope {scope!r} (use consolidated or standalone)")
+    focus = payload.get("focus")
+    if focus is not None and not isinstance(focus, str):
+        return _error(request, 400, "focus must be a string")
+    raw_period = payload.get("period_end")
+    wanted = _parse_period_end(raw_period)
+    if raw_period and wanted is None:
+        return _error(request, 400, f"invalid period_end {raw_period!r} (use YYYY-MM-DD)")
+
+    try:
+        outcome = generate_india_brief(issuer.issuer_id, wanted, scope=scope, focus=focus)
+    except LookupError as exc:
+        return _error(request, 404, str(exc))
+
+    if _wants_html(request):
+        return templates.TemplateResponse(
+            request=request,
+            name="partials/india_brief.html",
+            context={
+                "outcome": outcome,
+                "degraded_banner": _BANNER_DEGRADED
+                if outcome.status == "provider_unavailable"
+                else None,
+                "disclaimer": RESEARCH_DISCLAIMER_BRIEF,
+            },
+        )
+    return JSONResponse(content=outcome.model_dump(mode="json"))
+
+
+@router.post("/api/india-memos")
+async def create_india_memo_run(request: Request) -> JSONResponse:
+    """POST /api/india-memos — one synchronous bounded India memo run (IND-8).
+
+    Identical budgets, gates, checkpoints and approval-gated export as the US
+    ``POST /api/memos``; the request is pinned to ``market="india"`` and the
+    issuer must be verified in the India registry.
+    """
+    from quarterline.agent.graph import run_memo_workflow  # lazy: LLM stack
+
+    payload, parse_error = await _parse_body(request)
+    if parse_error:
+        return _error(request, 400, parse_error)
+    unknown = sorted(
+        set(payload)
+        - {"issuer_id", "memo_type", "question", "topic", "period_end", "market_context"}
+    )
+    if unknown:
+        return _error(request, 400, f"unknown field(s): {', '.join(unknown)}")
+    raw_issuer = payload.get("issuer_id")
+    if not raw_issuer:
+        return _error(request, 400, "issuer_id is required")
+    try:
+        issuer = get_issuer(str(raw_issuer).strip().upper())
+    except LookupError as exc:
+        return _error(request, 404, f"Unknown India issuer {raw_issuer!r}. {exc}")
+    if issuer.verification_status != STATUS_VERIFIED:
+        return _error(
+            request,
+            404,
+            f"{issuer.issuer_id} is listed as {issuer.verification_status!r} — "
+            f"{PROPOSED_TEXT}, so no memo can be generated for it.",
+        )
+    if payload.get("memo_type") not in ("quarter_review", "risk_review"):
+        return _error(request, 400, "memo_type must be quarter_review or risk_review")
+    if payload.get("period_end"):
+        parsed_period = _parse_period_end(payload.get("period_end"))
+        if parsed_period is None:
+            return _error(
+                request,
+                400,
+                f"invalid period_end {payload.get('period_end')!r} (use YYYY-MM-DD)",
+            )
+        payload["period_end"] = parsed_period.isoformat()
+    if payload.get("market_context") not in (None, "true", "false", True, False):
+        return _error(request, 400, "market_context must be a boolean")
+
+    workflow_payload = {
+        "ticker": issuer.issuer_id,
+        "memo_type": payload["memo_type"],
+        "market": "india",
+    }
+    for name in ("question", "topic", "period_end", "market_context"):
+        if payload.get(name) not in (None, ""):
+            workflow_payload[name] = payload[name]
+    result = run_memo_workflow(workflow_payload)
+    if _wants_html(request):
+        return _render_india_review(request, result)
+    return JSONResponse(status_code=200, content=result.model_dump(mode="json"))
+
+
+@router.get("/api/india-memos/{run_id}")
+async def get_india_memo_run(run_id: str, request: Request):
+    from quarterline.agent.checkpoints import load_result  # lazy
+    from quarterline.store.db import session_scope
+
+    with session_scope() as session:
+        result = load_result(session, run_id)
+    if result is None:
+        return _error(request, 404, f"no agent run {run_id!r}")
+    if _wants_html(request):
+        return _render_india_review(request, result)
+    return JSONResponse(status_code=200, content=result.model_dump(mode="json"))
+
+
+@router.post("/api/india-memos/{run_id}/approve-export")
+async def approve_and_export_india_memo(run_id: str, request: Request):
+    from quarterline.agent.checkpoints import load_state  # lazy
+    from quarterline.agent.graph import export_approved_memo  # lazy
+    from quarterline.store.db import session_scope
+
+    payload, parse_error = await _parse_body(request)
+    if parse_error:
+        return _error(request, 400, parse_error)
+    unknown = sorted(set(payload) - {"approval_request_id", "export_type", "memo_content"})
+    if unknown:
+        return _error(request, 400, f"unknown field(s): {', '.join(unknown)}")
+    export_type = payload.get("export_type") or "md"
+    if export_type not in ("md", "json"):
+        return _error(request, 400, "export_type must be 'md' or 'json'")
+    raw_request_id = payload.get("approval_request_id")
+    try:
+        request_id = int(raw_request_id)
+    except (TypeError, ValueError):
+        return _error(request, 400, "approval_request_id must be an integer")
+
+    with session_scope() as session:
+        state = load_state(session, run_id)
+        if state is None:
+            return _error(request, 404, f"no agent run {run_id!r}")
+        if state.get("status") != "awaiting_approval":
+            return _error(
+                request,
+                409,
+                f"run status is {state.get('status')!r}; export requires "
+                "awaiting_approval with a validated memo",
+            )
+        result, decision = export_approved_memo(
+            run_id,
+            request_id,
+            payload.get("memo_content") or state.get("memo_content") or "",
+            export_type,
+            session=session,
+        )
+    if not decision.approved:
+        return _error(request, 409, f"export not approved: {decision.reason}")
+    assert result is not None
+    if _wants_html(request):
+        return _render_india_review(request, result, exported=True)
+    return JSONResponse(
+        status_code=200,
+        content={
+            "status": "exported",
+            "exported": result.exported,
+            "run": result.model_dump(mode="json"),
+        },
+    )
+
+
+def _render_india_review(request: Request, result, *, exported: bool = False):
+    """The US memo_review rendering reused verbatim (same page, same gate)."""
+    from quarterline.api.routers.memo import _render_review
+
+    return _render_review(request, result, exported=exported)
+
+
+def _error(request: Request, status: int, detail: str):
+    from quarterline.api.routers.memo import _wants_html as _memo_wants_html
+
+    if _memo_wants_html(request):
+        return render_error(request, status, detail)
+    return JSONResponse(status_code=status, content={"error": detail})

@@ -25,4 +25,20 @@
 </section>
 
 {% include "partials/india_panels.html" %}
+
+<section class="panel india-brief-section" id="india-brief-section">
+  <h2>Generated brief</h2>
+  <p class="muted">
+    Validated constrained-writer output: page-level citations, numbers rendered
+    by code from the India fact card, unsupported statements dropped as a whole.
+    Never a recommendation or forecast.
+  </p>
+  <form class="brief-form"
+        hx-post="/in/{{ issuer.issuer_id }}/brief"
+        hx-target="#india-brief-panel" hx-swap="outerHTML">
+    <input type="hidden" name="scope" value="{{ scope }}">
+    <button type="submit" class="chip">Generate brief ({{ scope }})</button>
+  </form>
+  {% include "partials/india_brief.html" %}
+</section>
 {% endblock %}

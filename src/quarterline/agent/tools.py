@@ -16,6 +16,14 @@ attempts — is written to the ``agent_tool_calls`` audit trail
 4. ``export_memo`` — writes approved Markdown/JSON under
    ``{STORAGE_DIR}/exports/`` with a SERVER-GENERATED filename; requires a
    valid approval (see approval.py) verified again inside the handler.
+
+IND-8 India bindings (same budgets, same allowlist registry, same audit
+trail; granted by the orchestrator):
+
+5. ``get_india_facts`` — the IND-4 canonical fact card via
+   ``build_india_fact_card``; TYPED (issuer_id, period_end, scope) only.
+6. ``search_india_filings`` — the hybrid SearchService over the India
+   narrative corpus with the issuer's ticker filter; page-level evidence.
 """
 
 from __future__ import annotations
@@ -73,6 +81,26 @@ class GetPricesArgs(_StrictArgs):
 
     ticker: str = Field(min_length=1, max_length=16)
     period_end: date | None = None
+
+
+class GetIndiaFactsArgs(_StrictArgs):
+    """IND-8 typed India tool arguments: verified issuer id + optional period
+    identity. The India fact card is read-only (no scope/period inference)."""
+
+    issuer_id: str = Field(min_length=3, max_length=16)
+    period_end: date | None = None
+    scope: Literal["consolidated", "standalone"] = "consolidated"
+
+
+class SearchIndiaFilingsArgs(_StrictArgs):
+    """Typed India retrieval arguments over the narrative corpus (page
+    sections, one evidence window per PDF page)."""
+
+    query: str = Field(min_length=1, max_length=2000)
+    issuer_id: str = Field(min_length=3, max_length=16)
+    mode: Literal["general", "brief", "risk"] = "general"
+    period_end: date | None = None
+    top_k: int = Field(default=6, ge=1, le=12)
 
 
 class ExportMemoArgs(_StrictArgs):
@@ -377,6 +405,129 @@ def _handle_search_filings(context: ToolContext, args: BaseModel) -> dict[str, A
     }
 
 
+def _handle_get_india_facts(context: ToolContext, args: BaseModel) -> dict[str, Any]:
+    """Read-only India fact card via build_india_fact_card (typed args only:
+    issuer_id / period_end / scope — no query text, no scope strings beyond
+    the Literal-validated two)."""
+    assert isinstance(args, GetIndiaFactsArgs)
+    from quarterline.sources.india.factcard import build_india_fact_card
+
+    try:
+        card = build_india_fact_card(
+            context.session, args.issuer_id, period_end=args.period_end, scope=args.scope
+        )
+    except LookupError as exc:
+        return {"status": "not_found", "error": str(exc)}
+    except ValueError as exc:
+        return {"status": "rejected", "error": str(exc)}
+    return {
+        "status": "ok",
+        "issuer_id": card.issuer.issuer_id,
+        "ticker": card.issuer.ticker_nse or card.issuer.issuer_id,
+        "scope": card.scope,
+        "period_identities": [
+            {
+                "period_start": p.period_start.isoformat() if p.period_start else None,
+                "period_end": p.period_end.isoformat(),
+                "period_kind": p.period_kind,
+                "application_label": p.application_label,
+                "source_label": p.source_label,
+            }
+            for p in card.period_identities
+        ],
+        "facts": card.model_dump(mode="json"),
+        "coverage": [
+            {
+                "concept": cell.concept,
+                "status": cell.status,
+                "missing_status": cell.missing_status,
+                "period_end": cell.period_end.isoformat(),
+                "period_kind": cell.period_kind,
+            }
+            for cell in card.coverage
+        ],
+    }
+
+
+def _india_sections_for_mode(mode: str) -> list[str]:
+    """Mode -> India narrative section preset (the US MODE_SECTION_PRESETS
+    names do not exist in the India corpus, so India modes translate here)."""
+    from quarterline.sources.india.brief import (
+        INDIA_BRIEF_SECTIONS,
+        INDIA_NARRATIVE_SECTIONS,
+    )
+
+    if mode == "brief":
+        return list(INDIA_BRIEF_SECTIONS)
+    return list(INDIA_NARRATIVE_SECTIONS)
+
+
+def _handle_search_india_filings(context: ToolContext, args: BaseModel) -> dict[str, Any]:
+    """SearchService with the issuer's ticker filter; page-level evidence."""
+    assert isinstance(args, SearchIndiaFilingsArgs)
+    from quarterline.sources.india.issuers import get_issuer
+
+    try:
+        issuer = get_issuer(args.issuer_id.strip().upper())
+    except LookupError as exc:
+        return {"status": "unavailable", "error": str(exc), "items": []}
+    ticker = issuer.ticker_nse or issuer.issuer_id
+    service = context.search_service
+    if service is None and context.search_service_factory is not None:
+        service = context.search_service_factory()
+    if service is None:
+        return {"status": "unavailable", "error": "no search service configured", "items": []}
+    from quarterline.retrieve.models import SearchQuery
+
+    query = SearchQuery(
+        query=args.query,
+        ticker=ticker,
+        strategy="section",
+        retrieval="hybrid",
+        mode="general",
+        sections=_india_sections_for_mode(args.mode),
+        period_end=args.period_end,
+        top_k=args.top_k,
+    )
+    try:
+        result = service.search(query)
+    except Exception as exc:  # noqa: BLE001 - retrieval failure is data, not a crash
+        from quarterline.retrieve.embeddings import EmbeddingModelMismatchError
+
+        if not isinstance(exc, EmbeddingModelMismatchError):
+            return {"status": "unavailable", "error": str(exc), "items": []}
+        query.retrieval = "lexical"  # SPEC §25: lexical remains available
+        result = service.search(query)
+    from quarterline.store.repositories.documents import DocumentsRepo
+
+    docs_repo = DocumentsRepo(context.session)
+    items: list[dict[str, Any]] = []
+    for item in result.items:
+        document = docs_repo.get_document(item.document_id)
+        items.append(
+            {
+                "evidence_id": item.evidence_id,
+                "document_id": item.document_id,
+                "section": item.section,
+                "page": item.page,
+                "text": item.text,
+                "period_end": (
+                    document.period_end.isoformat()
+                    if document is not None and document.period_end
+                    else None
+                ),
+                "document_kind": (document.document_kind if document is not None else None),
+                "scores": {k: float(v) for k, v in item.scores.items()},
+            }
+        )
+    return {
+        "status": ("insufficient_evidence" if result.insufficient_evidence else "ok"),
+        "insufficient_evidence_reason": result.insufficient_evidence_reason,
+        "degraded": dict(result.degraded),
+        "items": items,
+    }
+
+
 def _handle_get_prices(context: ToolContext, args: BaseModel) -> dict[str, Any]:
     assert isinstance(args, GetPricesArgs)
     if context.price_provider is None:
@@ -488,9 +639,24 @@ _register(
 )
 _register(ToolRegistryEntry("get_prices", GetPricesArgs, _handle_get_prices, kind="read"))
 _register(ToolRegistryEntry("export_memo", ExportMemoArgs, _handle_export_memo, kind="write"))
+# IND-8 India bindings (same budgets, same audit trail, same read-once rule).
+_register(
+    ToolRegistryEntry("get_india_facts", GetIndiaFactsArgs, _handle_get_india_facts, kind="read")
+)
+_register(
+    ToolRegistryEntry(
+        "search_india_filings", SearchIndiaFilingsArgs, _handle_search_india_filings, kind="read"
+    )
+)
 
 #: The planner's read-tool universe (export is approval-gated, never planned).
-READ_TOOLS: tuple[str, ...] = ("get_company_facts", "search_filings", "get_prices")
+READ_TOOLS: tuple[str, ...] = (
+    "get_company_facts",
+    "search_filings",
+    "get_prices",
+    "get_india_facts",
+    "search_india_filings",
+)
 
 __all__ = [
     "EXPORTS_DIRNAME",
@@ -498,8 +664,10 @@ __all__ = [
     "TOOL_REGISTRY",
     "ExportMemoArgs",
     "GetCompanyFactsArgs",
+    "GetIndiaFactsArgs",
     "GetPricesArgs",
     "SearchFilingsArgs",
+    "SearchIndiaFilingsArgs",
     "ToolContext",
     "ToolOutcome",
     "ToolRegistryEntry",

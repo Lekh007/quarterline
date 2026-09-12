@@ -63,6 +63,11 @@ DEFAULT_DEADLINE_SECONDS = 60.0
 #: Deterministic retrieval queries per intent (mode presets scope sections).
 QUARTER_REVIEW_QUERY = "quarterly results revenue operating margin cash flow management discussion"
 RISK_REVIEW_QUERY = "risk factors supply chain regulation management discussion outlook"
+#: India equivalents (the narrative corpus vocabulary).
+INDIA_QUARTER_REVIEW_QUERY = (
+    "quarterly results revenue profit margin cash flow management commentary"
+)
+INDIA_RISK_REVIEW_QUERY = "risk factors management discussion outlook commentary challenges"
 
 #: Market-context language that may add the informational get_prices tool.
 _MARKET_CONTEXT_RE = re.compile(
@@ -197,13 +202,39 @@ def _node_classify_intent(config: WorkflowConfig):
         request = MemoRequest.model_validate(state["request"])
         from quarterline.store.repositories.companies import CompaniesRepo
 
-        company = CompaniesRepo(config.session).get_by_ticker(request.ticker)
-        market = request.market_context or bool(_MARKET_CONTEXT_RE.search(request.focus_text))
+        market = getattr(request, "market", "us") or "us"
         updates: dict[str, Any] = {
             "intent": request.memo_type,
-            "market_context_requested": market,
-            "company_id": company.id if company is not None else None,
+            "market_context_requested": request.market_context
+            or bool(_MARKET_CONTEXT_RE.search(request.focus_text)),
         }
+        if market == "india":
+            # India binding: resolve the verified issuer to its company row
+            # (facts + narrative documents are keyed by the NSE ticker).
+            from quarterline.sources.india.issuers import get_issuer
+
+            try:
+                issuer = get_issuer(request.ticker.strip().upper())
+            except LookupError as exc:
+                return {
+                    "intent": request.memo_type,
+                    "market_context_requested": updates["market_context_requested"],
+                    "company_id": None,
+                    "status": "failed",
+                    "errors": list(state.get("errors") or [])
+                    + [f"unknown India issuer {request.ticker!r}: {exc}"],
+                }
+            company = CompaniesRepo(config.session).get_by_ticker(
+                issuer.ticker_nse or issuer.issuer_id
+            )
+            updates["company_id"] = company.id if company is not None else None
+            if company is None:
+                updates["errors"] = list(state.get("errors") or []) + [
+                    f"no company row for {issuer.issuer_id}: no fact card can be built"
+                ]
+            return updates
+        company = CompaniesRepo(config.session).get_by_ticker(request.ticker)
+        updates["company_id"] = company.id if company is not None else None
         if company is None:
             # Not fatal yet: the facts tool records a controlled not_found.
             updates["errors"] = list(state.get("errors") or []) + [
@@ -216,7 +247,12 @@ def _node_classify_intent(config: WorkflowConfig):
 
 def _node_create_plan(config: WorkflowConfig):
     def node(state: AgentState) -> dict[str, Any]:
-        plan = ["get_company_facts", "search_filings"]
+        request = MemoRequest.model_validate(state["request"])
+        market = getattr(request, "market", "us") or "us"
+        if market == "india":
+            plan = ["get_india_facts", "search_india_filings"]
+        else:
+            plan = ["get_company_facts", "search_filings"]
         if state.get("market_context_requested"):
             plan.append("get_prices")
         # The planner may ONLY select allowlist names (SPEC §20 Graph).
@@ -275,11 +311,34 @@ def _node_execute_read_tools(config: WorkflowConfig):
         evidence = list(state.get("evidence") or [])
 
         period = request.period_end.isoformat() if request.period_end else None
-        planned_args: dict[str, dict[str, Any]] = {
-            "get_company_facts": {"ticker": request.ticker, "period_end": period},
-            "search_filings": _search_args_for(request),
-            "get_prices": {"ticker": request.ticker, "period_end": period},
-        }
+        market = getattr(request, "market", "us") or "us"
+        if market == "india":
+            planned_args: dict[str, dict[str, Any]] = {
+                "get_india_facts": {
+                    "issuer_id": request.ticker,
+                    "period_end": period,
+                    "scope": "consolidated",
+                },
+                "search_india_filings": {
+                    "query": request.focus_text.strip()
+                    or (
+                        INDIA_QUARTER_REVIEW_QUERY
+                        if request.memo_type == "quarter_review"
+                        else INDIA_RISK_REVIEW_QUERY
+                    ),
+                    "issuer_id": request.ticker,
+                    "mode": "brief" if request.memo_type == "quarter_review" else "risk",
+                    "period_end": period,
+                    "top_k": 6,
+                },
+                "get_prices": {"ticker": request.ticker, "period_end": period},
+            }
+        else:
+            planned_args = {
+                "get_company_facts": {"ticker": request.ticker, "period_end": period},
+                "search_filings": _search_args_for(request),
+                "get_prices": {"ticker": request.ticker, "period_end": period},
+            }
 
         for name in state.get("plan") or []:
             if name in context.tools_executed:
@@ -288,11 +347,9 @@ def _node_execute_read_tools(config: WorkflowConfig):
             tool_results[name] = outcome.json
             if outcome.executed:
                 if outcome.ok:
-                    if name == "get_company_facts":
+                    if name in ("get_company_facts", "get_india_facts"):
                         if outcome.result.get("status") == "not_found":
-                            errors.append(
-                                f"get_company_facts failed: {outcome.result.get('error')}"
-                            )
+                            errors.append(f"{name} failed: {outcome.result.get('error')}")
                             return _failed_tools(
                                 state,
                                 context,
@@ -301,7 +358,7 @@ def _node_execute_read_tools(config: WorkflowConfig):
                                 "no canonical facts for this ticker; controlled failure",
                             )
                         facts = outcome.result.get("facts")
-                    elif name == "search_filings":
+                    elif name in ("search_filings", "search_india_filings"):
                         evidence = list(outcome.result.get("items") or [])
                         if outcome.result.get("status") == "insufficient_evidence":
                             errors.append(
@@ -374,11 +431,15 @@ def _node_write_memo(config: WorkflowConfig):
                 "status": "failed",
                 "errors": list(state.get("errors") or []) + ["no fact card; cannot write a memo"],
             }
-        card = FactCard.model_validate(facts)
         request = MemoRequest.model_validate(state["request"])
+        market = getattr(request, "market", "us") or "us"
 
-        from quarterline.llm.generation import label_display_of
         from quarterline.llm.prompts import load_prompt, render_prompt
+
+        if market == "india":
+            return _write_india_memo(config, state, request)
+        card = FactCard.model_validate(facts)
+        from quarterline.llm.generation import label_display_of
 
         label_display = label_display_of(card)
         spec = load_prompt("memo", "v1")
@@ -458,11 +519,107 @@ def _json_dumps(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False)
 
 
+def _write_india_memo(config: WorkflowConfig, state: AgentState, request: MemoRequest):
+    """India memo writer (IND-8): the SAME single-call + one-repair flow, the
+    India prompt variant, and the India memo output schema (india_* allowlist
+    in the metric mentions)."""
+    from quarterline.llm.prompts import load_prompt, render_prompt
+    from quarterline.sources.india.brief import (
+        INDIA_METRIC_REFERENCES,
+        IndiaMemoOutput,
+        application_label_of,
+        india_memo_json_schema,
+        primary_identity,
+    )
+    from quarterline.sources.india.factcard import IndiaFactCard
+
+    card = IndiaFactCard.model_validate(state["facts"])
+    label = application_label_of(card)
+    identity = primary_identity(card)
+    ticker = card.issuer.ticker_nse or card.issuer.issuer_id
+    spec = load_prompt("memo_india", "v1")
+    system = render_prompt(
+        spec,
+        issuer=card.issuer.issuer_id,
+        ticker=ticker,
+        period=label,
+        scope=card.scope,
+    )
+    quarter_metrics = [
+        m for m in card.metrics if (m.period_start, m.period_end, m.period_kind) == identity
+    ]
+    payload = {
+        "task": "india_agent_memo",
+        "memo_type": request.memo_type,
+        "focus": request.focus_text,
+        "issuer_id": card.issuer.issuer_id,
+        "ticker": ticker,
+        "reporting_scope": card.scope,
+        "period_end": identity[1].isoformat(),
+        "required_label_echo": label,
+        "metric_allowlist": sorted(INDIA_METRIC_REFERENCES),
+        "facts": [
+            {"concept": f.concept, "availability": "present"}
+            for f in card.canonical_facts
+            if (f.period_start, f.period_end, f.period_kind) == identity
+        ]
+        + [{"metric_id": m.metric_id, "status": m.status} for m in quarter_metrics],
+        "evidence": [
+            {
+                "evidence_id": item["evidence_id"],
+                "section": item.get("section"),
+                "text": item["text"],
+            }
+            for item in state.get("evidence") or []
+        ],
+    }
+    messages = [
+        {"role": "system", "content": system},
+        {"role": "user", "content": _json_dumps(payload)},
+    ]
+    try:
+        provider = _resolve_provider(config)
+    except Exception as exc:  # noqa: BLE001 - consent/config failures are controlled
+        return {
+            "status": "failed",
+            "errors": list(state.get("errors") or [])
+            + [f"generation provider not available: {exc}"],
+        }
+    from quarterline.llm.base import GenerationProviderUnavailable, RemoteFallbackNotConsented
+    from quarterline.llm.repair import GenerationFailure, generate_and_parse
+
+    try:
+        repaired = generate_and_parse(
+            provider,
+            messages=messages,
+            model_cls=IndiaMemoOutput,
+            json_schema=india_memo_json_schema(),
+        )
+    except (GenerationProviderUnavailable, RemoteFallbackNotConsented) as exc:
+        return {
+            "status": "failed",
+            "errors": list(state.get("errors") or []) + [f"generation provider unavailable: {exc}"],
+        }
+    except GenerationFailure as exc:
+        return {
+            "status": "failed",
+            "errors": list(state.get("errors") or [])
+            + [f"controlled generation failure after the single repair pass: {exc}"],
+        }
+    return {
+        "draft_output": repaired.model.model_dump(mode="json"),
+        "memo_repair_used": bool(repaired.repair_used),
+    }
+
+
 def _node_validate_memo(config: WorkflowConfig):
     def node(state: AgentState) -> dict[str, Any]:
         output = state.get("draft_output")
         if output is None or state.get("draft") is not None:
             return {}
+        request = MemoRequest.model_validate(state["request"])
+        if (getattr(request, "market", "us") or "us") == "india":
+            return _validate_india_memo(config, state)
         parsed = MemoOutput.model_validate(output)
         card = FactCard.model_validate(state["facts"])
         request = MemoRequest.model_validate(state["request"])
@@ -688,6 +845,320 @@ def _parse_date(value: str):
     from datetime import date
 
     return date.fromisoformat(value)
+
+
+def _india_metric_mention_reasons(mentions) -> list[str]:
+    """Check 8 rejection reasons against the INDIA allowlist (IND-8)."""
+    from quarterline.sources.india.brief import (
+        INDIA_METRIC_REFERENCES,
+        india_template_valid_for,
+    )
+
+    reasons: list[str] = []
+    for mention in mentions:
+        if mention.metric_id not in INDIA_METRIC_REFERENCES:
+            reasons.append(
+                f"metric_id {mention.metric_id!r} is not in the INDIA_METRIC_REFERENCES allowlist"
+            )
+        elif not india_template_valid_for(mention.metric_id, mention.template):
+            reasons.append(
+                f"template {mention.template!r} is not structurally valid for "
+                f"metric {mention.metric_id!r}"
+            )
+    return reasons
+
+
+def _validate_india_memo(config: WorkflowConfig, state: AgentState) -> dict[str, Any]:
+    """India memo gate (IND-8): the SPEC §18 checks in order with the India
+    semantics (india_* allowlist, India numeric consistency at the card's
+    primary period identity, scope attribution, commentary attribution)."""
+    from quarterline.core.advice_policy import detect_advice_content
+    from quarterline.core.citations import EvidenceRef, validate_statement_citations
+    from quarterline.sources.india.brief import (
+        INDIA_VALIDATION_VERSION,
+        IndiaMemoOutput,
+        application_label_of,
+        check_commentary_attribution,
+        check_india_statement_numbers,
+        check_scope_attribution,
+        expand_india_metric_mentions,
+        primary_identity,
+    )
+    from quarterline.sources.india.factcard import IndiaFactCard
+
+    parsed = IndiaMemoOutput.model_validate(state["draft_output"])
+    card = IndiaFactCard.model_validate(state["facts"])
+    request = MemoRequest.model_validate(state["request"])
+    label = application_label_of(card)
+    identity = primary_identity(card)
+    ticker = card.issuer.ticker_nse or card.issuer.issuer_id
+    errors = list(state.get("errors") or [])
+    checks: list[dict[str, Any]] = []
+
+    def _check(check_id, name, passed, reasons, dropped=0):
+        checks.append(
+            {
+                "check_id": check_id,
+                "name": name,
+                "passed": passed,
+                "dropped_count": dropped,
+                "reasons": reasons,
+            }
+        )
+
+    # check 2: status validity / model abstention
+    if parsed.status in ("insufficient_evidence", "refused"):
+        _check(
+            "2",
+            "status_validity",
+            True,
+            ["model returned an abstention status; no content is presented"],
+        )
+        run_status = "refused" if parsed.status == "refused" else "insufficient_evidence"
+        return {
+            "validation_results": {
+                "version": INDIA_VALIDATION_VERSION,
+                "checks": checks,
+            },
+            "status": run_status,
+            "errors": errors + [f"model abstained: {parsed.status}"],
+        }
+    _check("2", "status_validity", True, [])
+
+    # check 3: application-period-label echo EQUALITY
+    echoed = (parsed.label_echo or "").strip()
+    expected = (label or "").strip()
+    label_ok = bool(expected) and echoed.lower() == expected.lower()
+    if not label_ok:
+        _check(
+            "3",
+            "period_label_echo_equality",
+            False,
+            [
+                (
+                    f"label_echo {echoed!r} does not equal the code-generated "
+                    f"application period label {expected!r}; all content dropped"
+                )
+            ],
+            dropped=len(parsed.sections),
+        )
+        return {
+            "validation_results": {
+                "version": INDIA_VALIDATION_VERSION,
+                "checks": checks,
+            },
+            "status": "insufficient_evidence",
+            "errors": errors + ["label echo mismatch; all memo content dropped"],
+        }
+    _check("3", "period_label_echo_equality", True, [])
+
+    evidence_map = {
+        item["evidence_id"]: EvidenceRef(
+            evidence_id=item["evidence_id"],
+            document_id=int(item["document_id"]),
+            ticker=ticker,
+            period_end=(_parse_date(item["period_end"]) if item.get("period_end") else None),
+            text=item["text"],
+        )
+        for item in state.get("evidence") or []
+    }
+    commentary_flags = _india_commentary_flags(config, state)
+
+    kept_sections: list[MemoSection] = []
+    per_check: dict[str, list[str]] = {}
+    checked = 0
+    for section in parsed.sections:
+        checked += 1
+        reasons: list[str] = []
+        if section.heading in CITATION_REQUIRED_HEADINGS and not section.evidence_ids:
+            reasons.append("citation_existence: filing-derived section has no supplied citation")
+        reasons.extend(
+            validate_statement_citations(
+                section.text,
+                section.evidence_ids,
+                evidence_map,
+                expected_ticker=ticker,
+                expected_period_end=identity[1],
+            )
+        )
+        if reasons:
+            for reason in reasons:
+                bucket, _, detail = reason.partition(":")
+                per_check.setdefault(bucket, []).append(f"{section.heading}: {detail.strip()}")
+        else:
+            kept_sections.append(section)
+    for bucket, check_id, name in (
+        ("citation_existence", "4", "citation_existence"),
+        ("citation_supplied_context", "5", "citation_supplied_context"),
+        ("citation_company_period", "6", "citation_company_period"),
+        ("citation_sentence_format", "7", "citation_sentence_format"),
+    ):
+        reasons = per_check.get(bucket, [])
+        _check(
+            check_id,
+            name,
+            not reasons,
+            reasons,
+            dropped=checked - len(kept_sections) if reasons else 0,
+        )
+
+    # check 8: India metric-reference validity
+    mention_reasons = _india_metric_mention_reasons(parsed.metric_mentions)
+    _check(
+        "8",
+        "metric_reference_validity",
+        not mention_reasons,
+        mention_reasons,
+        dropped=len(mention_reasons),
+    )
+    kept_mentions = parsed.metric_mentions if not mention_reasons else []
+
+    # check 9: numeric consistency vs the India fact card at this identity
+    numeric_kept: list[MemoSection] = []
+    numeric_reasons: list[str] = []
+    for section in kept_sections:
+        reasons = check_india_statement_numbers(section.text, card, identity)
+        if reasons:
+            numeric_reasons.extend(f"{section.heading}: {r}" for r in reasons)
+        else:
+            numeric_kept.append(section)
+    _check(
+        "9",
+        "numeric_consistency",
+        not numeric_reasons,
+        numeric_reasons,
+        dropped=len(kept_sections) - len(numeric_kept),
+    )
+
+    # check 10: advice-policy compliance
+    advice_kept: list[MemoSection] = []
+    advice_reasons: list[str] = []
+    advice_hit = False
+    for section in numeric_kept:
+        decision = detect_advice_content(section.text)
+        if decision.is_advice:
+            advice_hit = True
+            advice_reasons.append(
+                f"{section.heading}: generated content issues investment advice "
+                f"({', '.join(decision.matched)}); section dropped"
+            )
+        else:
+            advice_kept.append(section)
+    _check(
+        "10",
+        "advice_policy_compliance",
+        not advice_reasons,
+        advice_reasons,
+        dropped=len(numeric_kept) - len(advice_kept),
+    )
+
+    # check 11: scope attribution
+    scope_kept: list[MemoSection] = []
+    scope_reasons: list[str] = []
+    for section in advice_kept:
+        reasons = check_scope_attribution(section.text, card.scope)
+        if reasons:
+            scope_reasons.extend(f"{section.heading}: {r}" for r in reasons)
+        else:
+            scope_kept.append(section)
+    _check(
+        "11",
+        "scope_attribution_consistency",
+        not scope_reasons,
+        scope_reasons,
+        dropped=len(advice_kept) - len(scope_kept),
+    )
+
+    # check 12: commentary attribution (filing-derived sections only)
+    commentary_kept: list[MemoSection] = []
+    commentary_reasons: list[str] = []
+    for section in scope_kept:
+        if section.heading == "evidence_gaps":
+            commentary_kept.append(section)
+            continue
+        reasons = check_commentary_attribution(section.text, section.evidence_ids, commentary_flags)
+        if reasons:
+            commentary_reasons.extend(f"{section.heading}: {r}" for r in reasons)
+        else:
+            commentary_kept.append(section)
+    _check(
+        "12",
+        "commentary_attribution",
+        not commentary_reasons,
+        commentary_reasons,
+        dropped=len(scope_kept) - len(commentary_kept),
+    )
+
+    # metric expansion: Python renders the numbers (never the model). The US
+    # MemoDraft metric_mentions field is US-allowlist-typed, so India drafts
+    # carry the rendered sentences (metric_facts + validation_results) instead.
+    expansion = expand_india_metric_mentions(kept_mentions, card)
+    metric_facts = [fact.text for fact in expansion.rendered]
+
+    from quarterline.sources.india.brief import india_gate_failed_checks
+
+    gate_failed = india_gate_failed_checks(checks)
+    if commentary_kept or metric_facts:
+        dropped_anything = gate_failed or bool(expansion.issues)
+        draft_status = "partial" if dropped_anything else "ok"
+        run_status = None  # continue to approval
+    elif advice_hit:
+        draft_status = "refused"
+        run_status = "refused"
+    else:
+        draft_status = "insufficient_evidence"
+        run_status = "insufficient_evidence"
+
+    reasons_all = [f"check[{c['check_id']}]: {r}" for c in checks for r in c["reasons"]] + [
+        f"metric_mention dropped: {issue}" for issue in expansion.issues
+    ]
+    draft = MemoDraft(
+        status=draft_status,  # type: ignore[arg-type]
+        title=(
+            f"{card.issuer.issuer_id} {request.memo_type.replace('_', ' ')} — "
+            f"{identity[1].isoformat()} [{card.scope}]"
+        ),
+        label_echo=label if label_ok else None,
+        sections=[
+            MemoSection(
+                heading=section.heading,
+                text=section.text,
+                evidence_ids=list(section.evidence_ids),
+            )
+            for section in commentary_kept
+        ],
+        metric_mentions=[],
+    )
+    memo_content = memo_content_markdown(draft)
+    updates: dict[str, Any] = {
+        "draft": draft.model_dump(mode="json"),
+        "memo_content": memo_content,
+        "memo_content_hash": approval.memo_content_hash(memo_content),
+        "metric_facts": metric_facts,
+        "validation_results": {
+            "version": INDIA_VALIDATION_VERSION,
+            "checks": checks,
+            "reasons": reasons_all,
+        },
+        "errors": errors + reasons_all,
+    }
+    if run_status is not None:
+        updates["status"] = run_status
+    return updates
+
+
+def _india_commentary_flags(config: WorkflowConfig, state: AgentState) -> dict[str, bool]:
+    """evidence_id -> management_commentary flag for the run's evidence."""
+    from quarterline.sources.india.narrative import narrative_metadata
+    from quarterline.store.repositories.documents import DocumentsRepo
+
+    repo = DocumentsRepo(config.session)
+    flags: dict[str, bool] = {}
+    for item in state.get("evidence") or []:
+        document = repo.get_document(int(item["document_id"]))
+        metadata = narrative_metadata(document) if document is not None else {}
+        flags[item["evidence_id"]] = bool(metadata.get("management_commentary"))
+    return flags
 
 
 def _node_await_export_approval(config: WorkflowConfig):

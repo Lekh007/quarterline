@@ -58,7 +58,12 @@ class StrictModel(BaseModel):
 
 
 class MemoRequest(StrictModel):
-    """One memo run request (SPEC §20): a ticker plus optional focus text."""
+    """One memo run request (SPEC §20): a ticker plus optional focus text.
+
+    ``market`` selects the tool/prompt family: ``us`` (default, unchanged
+    behavior) or ``india`` (IND-8) where ``ticker`` carries the verified India
+    issuer id (``IN-INFY``). Budgets and gates are identical for both.
+    """
 
     ticker: str = Field(min_length=1, max_length=16)
     memo_type: MemoType
@@ -68,6 +73,8 @@ class MemoRequest(StrictModel):
     #: Explicit opt-in for the informational get_prices tool; the planner also
     #: auto-detects market-context language in question/topic.
     market_context: bool = False
+    #: us (default) | india (IND-8 bindings).
+    market: Literal["us", "india"] = "us"
 
     @property
     def focus_text(self) -> str:
