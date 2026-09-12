@@ -31,9 +31,13 @@ from decimal import Decimal
 from quarterline.sources.india.units import CRORE, LAKH
 
 #: Scale headers observed in the acquired PDFs (docs/india_source_audit.md §6.6):
-#: HUL prints "(Rs in Crores)" / "Rs in Lakhs"; Infosys prints "In ₹ crore".
+#: HUL prints "(Rs in Crores)" / "Rs in Lakhs"; Infosys prints "In ₹ crore";
+#: TCS's condensed statements print "(` crore)" — the PDF font renders the
+#: rupee glyph as a bare backtick in extracted text (known encoding artifact;
+#: the anchored values still verify every number read under it).
 _SCALE_HEADER_PATTERNS: tuple[tuple[re.Pattern[str], Decimal, str], ...] = (
     (re.compile(r"(?:₹|Rs\.?|INR)\s*(?:in|In)?\s*crores?\b", re.IGNORECASE), CRORE, "Crores"),
+    (re.compile(r"`\s*crores?\b"), CRORE, "Crores"),
     (re.compile(r"\bin\s+₹?\s*crores?\b", re.IGNORECASE), CRORE, "Crores"),
     (re.compile(r"(?:₹|Rs\.?|INR)\s*(?:in|In)?\s*lakhs?\b", re.IGNORECASE), LAKH, "Lakhs"),
     (re.compile(r"\bin\s+₹?\s*lakhs?\b", re.IGNORECASE), LAKH, "Lakhs"),

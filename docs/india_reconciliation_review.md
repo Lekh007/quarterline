@@ -405,3 +405,42 @@ issuers from the Q4 instances. The no-fabrication rules are unchanged.
 `scope_or_basis_difference_recorded` (INFY exceptional sign, HUL PBT/continuing
 basis, ITC PBT associate-share basis), 0 `mismatch_flagged_do_not_force`, 0
 `human_approved` (never set by code).
+
+# 12. IND-7 addition — TCS reported quarterly CFO ingested (2026-09-11)
+
+The §11.4 open item is closed. TCS's REPORTED Q1 FY27 quarterly CFO is now
+INGESTED as a `fact_observations` observation under exactly the INFY
+provenance standard (§5 / `pipeline.ingest_reviewed_pdf_cash_flow`):
+
+- value **₹12,171 Cr = 121710000000 rupees**, quarter 2026-04-01..2026-06-30,
+  consolidated, `cash_flow_operations`, form `PDF`;
+- extraction `pdf_text` via
+  `quarterline.sources.india.pdf_results.extract_cash_flow_from_pdf` against
+  the cached condensed statement (`tcs-q1fy27-consolidated-indas-finstatement.pdf`,
+  manifest sha256 87b3c84815de…), page provenance **"PDF p.6 (Consolidated
+  Interim Statement of Cash Flows)"**, current-period column order verified
+  from the page's own year headers, prior-year corroboration token
+  **₹11,919 Cr** verified in the same row window (current column first);
+- declared scale on the page is "(` crore)" — the PDF font renders the rupee
+  glyph as a backtick; the scale-header detector now recognizes this artifact
+  explicitly (the anchored values still verify every number);
+- review status `agent_checked_against_document` (agent = the IND-7
+  verification run, 2026-09-11; a live drift guard re-extracts on every
+  ingest and REFUSES on any mismatch, so the constant cannot silently rot);
+- idempotent via the observation hash (rendered-line tag
+  `NetCashFlowsGeneratedFromOperatingActivitiesRenderedLine` under the TCS
+  ISIN — distinct from the exchange annual observation and from INFY's
+  rendered-line tag); re-run inserts 0 rows.
+
+Consequence: the reported quarterly CFO cell of the §11.4 matrix is now
+ingested for TWO issuers (INFY ₹9,330 Cr and TCS ₹12,171 Cr, both
+`agent_checked_against_document`, both `company_ir` source tier); the other
+eight issuers' Q1 quarterly CF remains `not_present_in_ingested_sources`.
+No derived quarterly CF exists for any issuer (nothing is ever divided).
+
+Corpus update for retrieval (IND-7, same date): the company-IR narrative PDFs
+are ingested as `documents` (page-level sections, management-commentary
+labeled, `source_tier` carried) and indexed for filtered retrieval; measured
+results in `docs/india_evaluation.md`. The §7.1 HUL rendered-P&L tension is
+UNCHANGED — narrative ingestion indexes those pages for citation only; no
+value is read from them.
