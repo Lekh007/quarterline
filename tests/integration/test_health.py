@@ -43,8 +43,12 @@ def test_health_provider_statuses_cached_for_30s(tmp_path: Path, monkeypatch) ->
 
 
 def test_health_broken_database_returns_503(tmp_path: Path, monkeypatch) -> None:
-    # Parent directory does not exist -> SQLite cannot open the database.
-    broken_url = f"sqlite:///{(tmp_path / 'missing-dir' / 'app.db').as_posix()}"
+    # The database path IS a directory: SQLite cannot open it (platform-
+    # independent breakage — since IND-review, get_engine() creates missing
+    # parent directories, so an absent directory no longer breaks anything).
+    db_dir = tmp_path / "app.db"
+    db_dir.mkdir()
+    broken_url = f"sqlite:///{db_dir.as_posix()}"
     monkeypatch.setenv("DATABASE_URL", broken_url)
     monkeypatch.setenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 
