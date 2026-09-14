@@ -11,6 +11,7 @@ Display helpers in this module are reused by the screener router.
 
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -224,8 +225,30 @@ def label_display_of(card: FactCard) -> str:
 
 
 def _watchlist_rows(session) -> list[WatchlistRow]:
-    companies = CompaniesRepo(session).all()
-    return [watchlist_row_for(session, company) for company in companies]
+    # The US watchlist page lists the watchlist rows only. The store also
+    # holds India issuers (served under /in) and possible local test rows,
+    # which must not appear as US watchlist entries.
+    repo = CompaniesRepo(session)
+    by_ticker = {c.ticker: c for c in repo.all()}
+    rows: list[WatchlistRow] = []
+    seen: set[str] = set()
+    with _watchlist_csv().open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            ticker = (row.get("ticker") or "").strip().upper()
+            if not ticker or ticker in seen:
+                continue
+            seen.add(ticker)
+            company = by_ticker.get(ticker)
+            if company is not None:
+                rows.append(watchlist_row_for(session, company))
+    return rows
+
+
+def _watchlist_csv() -> Path:
+    candidate = Path("data/watchlist_us.csv")
+    if candidate.exists():
+        return candidate
+    return Path(__file__).resolve().parents[3] / "data" / "watchlist_us.csv"
 
 
 @router.get("/")
