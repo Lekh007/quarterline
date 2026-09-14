@@ -67,7 +67,11 @@ from quarterline.retrieve.models import text_hash as sha256_text
 from quarterline.retrieve.vector import DenseFilters, DenseHit, search_dense
 from quarterline.store.models import Chunk, Company, Document
 from quarterline.store.repositories.documents import DocumentsRepo
-from quarterline.store.repositories.search_postgres import get_search_repo
+from quarterline.store.repositories.search_postgres import (
+    get_search_repo,
+    search_dense_postgres,
+    search_lexical_postgres,
+)
 from quarterline.store.repositories.search_sqlite import (
     SearchIndexRepo,
     provider_revision,
@@ -337,11 +341,16 @@ def _document_meta(docs_repo: DocumentsRepo, document: Document) -> DocumentMeta
 # ---------------------------------------------------------------------------
 
 
+def _is_postgres(settings: Settings) -> bool:
+    """True when DATABASE_URL targets the PostgreSQL + pgvector profile."""
+    url = str(getattr(settings, "database_url", "") or "")
+    return url.startswith(("postgresql://", "postgres://", "postgresql+"))
+
+
 def _repo_for(session: Session, settings: Settings):
     """Select the search backend for the configured DATABASE_URL (SQLite
     default; PostgreSQL + pgvector profile when the URL targets Postgres)."""
-    url = str(getattr(settings, "database_url", "") or "")
-    if url.startswith(("postgresql://", "postgres://", "postgresql+")):
+    if _is_postgres(settings):
         return get_search_repo(session, settings)
     return SearchIndexRepo(session)
 
@@ -364,6 +373,12 @@ class SearchService:
         self.reranker_enabled = reranker_enabled
         self.settings = settings or _get_settings()
         self.repo = _repo_for(session, self.settings)
+        # The repo and the query functions must agree on the backend: binding
+        # them from one decision is what stops a Postgres session from running
+        # SQLite FTS5 syntax (`chunks_fts MATCH ...`), which psycopg rejects.
+        postgres = _is_postgres(self.settings)
+        self._search_lexical = search_lexical_postgres if postgres else search_lexical
+        self._search_dense = search_dense_postgres if postgres else search_dense
         self.repo.ensure_schema()
 
     # -- public API -----------------------------------------------------------
@@ -450,7 +465,7 @@ class SearchService:
         # -- lexical top 20 -------------------------------------------------------
         lexical_hits: list[LexicalHit] = []
         if query.retrieval in ("lexical", "hybrid", "hybrid-rerank"):
-            lexical_hits = search_lexical(self.session, query.query, lexical_filters)
+            lexical_hits = self._search_lexical(self.session, query.query, lexical_filters)
 
         # -- dense top 20 ---------------------------------------------------------
         dense_hits: list[DenseHit] = []
@@ -466,7 +481,7 @@ class SearchService:
                     result.degraded["dense"] = f"embedding provider unavailable: {exc}"
                     vectors = None
                 if vectors is not None:
-                    dense_hits = search_dense(
+                    dense_hits = self._search_dense(
                         self.session,
                         np.asarray(vectors[0], dtype=np.float32),
                         _dense_filters_from(lexical_filters),

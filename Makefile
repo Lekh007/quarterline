@@ -33,7 +33,13 @@ test:
 # schema and the named volume persists across runs.
 # If Docker is unavailable the pytest run still executes and the tests SKIP
 # (fast TCP probe) instead of failing.
-POSTGRES_TEST_URL ?= postgresql://quarterline:quarterline@127.0.0.1:5432/quarterline
+#
+# The contract tests own a SEPARATE database (`quarterline_test`). They build
+# their schema with metadata.create_all and never stamp Alembic, so sharing a
+# database with the app leaves tables Alembic did not create and the app's
+# `db upgrade` fails on the first CREATE TABLE. One database, one owner.
+POSTGRES_TEST_DB ?= quarterline_test
+POSTGRES_TEST_URL ?= postgresql://quarterline:quarterline@127.0.0.1:5432/$(POSTGRES_TEST_DB)
 
 test-postgres:
 	@docker compose up -d quarterline-db 2>/dev/null \
@@ -41,6 +47,7 @@ test-postgres:
 	@until docker compose exec -T quarterline-db pg_isready -U quarterline -d quarterline >/dev/null 2>&1; do \
 		sleep 1; \
 	done 2>/dev/null || true
+	@docker compose exec -T quarterline-db psql -U quarterline -d postgres -c "CREATE DATABASE $(POSTGRES_TEST_DB)" >/dev/null 2>&1 || true
 	QUARTERLINE_TEST_POSTGRES_URL=$(POSTGRES_TEST_URL) uv run pytest -q tests/integration/test_postgres_profile.py
 	@docker compose stop quarterline-db 2>/dev/null || true
 

@@ -55,7 +55,9 @@ from quarterline.store.repositories.search_postgres import (
 
 pytestmark = pytest.mark.postgres
 
-DEFAULT_PG_URL = "postgresql://quarterline:quarterline@127.0.0.1:5432/quarterline"
+#: The contract tests own their own database — never the app's (see Makefile:
+#: they create schema outside Alembic, which would break the app's migrations).
+DEFAULT_PG_URL = "postgresql://quarterline:quarterline@127.0.0.1:5432/quarterline_test"
 
 _DRIVERS: tuple[tuple[str, str], ...] = (
     ("psycopg", "postgresql+psycopg"),
