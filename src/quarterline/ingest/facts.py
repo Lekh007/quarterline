@@ -259,7 +259,9 @@ def ingest_facts(
 
     def _run(sess: Session) -> None:
         companies_repo = CompaniesRepo(sess)
-        companies_repo.upsert_from_watchlist_csv(_resolve_watchlist(watchlist))
+        watchlist_companies = companies_repo.upsert_from_watchlist_csv(
+            _resolve_watchlist(watchlist)
+        )
         wanted = [t.strip().upper() for t in (tickers or [])]
         if wanted:
             # Resolve requested tickers against the store (watchlist members and
@@ -275,7 +277,10 @@ def ingest_facts(
             if missing:
                 report.errors["(unknown tickers)"] = ", ".join(sorted(missing))
         else:
-            targets = companies_repo.all()
+            # Default: the watchlist rows only — never every company in the
+            # store (the store also holds India issuers, which do not file
+            # with the SEC, and any locally registered test rows).
+            targets = list(watchlist_companies)
         if not report.tickers:
             report.tickers = [c.ticker for c in targets]
         settings = get_settings()

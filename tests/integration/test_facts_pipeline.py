@@ -284,3 +284,44 @@ def test_inferred_fye_and_fiscal_labels(seeded) -> None:
         )
         assert annual is not None and annual.fiscal_year == 2024  # 53-week spill
         assert annual.period_kind == PeriodKind.annual.value
+
+
+def test_default_ingest_targets_watchlist_rows_only(tmp_path, monkeypatch):
+    """Regression (live-run finding, 2026-09-14): with no explicit tickers,
+    ingest must target the watchlist rows only — never every company in the
+    store. The store also holds India issuers (BSE codes, not SEC CIKs) and
+    locally registered test rows; routing them to the SEC produced 404s."""
+    storage = tmp_path / "storage"
+    monkeypatch.setenv("STORAGE_DIR", str(storage))
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{(tmp_path / 'app.db').as_posix()}")
+    create_schema()
+
+    from quarterline.store.db import session_scope
+    from quarterline.store.repositories.companies import CompaniesRepo
+
+    with session_scope() as sess:
+        # a stray non-watchlist company already registered in the store
+        CompaniesRepo(sess).upsert_company(ticker="STRAY", cik="9999999", name="Stray")
+
+    watchlist = tmp_path / "watchlist.csv"
+    watchlist.write_text(
+        "ticker,cik,name,sector,country\nAAPL,0000320193,Apple Inc.,Information Technology,US\n",
+        encoding="utf-8",
+    )
+
+    fetches: list[str] = []
+
+    class RecordingClient:
+        """Serves the real AAPL fixture; records every requested URL."""
+
+        def get_json(self, url: str) -> dict:
+            fetches.append(url)
+            return load_aapl_fixture()
+
+    report = import_ingest_facts().ingest_facts(
+        watchlist=watchlist, client=RecordingClient()
+    )
+
+    assert report.tickers == ["AAPL"]
+    assert len(fetches) == 1
+    assert "CIK0000320193" in fetches[0]
