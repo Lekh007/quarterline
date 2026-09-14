@@ -1,0 +1,454 @@
+{
+  "uid": "quarterline-llmops",
+  "title": "Quarterline \u2014 LLMOps",
+  "description": "Retrieval/generation health for the Quarterline research desk. Every rate panel has a matching sample-size series: rates with no samples are absent rather than zero.",
+  "tags": [
+    "quarterline",
+    "llmops"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "title": "Scrape up",
+      "type": "stat",
+      "description": "1 while Prometheus can reach the app's /metrics endpoint.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "up{job=\"quarterline\"}",
+          "legendFormat": "up",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 2,
+      "title": "Runs recorded",
+      "type": "stat",
+      "description": "Distinct runs persisted by the app (survives restarts).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_runs_total",
+          "legendFormat": "runs",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Events recorded",
+      "type": "stat",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_events_total",
+          "legendFormat": "events",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 4,
+      "title": "Cache hit ratio",
+      "type": "stat",
+      "description": "Absent until it has samples \u2014 an unmeasured rate is missing, not zero. Shows 'No data' until it has samples \u2014 see the sample-size panel.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_cache_hit_ratio",
+          "legendFormat": "hit ratio",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 5,
+      "title": "Bullet retention",
+      "type": "stat",
+      "description": "Share of generated bullets that survived citation + allowlist validation. Shows 'No data' until bullets have been generated.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_bullet_retention_ratio",
+          "legendFormat": "retained",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "graphMode": "area"
+      }
+    },
+    {
+      "id": 6,
+      "title": "Stage latency (ms)",
+      "type": "timeseries",
+      "description": "Percentiles computed in Python from persisted run events, not from a histogram.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_latency_milliseconds{quantile=\"0.5\"}",
+          "legendFormat": "{{stage}} p50",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_latency_milliseconds{quantile=\"0.95\"}",
+          "legendFormat": "{{stage}} p95",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "ms"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 7,
+      "title": "Answer outcomes",
+      "type": "timeseries",
+      "description": "Abstention, refusal, provider failure, and validation-gate rejections.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_answer_status_ratio",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_numeric_rejection_ratio",
+          "legendFormat": "numeric rejection",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "percentunit"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 8,
+      "title": "Events by endpoint",
+      "type": "barchart",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_endpoint_events_total",
+          "legendFormat": "{{endpoint}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 9,
+      "title": "Events by provider / model",
+      "type": "barchart",
+      "description": "",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 7
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_provider_events_total",
+          "legendFormat": "{{provider}} / {{model}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 10,
+      "title": "Sample sizes behind every rate",
+      "type": "timeseries",
+      "description": "SPEC \u00a724: no rate is readable without the n behind it. Low n is noise.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "quarterline-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 19,
+        "w": 24,
+        "h": 7
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_cache_hit_ratio_samples",
+          "legendFormat": "cache n",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_numeric_rejection_ratio_samples",
+          "legendFormat": "numeric n",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_answer_status_ratio_samples",
+          "legendFormat": "{{status}} n",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "quarterline-prometheus"
+          },
+          "expr": "quarterline_latency_samples",
+          "legendFormat": "{{stage}} latency n",
+          "refId": "D"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      }
+    }
+  ]
+}

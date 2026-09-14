@@ -21,6 +21,7 @@ from quarterline.api.routers import (
     filings,
     health,
     india,
+    metrics,
     runs,
     screener,
 )
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
         return response
 
     app.include_router(health.router)
+    app.include_router(metrics.router)
     app.include_router(companies.router)
     app.include_router(screener.router)
     app.include_router(filings.router)

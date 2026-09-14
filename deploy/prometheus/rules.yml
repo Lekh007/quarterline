@@ -1,0 +1,64 @@
+# Alerts that would actually page someone running this desk.
+#
+# Every rule is written against a sample size as well as a rate, so a single
+# unlucky run cannot fire an alert — the honesty rule from SPEC §24 applied to
+# alerting.
+groups:
+  - name: quarterline
+    rules:
+      - alert: QuarterlineDown
+        expr: up{job="quarterline"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Quarterline is not being scraped"
+          description: "The app has failed its scrape for 1 minute."
+
+      - alert: NumericRejectionsElevated
+        expr: >
+          quarterline_numeric_rejection_ratio > 0.1
+          and quarterline_numeric_rejection_ratio_samples >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Validation gate is rejecting >10% of answers on numbers"
+          description: >
+            The numeric-consistency check is rejecting a large share of
+            generated answers. Either the fact card changed shape or the
+            provider/prompt regressed.
+
+      - alert: BulletRetentionCollapsed
+        expr: >
+          quarterline_bullet_retention_ratio < 0.5
+          and (quarterline_bullets_total{outcome="retained"}
+               + quarterline_bullets_total{outcome="dropped"}) >= 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than half of generated bullets are being dropped"
+          description: "Citations or the metric allowlist are failing at scale."
+
+      - alert: ProviderFailuresElevated
+        expr: >
+          quarterline_answer_status_ratio{status="provider_failure"} > 0.2
+          and quarterline_answer_status_ratio_samples{status="provider_failure"} >= 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "The generation provider is failing >20% of calls"
+          description: "Check that Ollama is reachable from the container network."
+
+      - alert: GenerationLatencyHigh
+        expr: >
+          quarterline_latency_milliseconds{stage="generation",quantile="0.95"} > 60000
+          and quarterline_latency_samples{stage="generation"} >= 10
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 generation latency above 60s"
+          description: "Local model throughput has degraded; check host load."

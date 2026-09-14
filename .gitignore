@@ -9,3 +9,6 @@ __pycache__/
 *.egg-info/
 .DS_Store
 .playwright-mcp/
+
+# j-space ledger (local working state, never shared)
+.jspace/
