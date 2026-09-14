@@ -27,7 +27,6 @@ from quarterline.sources.india.data_status import MissingDataStatus
 from quarterline.sources.india.metrics import INDIA_METRIC_IDS
 from quarterline.sources.india.normalization import (
     DQ_AGENT_CHECKED,
-    DQ_REQUIRES_MANUAL_REVIEW,
     NORMALIZATION_VERSION,
     SELECTION_POLICY,
     cash_flow_derivation_statuses,
