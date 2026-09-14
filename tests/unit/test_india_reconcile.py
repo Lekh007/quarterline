@@ -225,7 +225,12 @@ class TestValidationCsv:
                 assert row["review_status"] == REVIEW_HUMAN_PENDING
                 assert row["review_notes"]  # the reason is always recorded
 
-    def test_hul_q1_revenue_tension_flagged_not_resolved(self):
+    def test_hul_q1_revenue_tension_resolved_by_visual_inspection(self):
+        # 2026-09-12: the P&L page was rendered to an image and read
+        # (owner-delegated). The printed statement has no revenue subtotal;
+        # 17,341 is the component sum (17,149 + 35 + 157), so the earlier
+        # linear-extraction reading (17,149 = sale of products) was the
+        # artifact. The stored fact was always correct.
         row = next(
             r
             for r in self.rows
@@ -233,11 +238,11 @@ class TestValidationCsv:
             and r["concept"] == "revenue_from_operations"
             and r["period_end"] == "2026-06-30"
         )
-        assert row["comparison_status"] == COMPARISON_SCRAMBLED
-        assert row["review_status"] == REVIEW_HUMAN_PENDING
+        assert row["comparison_status"] == COMPARISON_MATCHED
+        assert row["review_status"] == REVIEW_AGENT_CHECKED
         assert "17,341" in row["reference_display_value"]
         assert "17,149" in row["reference_display_value"]
-        assert "never guessed" in row["review_notes"]
+        assert "VISUAL PAGE INSPECTION" in row["review_notes"]
 
     def test_hul_sign_semantics_recorded(self):
         exceptional = next(

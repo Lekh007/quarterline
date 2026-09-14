@@ -444,3 +444,41 @@ labeled, `source_tier` carried) and indexed for filtered retrieval; measured
 results in `docs/india_evaluation.md`. The §7.1 HUL rendered-P&L tension is
 UNCHANGED — narrative ingestion indexes those pages for citation only; no
 value is read from them.
+
+## 13. Visual page inspection record (2026-09-12, owner-delegated)
+
+Lekhraj delegated the review-packet inspection to the agent. Method: the exact
+referenced PDF pages were rendered to images (PyMuPDF, 2.2x zoom) and read;
+values were transcribed from the rendered tables and compared against the
+stored facts. **These rows are `agent_checked_against_document` (visual) —
+`human_approved` is still never recorded by code.**
+
+Pages read:
+
+| Document | Page | Content verified |
+|---|---|---|
+| `hul-jq26-financial-results.pdf` | p.6 | Consolidated P&L, quarter ended 30.06.2026 column + audited Q4/FY26 columns |
+| `hul-mq26-financial-results.pdf` | p.8 | Consolidated P&L, Q4 + FY26 columns (own document) |
+| `consol-fy27-q1-finstatement.pdf` (INFY) | p.3 (printed p.2) | Condensed consolidated P&L, Q1 FY27 + prior-year comparatives |
+| `consol-fy27-q1-finstatement.pdf` (INFY) | p.6 (printed p.5) | Condensed consolidated cash flows, Q1 FY27 |
+
+Outcomes:
+
+- **All 33 `human_review_pending` HUL rows verified and upgraded to
+  `agent_checked_against_document`** (12 Q1 + 12 Q4 + 9 FY26). HUL now has 39/39
+  rows agent-checked; the reconciliation CSV stands at 145 agent-checked /
+  274 pending (pending = the other issuers' rendered-document cross-checks).
+- **RESOLVED: the HUL Q1 revenue tension.** The printed P&L has no revenue
+  subtotal: 17,149 (sale of products) + 35 (services) + 157 (other operating
+  revenue) = **17,341**, matching the segment note and the stored fact. The
+  "17,149" from linear text extraction was the component line.
+- **NEW finding (recorded, not forced):** HUL's XBRL `ProfitBeforeTax` fact
+  (Q4 3,928 / FY26 13,827) sits BEFORE the share of equity-accounted investee
+  loss, while the printed "Profit before tax" line is AFTER it
+  (Q4 3,924 / FY26 13,812). Difference equals the equity-accounted share
+  exactly ((4) / (15)). Stored facts are correct XBRL transcriptions; the
+  definition difference vs the printed line is now documented in
+  `docs/india_financial_methodology.md` and in each row's notes.
+- INFY anchors re-confirmed visually: revenue 48,211, total income 49,195,
+  PBT 11,028, PAT 7,775, owners 7,769, EPS 19.19/19.17, quarterly CFO 9,330,
+  plus prior-year comparatives (42,279 / 6,924) that underpin YoY +14.03%.

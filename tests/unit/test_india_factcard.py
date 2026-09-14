@@ -161,9 +161,11 @@ class TestBuildCard:
             card = build_india_fact_card(session, "IN-HINDUNILVR")
         assert card.no_score_note == NO_SCORE_NOTE
         revenue = next(f for f in card.canonical_facts if f.concept == "revenue_from_operations")
-        # the scrambling review-pending item is carried, not resolved
-        assert revenue.data_quality_status == "requires_manual_review"
-        assert revenue.provenance.review_status == "human_review_pending"
+        # 2026-09-12 visual page inspection (owner-delegated) resolved the
+        # scrambling: the P&L prints no revenue subtotal; 17,341 is the
+        # printed component sum and matches the segment note.
+        assert revenue.data_quality_status == "agent_checked_against_document"
+        assert revenue.provenance.review_status == "agent_checked_against_document"
         assert revenue.value == Decimal(173410000000)
 
     def test_explicit_scope_override(self, india_imported, tmp_path):

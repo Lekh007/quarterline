@@ -270,9 +270,11 @@ class TestSelection:
 
 
 class TestDataQuality:
-    def test_hul_pnl_scrambling_carries_requires_manual_review(self, india_imported):
-        """The IND-3 human-review-pending HUL P&L rows stay review-gated — the
-        canonical fact carries the status, never a silent resolution."""
+    def test_hul_pnl_rows_carry_visual_inspection_status(self, india_imported):
+        """2026-09-12 (owner-delegated): the HUL P&L pages were rendered and
+        read, resolving the IND-3 pending rows; the canonical facts carry the
+        agent-checked status with the provenance trail — never a silent
+        resolution, never human approval from code."""
         _, _ = india_imported
         run_ind4_pipeline()
         hul_q1_revenue = next(
@@ -283,16 +285,16 @@ class TestDataQuality:
             and f.period_kind == "quarter"
             and Decimal(f.value_decimal) == Decimal(173410000000)
         )
-        assert hul_q1_revenue.data_quality_status == DQ_REQUIRES_MANUAL_REVIEW
-        # HUL Q4 quarter and annual P&L rows are equally pending
-        pending = {
+        assert hul_q1_revenue.data_quality_status == DQ_AGENT_CHECKED
+        # HUL Q4 quarter and annual P&L rows are equally verified
+        checked = {
             f.data_quality_status
             for f in _india_facts("consolidated")
             if f.concept in ("revenue_from_operations", "profit_after_tax", "eps_basic")
             and Decimal(f.value_decimal)
             in (Decimal(163510000000), Decimal(644680000000), Decimal(2992000000))
         }
-        assert pending == {DQ_REQUIRES_MANUAL_REVIEW}
+        assert checked == {DQ_AGENT_CHECKED}
 
     def test_agent_checked_facts_carry_checked_status(self, india_imported):
         _, _ = india_imported

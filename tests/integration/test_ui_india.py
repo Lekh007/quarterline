@@ -217,14 +217,17 @@ def test_infy_page_no_score_note_and_badges_and_links(client) -> None:
 def test_hul_page_review_badges_link_to_review_packet(client) -> None:
     html = client.get("/in/IN-HINDUNILVR").text
 
-    assert "requires_manual_review" in html
-    assert REVIEW_PACKET_HREF in html  # amber badges link to the review packet
+    # After the 2026-09-12 visual page inspection the HUL Q1 P&L rows are
+    # agent-checked; remaining manual-review rows (other issuers/periods)
+    # still render amber badges linking to the review packet.
+    assert REVIEW_PACKET_HREF in html
     review_row = re.search(
         r'<tr data-concept="revenue_from_operations">.*?</tr>', html, re.DOTALL
     ).group(0)
-    assert "requires_manual_review" in review_row
-    assert REVIEW_PACKET_HREF in review_row
+    assert "agent_checked_against_document" in review_row
     assert "₹17,341 Cr" in review_row  # carried as ingested, never resolved
+    # no human_review_pending rows remain for HUL after the 2026-09-12
+    # visual page inspection; the packet link stays for the verification record
 
 
 def test_hul_page_quarterly_cash_flow_missing_not_zero(client) -> None:

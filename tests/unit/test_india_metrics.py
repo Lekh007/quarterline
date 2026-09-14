@@ -94,8 +94,10 @@ class TestGrowthMetrics:
         expected = Decimal(173410000000) / Decimal(163510000000) - Decimal(1)
         assert result.status == "ok"
         assert result.value == expected
-        # HUL P&L facts carry the IND-3 pending status; the metric notes it
-        assert any("requires_manual_review" in note for note in result.notes)
+        # 2026-09-12 visual page inspection resolved the IND-3 pending
+        # status; the metric notes the inputs' agent-checked provenance and
+        # no longer claims manual review
+        assert not any("requires_manual_review" in note for note in result.notes)
 
     def test_infy_yoy_computes_from_ingested_ir_pdf_comparative(self, india_imported):
         """IND-6: Infosys' prior-year quarter IS ingested (value-anchored

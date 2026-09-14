@@ -1383,8 +1383,149 @@ def review_status_for(issuer_id: str, document_id: str, context_kind: str, tag: 
 #: Explicit rendered references that OVERRIDE the scrambled fallback with a
 #: documented (unresolved or recorded) outcome.
 _RENDERED_OVERRIDES: dict[ReferenceKey, RenderedReference] = {
-    ("IN-HINDUNILVR", _DOC_HUL_Q1, "quarter", "RevenueFromOperations"): _HUL_Q1_REVENUE,
+    ("IN-HINDUNILVR", _DOC_HUL_Q1, "quarter", "RevenueFromOperations"): RenderedReference(
+        REF_HUL_Q1_PDF,
+        "PDF p.6 (consolidated P&L, quarter ended 30.06.2026 column)",
+        "17,341 (= 17,149 sale of products + 35 sale of services + 157 other operating revenue; "
+        "the P&L prints no revenue subtotal)",
+        COMPARISON_MATCHED,
+        "VISUAL PAGE INSPECTION 2026-09-12 (owner-delegated): page rendered to an image and read; "
+        "RESOLVES the earlier 17,149-vs-17,341 tension — 17,149 is the SALE-OF-PRODUCTS line, the "
+        "subtotal is not printed, and the component sum 17,341 agrees with the segment note (p.7) "
+        "and the XBRL fact. The linear-extraction reading was the component line, not an error in "
+        "the stored fact",
+    ),
 }
+
+
+#: -----------------------------------------------------------------------
+#: Visual page inspection (2026-09-12, owner-delegated): the HUL Q1 and
+#: Q4/annual consolidated P&L pages were rendered to images and read; every
+#: value below was transcribed from the rendered page. These entries
+#: supersede the linear-text ``extraction_scrambled`` fallback for their
+#: keys. Human approval is still never recorded — these remain
+#: agent-level verification.
+_VISUAL_NOTE = (
+    "VISUAL PAGE INSPECTION 2026-09-12 (owner-delegated): page rendered to an "
+    "image and read; value transcribed from the rendered table"
+)
+_HUL_PBT_PLACEMENT_NOTE = (
+    "BASIS DIFFERENCE visually confirmed: the printed 'Profit before tax' line "
+    "sits AFTER the share of equity-accounted investee loss, while the XBRL "
+    "ProfitBeforeTax fact sits BEFORE it; the difference equals the "
+    "equity-accounted share exactly; recorded, never forced"
+)
+_HUL_COMPONENT_SUM_NOTE = (
+    "the P&L prints no revenue subtotal; the displayed figure is the printed "
+    "component sum (sale of products + sale of services + other operating revenue)"
+)
+
+
+def _build_visual_inspection_overrides() -> dict[ReferenceKey, RenderedReference]:
+    overrides: dict[ReferenceKey, RenderedReference] = {}
+
+    def add(doc, context, tag, ref, page, display, status, extra=""):
+        key = ("IN-HINDUNILVR", doc, context, tag)
+        if key in _RENDERED_OVERRIDES:
+            return  # an explicit reference already resolves this row
+        overrides[key] = RenderedReference(
+            ref,
+            page,
+            display,
+            status,
+            (_VISUAL_NOTE + ("; " + extra if extra else "")),
+        )
+
+    # --- HUL Q1 FY2026-27 (quarter ended 30.06.2026): PDF p.6 -------------
+    q1_page = "PDF p.6 (consolidated P&L, quarter ended 30.06.2026 column)"
+    add(_DOC_HUL_Q1, "quarter", "Income", REF_HUL_Q1_PDF, q1_page,
+        "17,529 (Total income)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "ProfitBeforeExceptionalItemsAndTax", REF_HUL_Q1_PDF, q1_page,
+        "3,707 (before exceptional items and tax; equity-accounted share nil this quarter)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "ProfitBeforeTax", REF_HUL_Q1_PDF, q1_page,
+        "3,632 (Profit before tax, after exceptional items (75))", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "ProfitLossForPeriod", REF_HUL_Q1_PDF, q1_page,
+        "2,680 (Profit for the period C = A+B; discontinued operations nil)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "ProfitLossForPeriodFromContinuingOperations", REF_HUL_Q1_PDF,
+        q1_page, "2,680 (A: profit from continuing operations)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "ProfitOrLossAttributableToOwnersOfParent", REF_HUL_Q1_PDF,
+        q1_page, "2,673 (owners of the holding company; non-controlling interest 7)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "ExceptionalItemsBeforeTax", REF_HUL_Q1_PDF, q1_page,
+        "(75) exceptional items [net] charge/credit", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+        REF_HUL_Q1_PDF, q1_page, "11.38 (basic, continuing and discontinued operations)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "BasicEarningsLossPerShareFromContinuingOperations",
+        REF_HUL_Q1_PDF, q1_page, "11.38 (basic, continuing operations)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+        REF_HUL_Q1_PDF, q1_page, "11.38 (diluted, continuing and discontinued operations)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "DilutedEarningsLossPerShareFromContinuingOperations",
+        REF_HUL_Q1_PDF, q1_page, "11.38 (diluted, continuing operations)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q1, "quarter", "RevenueFromOperations", REF_HUL_Q1_PDF, q1_page,
+        "17,341 (= 17,149 + 35 + 157)", COMPARISON_MATCHED, _HUL_COMPONENT_SUM_NOTE)
+
+    # --- HUL Q4 FY2025-26 (quarter ended 31.03.2026): PDF p.8 -------------
+    q4_page = "PDF p.8 (consolidated P&L, quarter ended 31.03.2026 column)"
+    add(_DOC_HUL_Q4, "quarter", "RevenueFromOperations", REF_HUL_Q4_PDF, q4_page,
+        "16,351 (= 16,172 + 35 + 144)", COMPARISON_MATCHED, _HUL_COMPONENT_SUM_NOTE)
+    add(_DOC_HUL_Q4, "quarter", "Income", REF_HUL_Q4_PDF, q4_page,
+        "16,615 (Total income)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "ProfitBeforeExceptionalItemsAndTax", REF_HUL_Q4_PDF, q4_page,
+        "3,681 (before exceptional items and tax and before share of equity-accounted investee)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "ProfitBeforeTax", REF_HUL_Q4_PDF, q4_page,
+        "3,928 fact vs printed 'Profit before tax' 3,924", COMPARISON_SCOPE_BASIS,
+        _HUL_PBT_PLACEMENT_NOTE + " (share for the quarter: (4))")
+    add(_DOC_HUL_Q4, "quarter", "ProfitLossForPeriod", REF_HUL_Q4_PDF, q4_page,
+        "2,994 (Profit for the period C = A+B)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "ProfitLossForPeriodFromContinuingOperations", REF_HUL_Q4_PDF,
+        q4_page, "3,002 (A: profit from continuing operations)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "ProfitOrLossAttributableToOwnersOfParent", REF_HUL_Q4_PDF,
+        q4_page, "2,992 (owners of the holding company; non-controlling interest 2)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "ExceptionalItemsBeforeTax", REF_HUL_Q4_PDF, q4_page,
+        "247 exceptional items [net] gain/credit (demerger-related)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+        REF_HUL_Q4_PDF, q4_page, "12.73 (basic, continuing and discontinued operations)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "BasicEarningsLossPerShareFromContinuingOperations",
+        REF_HUL_Q4_PDF, q4_page, "12.76 (basic, continuing operations)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+        REF_HUL_Q4_PDF, q4_page, "12.72 (diluted, continuing and discontinued operations)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "quarter", "DilutedEarningsLossPerShareFromContinuingOperations",
+        REF_HUL_Q4_PDF, q4_page, "12.76 (diluted, continuing operations)", COMPARISON_MATCHED)
+
+    # --- HUL FY2025-26 (year ended 31.03.2026): PDF p.8 -------------------
+    fy_page = "PDF p.8 (consolidated P&L, year ended 31.03.2026 column)"
+    add(_DOC_HUL_Q4, "annual", "RevenueFromOperations", REF_HUL_Q4_PDF, fy_page,
+        "64,468 (= 63,636 + 127 + 705)", COMPARISON_MATCHED, _HUL_COMPONENT_SUM_NOTE)
+    add(_DOC_HUL_Q4, "annual", "Income", REF_HUL_Q4_PDF, fy_page,
+        "65,219 (Total income)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "ProfitBeforeExceptionalItemsAndTax", REF_HUL_Q4_PDF, fy_page,
+        "14,047 (after share of equity-accounted investee (15))", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "ProfitLossForPeriod", REF_HUL_Q4_PDF, fy_page,
+        "15,059 (C = A+B: 10,652 continuing + 4,407 discontinued)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "ProfitOrLossAttributableToOwnersOfParent", REF_HUL_Q4_PDF,
+        fy_page, "15,040 (owners of the holding company; non-controlling interest 19)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "BasicEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+        REF_HUL_Q4_PDF, fy_page, "64.01 (basic, continuing and discontinued operations)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "BasicEarningsLossPerShareFromContinuingOperations",
+        REF_HUL_Q4_PDF, fy_page, "45.25 (basic, continuing operations)", COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "DilutedEarningsLossPerShareFromContinuingAndDiscontinuedOperations",
+        REF_HUL_Q4_PDF, fy_page, "64.00 (diluted, continuing and discontinued operations)",
+        COMPARISON_MATCHED)
+    add(_DOC_HUL_Q4, "annual", "DilutedEarningsLossPerShareFromContinuingOperations",
+        REF_HUL_Q4_PDF, fy_page, "45.25 (diluted, continuing operations)", COMPARISON_MATCHED)
+    return overrides
+
+
+_RENDERED_OVERRIDES.update(_build_visual_inspection_overrides())
 
 #: Document provenance for rendered references (verified against the cached
 #: PDFs; hashes recorded in tests/fixtures/india/manifest.json).

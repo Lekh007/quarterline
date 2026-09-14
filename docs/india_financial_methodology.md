@@ -327,3 +327,14 @@ ingested periods. The card carries NO score — the fixed note states that
 downstream panels render indicators only. CLI: `verify india-facts --issuer
 IN-INFY [--scope consolidated] [--period-end YYYY-MM-DD]` (registry key
 `verify:india-facts`).
+
+### HUL: XBRL vs printed "Profit before tax" placement (visually confirmed 2026-09-12)
+
+HUL's exchange XBRL instances tag `ProfitBeforeTax` BEFORE the share of
+equity-accounted investee loss, while the rendered P&L prints "Profit before
+tax" AFTER that share. Concretely (consolidated): Q4 FY26 XBRL 3,928 Cr vs
+printed 3,924 Cr (share: (4) Cr); FY26 XBRL 13,827 Cr vs printed 13,812 Cr
+(share: (15) Cr). The stored canonical fact is the XBRL transcription with the
+difference documented in its notes; the printed-line value is recorded as the
+rendered reference. The same placement does not affect Q1 (share was nil).
+Never force the two to agree; cite which basis you are quoting.
