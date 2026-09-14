@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Local-first public-company research desk: official filings in, explainable
-research out. Built as an **AI-engineering portfolio project** — the point is
+research out. Built as an **AI-engineering portfolio project** - the point is
 the engineering discipline: provenance for every number, a validation gate in
 front of the LLM, measured retrieval experiments, and honest documentation of
 what is implemented, measured, optional, and unverified.
@@ -30,12 +30,12 @@ label is a fixed rule with its caption shown, not a forecast.
 - **Grounded generation**: one provider call → one repair pass → a 10-check
   validation gate (schema, citations 4–7, metric-allowlist, numeric
   consistency vs the fact card, research-only advice compliance). Numbers are
-  Python-rendered from validated metric mentions — the model never types
+  Python-rendered from validated metric mentions - the model never types
   figures. Insufficient evidence abstains without a model call.
 - **Eval/LLMOps**: 11 reviewed anchored questions, 2×4 retrieval matrix with
   regression thresholds and explicit gated baseline regeneration, generation
   harness, optional pinned LLM judge, metrics dashboard with sample sizes.
-- **Agent workflow**: LangGraph memo writer — typed read-only tools, tool and
+- **Agent workflow**: LangGraph memo writer - typed read-only tools, tool and
   transition budgets, full-state checkpoints, approval-gated export bound to
   the exact memo content hash.
 
@@ -43,16 +43,16 @@ label is a fixed rule with its caption shown, not a forecast.
 
 | Capability | Works offline (no models) | Needs Ollama (local models) | Unverified / pending |
 |---|---|---|---|
-| Install, migrations, `/health`, deterministic UI (watchlist, company charts, screener, filing/evidence viewer, provenance) | yes | — | — |
-| Facts ingestion + normalization + ratios + labels | fixture-backed (verified) | — | **live SEC ingestion of the 15-company watchlist** (needs a real `EDGAR_IDENTITY`; refuses placeholder by design) |
-| Document ingestion (HTML + PDF), chunking, index build, lexical search | fixture-backed (verified) | — | live SEC download path (same identity gate) |
-| Dense / hybrid retrieval, brief + ask generation, memo writing | degraded paths verified (facts + evidence shown, no fake prose) | yes — this is the real path; **live-model verification is in progress at release time** | real-model retrieval/generation quality numbers (see `docs/retrieval_experiments.md` → PENDING) |
-| Eval + regression + dashboard | yes (fixture corpus, fake embeddings — labeled as such) | scheduled real-model eval is opt-in | ≥30 reviewed questions (11 committed); CI execution (repo has no remote yet — workflows ship, local equivalents verified) |
+| Install, migrations, `/health`, deterministic UI (watchlist, company charts, screener, filing/evidence viewer, provenance) | yes | - | - |
+| Facts ingestion + normalization + ratios + labels | fixture-backed (verified) | - | **live SEC ingestion of the 15-company watchlist** (needs a real `EDGAR_IDENTITY`; refuses placeholder by design) |
+| Document ingestion (HTML + PDF), chunking, index build, lexical search | fixture-backed (verified) | - | live SEC download path (same identity gate) |
+| Dense / hybrid retrieval, brief + ask generation, memo writing | degraded paths verified (facts + evidence shown, no fake prose) | yes - this is the real path; **live-model verification is in progress at release time** | real-model retrieval/generation quality numbers (see `docs/retrieval_experiments.md` → PENDING) |
+| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | ≥30 reviewed questions (11 committed); CI execution (repo has no remote yet - workflows ship, local equivalents verified) |
 | Agent workflow (budgets, checkpoints, approval-gated export) | yes, offline-verified with fakes | live model memo quality untested | live yfinance/Ollama paths |
-| PostgreSQL 16 + pgvector profile | code + contract tests implemented; **tests skip** (no Postgres DBAPI installed; add `psycopg` to `pyproject.toml` to enable) | — | contract tests have not executed against a live server in this environment |
+| PostgreSQL 16 + pgvector profile | code + contract tests implemented; **tests skip** (no Postgres DBAPI installed; add `psycopg` to `pyproject.toml` to enable) | - | contract tests have not executed against a live server in this environment |
 
 Measured retrieval numbers are **fixture-corpus, fake-embedding** measurements
-(deterministic hash vectors — plumbing/regression signal, not quality):
+(deterministic hash vectors - plumbing/regression signal, not quality):
 see `docs/retrieval_experiments.md` for the matrix and its history.
 
 ## Quickstart
@@ -62,7 +62,7 @@ Requires Python 3.12, [uv](https://docs.astral.sh/uv/), and (for generation)
 
 ```bash
 cp .env.example .env
-# Edit .env — LIVE ingestion requires a REAL EDGAR_IDENTITY (name + contact
+# Edit .env - LIVE ingestion requires a REAL EDGAR_IDENTITY (name + contact
 # email). The app refuses live SEC calls while it is a placeholder. Offline
 # fixtures and tests work without it.
 
@@ -85,7 +85,7 @@ uv run pytest -q                       # or: make test
 
 If you only want to see the app without ingesting anything, `db upgrade` +
 `serve` already give you the watchlist shell with explicit "no data ingested"
-states (missing stays missing — never zero).
+states (missing stays missing - never zero).
 
 Search CLI (SPEC §29):
 
@@ -112,7 +112,7 @@ make test-postgres   # boots docker compose db, runs pgvector contract tests,
 ```
 
 Note: executing the pgvector contract tests additionally needs a Postgres
-DBAPI (`psycopg`) added to `pyproject.toml` — until then the tests skip
+DBAPI (`psycopg`) added to `pyproject.toml` - until then the tests skip
 cleanly everywhere, including CI (see `docs/commercial_readiness.md`).
 
 Quality gates:
@@ -129,7 +129,7 @@ docker compose config   # validates the optional db profile
 `make embed` · `make serve` · `make test` · `make test-postgres` ·
 `make eval` / `eval-retrieval` / `eval-generation` · `make fmt` · `make lint`.
 
-Nothing here promises ingestion time or token throughput — measure your own
+Nothing here promises ingestion time or token throughput - measure your own
 hardware (SPEC §29).
 
 ## Acceptance criteria (SPEC §31), honestly assessed
@@ -137,24 +137,24 @@ hardware (SPEC §29).
 | # | Criterion | Status |
 |---|---|---|
 | 1 | Fresh env can install + initialize DB | met |
-| 2 | SEC ingestion retrieves real observations for the 15-company watchlist | **pending** — EDGAR_IDENTITY still placeholder; pipeline verified on fixtures |
-| 3 | AAPL/MSFT manually reconciled against official filings | **partial** — AAPL fixture (trimmed real companyfacts) reconciled in tests; MSFT + human sign-off not done |
+| 2 | SEC ingestion retrieves real observations for the 15-company watchlist | **pending** - EDGAR_IDENTITY still placeholder; pipeline verified on fixtures |
+| 3 | AAPL/MSFT manually reconciled against official filings | **partial** - AAPL fixture (trimmed real companyfacts) reconciled in tests; MSFT + human sign-off not done |
 | 4 | Annual/YTD/quarterly facts do not collide | met (tested) |
 | 5 | Every normalized/derived value has inspectable lineage | met (display-level caveat for growth metrics documented in `docs/financial_methodology.md`) |
 | 6 | Watchlist/charts/screener work without an LLM | met (smoke-tested with Ollama down) |
 | 7 | HTML and text-based PDF ingestion with source metadata | met (fixtures) |
 | 8 | Both chunking strategies built and evaluated | met (fixture corpus) |
-| 9 | Hybrid retrieval and reranking work with measured comparisons | **partial** — hybrid measured (fake embeddings); reranker verified in degraded mode only, no real cross-encoder comparison |
-| 10 | SQLite and optional PostgreSQL profile pass contract tests | **partial** — SQLite passes; PG contract tests written but skip (no DBAPI → never executed against live PG) |
-| 11 | Briefs return validated JSON and resolvable citations | **partial** — verified offline (scripted provider + degraded paths); live-model run pending |
+| 9 | Hybrid retrieval and reranking work with measured comparisons | **partial** - hybrid measured (fake embeddings); reranker verified in degraded mode only, no real cross-encoder comparison |
+| 10 | SQLite and optional PostgreSQL profile pass contract tests | **partial** - SQLite passes; PG contract tests written but skip (no DBAPI → never executed against live PG) |
+| 11 | Briefs return validated JSON and resolvable citations | **partial** - verified offline (scripted provider + degraded paths); live-model run pending |
 | 12 | Numbers rendered from validated references or rejected | met (tested) |
 | 13 | Unanswerable → explicit insufficient evidence | met (tested) |
 | 14 | Advice → research-only refusal + alternative | met (tested) |
 | 15 | Agent tool budgets and approval controls enforced in code | met (tested) |
-| 16 | ≥30 reviewed evaluation questions committed | **partial** — 11 committed |
-| 17 | CI executes reproducible regression checks, no live SEC/paid provider | **partial** — workflows ship + local equivalents verified; no remote yet, so CI itself has not run |
+| 16 | ≥30 reviewed evaluation questions committed | **partial** - 11 committed |
+| 17 | CI executes reproducible regression checks, no live SEC/paid provider | **partial** - workflows ship + local equivalents verified; no remote yet, so CI itself has not run |
 | 18 | Dashboard reports real run metrics + sample sizes | met (tested) |
-| 19 | Tests pass | met — 561 passed, 1 skipped (pgvector contract, skip-by-design) |
+| 19 | Tests pass | met - 561 passed, 1 skipped (pgvector contract, skip-by-design) |
 | 20 | Docs separate implemented / measured / optional / unverified | met (this docs set) |
 
 Passing these criteria does not justify claiming "hallucination-free" or
@@ -162,14 +162,14 @@ Passing these criteria does not justify claiming "hallucination-free" or
 
 ## Documentation index
 
-- `docs/SPEC.md` — master build specification (source of truth)
-- `docs/PLAN.md` — build orchestration, wave status, pinned contracts
-- `docs/architecture.md` — components, module map, degradation matrix, contracts C1–C12
-- `docs/data_contract.md` — table-by-table schema, decimal-as-TEXT, evidence-id + index-version formulas
-- `docs/financial_methodology.md` — every financial rule with its SPEC section and proving tests
-- `docs/retrieval_experiments.md` — measured matrix (labeled), chunker-fix history, real-model status
-- `docs/evaluation.md` — dataset, metrics (Hit@5 vs Recall@5), judge policy, regression thresholds, CI honesty
-- `docs/threat_model.md` — STRIDE-lite over the local surface
-- `docs/failure_cases.md` — exercised agent failures with real traces
-- `docs/commercial_readiness.md` — SPEC §28 boundary: what a launch would need, what this release is NOT
-- `docs/implementation_log.md` — append-only per-wave build log (work, commands, results, limitations)
+- `docs/SPEC.md` - master build specification (source of truth)
+- `docs/PLAN.md` - build orchestration, wave status, pinned contracts
+- `docs/architecture.md` - components, module map, degradation matrix, contracts C1–C12
+- `docs/data_contract.md` - table-by-table schema, decimal-as-TEXT, evidence-id + index-version formulas
+- `docs/financial_methodology.md` - every financial rule with its SPEC section and proving tests
+- `docs/retrieval_experiments.md` - measured matrix (labeled), chunker-fix history, real-model status
+- `docs/evaluation.md` - dataset, metrics (Hit@5 vs Recall@5), judge policy, regression thresholds, CI honesty
+- `docs/threat_model.md` - STRIDE-lite over the local surface
+- `docs/failure_cases.md` - exercised agent failures with real traces
+- `docs/commercial_readiness.md` - SPEC §28 boundary: what a launch would need, what this release is NOT
+- `docs/implementation_log.md` - append-only per-wave build log (work, commands, results, limitations)
