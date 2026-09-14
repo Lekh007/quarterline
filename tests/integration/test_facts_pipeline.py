@@ -318,9 +318,7 @@ def test_default_ingest_targets_watchlist_rows_only(tmp_path, monkeypatch):
             fetches.append(url)
             return load_aapl_fixture()
 
-    report = import_ingest_facts().ingest_facts(
-        watchlist=watchlist, client=RecordingClient()
-    )
+    report = import_ingest_facts().ingest_facts(watchlist=watchlist, client=RecordingClient())
 
     assert report.tickers == ["AAPL"]
     assert len(fetches) == 1
