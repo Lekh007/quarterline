@@ -21,6 +21,7 @@ from facts_test_helpers import (
     find_fact_entry,
     import_ingest_facts,
     instant_fact_for,
+    load_aapl_fixture,
     load_synthetic_fixture,
 )
 from sqlalchemy import select
