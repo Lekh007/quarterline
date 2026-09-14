@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import cache
+from pathlib import Path
 
 from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
@@ -25,6 +27,13 @@ def get_engine(database_url: str | None = None) -> Engine:
     constraints are enforced without per-session setup.
     """
     url = database_url or get_settings().database_url
+    if _is_sqlite(url):
+        # A fresh checkout has no storage/ directory (it is gitignored);
+        # create the parent so the SQLite file can be created at all.
+        file_part = url.split("///", 1)[-1] if "///" in url else url.split(":", 1)[-1]
+        if file_part and file_part not in (":memory:",):
+            parent = Path(file_part).expanduser().resolve().parent
+            os.makedirs(parent, exist_ok=True)
     connect_args = {"check_same_thread": False} if _is_sqlite(url) else {}
     engine = create_engine(url, connect_args=connect_args, future=True)
     if _is_sqlite(url):
