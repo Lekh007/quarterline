@@ -62,7 +62,10 @@ def test_all_generation_metrics_offline(retrieval_db, questions) -> None:
 
 
 def test_generation_metrics_distinguish_failure_classes(retrieval_db, questions) -> None:
-    """Override two questions: one provider failure, one bad-JSON needing repair."""
+    """Override two question classes: every advice_request gets a provider
+    failure, every wrong_company_trap gets bad JSON needing repair. Counts
+    track the committed dataset (30 questions: 20 answer, 6 expected
+    insufficient, 4 expected refusal, 2 wrong-company traps)."""
     overrides = {}
     for question in questions:
         if question.task_type == "advice_request":
@@ -85,21 +88,21 @@ def test_generation_metrics_distinguish_failure_classes(retrieval_db, questions)
         service = SearchService(session, fixture_provider())
         summary = evaluate_generation(questions, runner, service=service)
 
-        assert summary["provider_failure_rate"]["count"] == 1
-        # The malformed JSON and the dead-provider output are both invalid before
-        # repair; exactly one of them is recovered by repair.
-        assert summary["json_validity_before_repair"]["count"] == len(questions) - 2
-        assert summary["json_repair_rate"]["count"] == 1
-        assert summary["status_breakdown"].get("provider_unavailable", 0) == 1
-        # The three non-answer outcomes stay distinct: with the only
+        assert summary["provider_failure_rate"]["count"] == 4
+        # The malformed-JSON and dead-provider outputs are all invalid before
+        # repair; only the malformed ones are recovered by repair.
+        assert summary["json_validity_before_repair"]["count"] == len(questions) - 6
+        assert summary["json_repair_rate"]["count"] == 2
+        assert summary["status_breakdown"].get("provider_unavailable", 0) == 4
+        # The three non-answer outcomes stay distinct: with every
         # expected-refusal question overridden to provider_unavailable, the
-        # remaining expected-insufficient questions still abstain — and the
-        # provider failure is never merged into either bucket.
+        # remaining expected-insufficient questions still abstain - and the
+        # provider failures are never merged into either bucket.
         statuses = summary["status_breakdown"]
         assert statuses == {
-            "answer": 7,
-            "insufficient_evidence": 3,
-            "provider_unavailable": 1,
+            "answer": 20,
+            "insufficient_evidence": 6,
+            "provider_unavailable": 4,
         }
 
 

@@ -3,7 +3,7 @@
 Reuses the wave-2 fixture corpus (REAL Apple EX-99.1 exhibit + synthetic
 distractors) and the committed dataset. Fully offline: FakeEmbeddingProvider
 only. Also verifies every gold span's anchor against the ingested cleaned
-document text — the machine check behind `reviewed: true`.
+document text - the machine check behind `reviewed: true`.
 """
 
 from __future__ import annotations
@@ -62,11 +62,14 @@ def test_gold_spans_live_in_the_real_exhibit_document(retrieval_db, questions) -
 def test_answerable_questions_hit_gold_on_hybrid_section(retrieval_db, questions) -> None:
     """Frozen fixture-corpus retrieval levels (SPEC §23 frozen regression tests).
 
-    Measured values (deterministic): section/hybrid reaches 6 of 7 gold
-    questions in top-5. Levels raised from 4/7 (MRR 3/7) after the
+    Measured values (deterministic): section/hybrid reaches 17 of 20 gold
+    questions in top-5 (dataset expanded 2026-09-17 from 11 to 30 reviewed
+    questions, 7 -> 20 with gold; the three misses are the diluted-EPS
+    headline paragraph and two table-line spans whose vocabulary does not
+    overlap the question wording under fake embeddings). Earlier levels:
+    4/7, then 6/7 after the
     orchestrator's wave-3 fix of the ``_pack_chunks`` early-stop in
-    ``retrieve/chunk_fixed.py`` (which had left offsets >~5639 of the exhibit
-    unindexed for both strategies); baseline regenerated explicitly via
+    ``retrieve/chunk_fixed.py``. Baseline regenerated explicitly via
     QUARTERLINE_EVAL_WRITE_BASELINE with the diff in the implementation log.
     """
     with session_scope() as session:
@@ -78,15 +81,19 @@ def test_answerable_questions_hit_gold_on_hybrid_section(retrieval_db, questions
             provider=fixture_provider(),
         )
     assert report.n_questions == len(questions)
-    assert report.n_with_gold == 7
-    assert report.hit_at_5 == pytest.approx(6 / 7)
-    assert report.recall_at_5 == pytest.approx(6 / 7)
-    assert report.mrr == pytest.approx(5.0 / 7)
+    assert report.n_with_gold == 20
+    assert report.hit_at_5 == pytest.approx(17 / 20)
+    assert report.recall_at_5 == pytest.approx(17 / 20)
+    assert report.mrr == pytest.approx(0.62)
     assert report.wrong_company_rate == 0.0  # ticker filter must hold
     assert report.period_filter_error_rate == 0.0
 
 
 def test_fixed_lexical_frozen_levels(retrieval_db, questions) -> None:
+    """Frozen levels after the 2026-09-17 dataset expansion (30 questions,
+    20 with gold): 19/20 - the sole miss is the cash-and-equivalents
+    table-line span. Baseline regenerated explicitly via
+    QUARTERLINE_EVAL_WRITE_BASELINE."""
     with session_scope() as session:
         report = evaluate_retrieval(
             questions,
@@ -95,9 +102,9 @@ def test_fixed_lexical_frozen_levels(retrieval_db, questions) -> None:
             retrieval="lexical",
             provider=fixture_provider(),
         )
-    assert report.hit_at_5 == pytest.approx(7 / 7)
-    assert report.recall_at_5 == pytest.approx(7 / 7)
-    assert report.mrr == pytest.approx(6.5 / 7)
+    assert report.hit_at_5 == pytest.approx(19 / 20)
+    assert report.recall_at_5 == pytest.approx(19 / 20)
+    assert report.mrr == pytest.approx(0.8083333333333333)
 
 
 def test_wrong_company_trap_retrieves_nothing(retrieval_db, questions) -> None:

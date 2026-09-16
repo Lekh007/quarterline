@@ -32,7 +32,7 @@ label is a fixed rule with its caption shown, not a forecast.
   consistency vs the fact card, research-only advice compliance). Numbers are
   Python-rendered from validated metric mentions - the model never types
   figures. Insufficient evidence abstains without a model call.
-- **Eval/LLMOps**: 11 reviewed anchored questions, 2×4 retrieval matrix with
+- **Eval/LLMOps**: 30 reviewed anchored questions, 2×4 retrieval matrix with
   regression thresholds and explicit gated baseline regeneration, generation
   harness, optional pinned LLM judge, metrics dashboard with sample sizes.
 - **Agent workflow**: LangGraph memo writer - typed read-only tools, tool and
@@ -47,7 +47,7 @@ label is a fixed rule with its caption shown, not a forecast.
 | Facts ingestion + normalization + ratios + labels | fixture-backed (verified) | - | - (live SEC ingestion of the 15-company watchlist verified 2026-09-14; still refuses a placeholder `EDGAR_IDENTITY` by design) |
 | Document ingestion (HTML + PDF), chunking, index build, lexical search | fixture-backed (verified) | - | live SEC download path (same identity gate) |
 | Dense / hybrid retrieval, brief + ask generation, memo writing | degraded paths verified (facts + evidence shown, no fake prose) | yes - this is the real path; **live-model verification is in progress at release time** | real-model retrieval/generation quality numbers (see `docs/retrieval_experiments.md` → PENDING) |
-| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | ≥30 reviewed questions (11 committed); real-model retrieval quality numbers |
+| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | real-model retrieval quality numbers (rerun at n=30 in progress) |
 | Agent workflow (budgets, checkpoints, approval-gated export) | yes, offline-verified with fakes | live model memo quality untested | live yfinance/Ollama paths |
 | PostgreSQL 16 + pgvector profile | contract tests pass against a live server (`make test-postgres`; `psycopg` ships in the `postgres` extra) | - | - |
 
@@ -186,7 +186,7 @@ hardware (SPEC §29).
 | 13 | Unanswerable → explicit insufficient evidence | met (tested) |
 | 14 | Advice → research-only refusal + alternative | met (tested) |
 | 15 | Agent tool budgets and approval controls enforced in code | met (tested) |
-| 16 | ≥30 reviewed evaluation questions committed | **partial** - 11 committed |
+| 16 | ≥30 reviewed evaluation questions committed | met - 30 committed (20 answerable with machine-verified gold spans, 6 insufficient-evidence incl. 2 wrong-company traps, 4 advice refusals); every anchor verified by `quarterline.eval.dataset.verify_spans` against the ingested corpus; baseline regenerated through the `QUARTERLINE_EVAL_WRITE_BASELINE` gate 2026-09-17 |
 | 17 | CI executes reproducible regression checks, no live SEC/paid provider | met - GitHub Actions runs on every push to `main`; latest run green |
 | 18 | Dashboard reports real run metrics + sample sizes | met (tested) |
 | 19 | Tests pass | met - 988 passed, 0 skipped (2026-09-15; the pgvector contract tests execute for real once the compose database is up) |
