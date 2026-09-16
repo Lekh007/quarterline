@@ -47,7 +47,7 @@ label is a fixed rule with its caption shown, not a forecast.
 | Facts ingestion + normalization + ratios + labels | fixture-backed (verified) | - | - (live SEC ingestion of the 15-company watchlist verified 2026-09-14; still refuses a placeholder `EDGAR_IDENTITY` by design) |
 | Document ingestion (HTML + PDF), chunking, index build, lexical search | fixture-backed (verified) | - | live SEC download path (same identity gate) |
 | Dense / hybrid retrieval, brief + ask generation, memo writing | degraded paths verified (facts + evidence shown, no fake prose) | yes - this is the real path; **live-model verification is in progress at release time** | real-model retrieval/generation quality numbers (see `docs/retrieval_experiments.md` → PENDING) |
-| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | ≥30 reviewed questions (11 committed); CI execution (repo has no remote yet - workflows ship, local equivalents verified) |
+| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | ≥30 reviewed questions (11 committed); real-model retrieval quality numbers |
 | Agent workflow (budgets, checkpoints, approval-gated export) | yes, offline-verified with fakes | live model memo quality untested | live yfinance/Ollama paths |
 | PostgreSQL 16 + pgvector profile | contract tests pass against a live server (`make test-postgres`; `psycopg` ships in the `postgres` extra) | - | - |
 
