@@ -1,4 +1,4 @@
-"""Retrieval service integration tests — the SPEC §26 retrieval list over the
+"""Retrieval service integration tests - the SPEC §26 retrieval list over the
 real fixture corpus (REAL Apple EX-99.1 exhibit + synthetic fixtures) in a tmp
 SQLite DB, indexed with the deterministic FakeEmbeddingProvider. Fully
 offline: no SEC, no Ollama."""
@@ -324,11 +324,22 @@ def _slice_document_text(session, document_id: int, start: int, end: int) -> str
 
 
 def test_reranker_failure_fallback_returns_hybrid_with_metadata(retrieval_db) -> None:
-    from quarterline.retrieve.reranker import CrossEncoderReranker
+    from quarterline.retrieve.reranker import CrossEncoderReranker, RerankerUnavailable
+
+    def _unavailable_loader(model_name):
+        # Same message the real import guard produces when the [rerank]
+        # extra is absent. Injected so the service-path fallback is
+        # exercised deterministically whether or not the extra is installed
+        # in this environment.
+        raise RerankerUnavailable(
+            "sentence-transformers is not installed (install the [rerank] extra)"
+        )
 
     with session_scope() as session:
-        # A real (library-absent) reranker attempt, not just "none configured".
-        service = SearchService(session, fixture_provider(), reranker=CrossEncoderReranker())
+        # A real reranker attempt that fails at load, not just "none configured".
+        service = SearchService(
+            session, fixture_provider(), reranker=CrossEncoderReranker(_loader=_unavailable_loader)
+        )
         result = service.search(
             SearchQuery(
                 query="Apple revenue March quarter",

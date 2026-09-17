@@ -144,8 +144,10 @@ check on a schedule/workflow dispatch and uploads reports.
 scripted-fake generation harness is labeled a NON-MEASUREMENT (plumbing
 check). Real-model quality (retrieval matrix + generation eval with
 `nomic-embed-text`/`qwen3:4b`) runs on an opt-in self-hosted runner or as an
-attached local evaluation report - it is **PENDING** at this release (see
-`docs/retrieval_experiments.md`).
+attached local evaluation report - the local runs are now recorded
+(2026-09-17, see `docs/retrieval_experiments.md`: real-embedding matrix with
+the real cross-encoder at n=30, and live qwen3:4b brief runs through the
+gate); CI itself still does not attach them.
 
 CI also does not exercise live SEC ingestion (EDGAR_IDENTITY gate), Ollama,
 or PostgreSQL (the pgvector contract tests skip without a server + DBAPI).

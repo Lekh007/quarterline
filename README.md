@@ -46,8 +46,8 @@ label is a fixed rule with its caption shown, not a forecast.
 | Install, migrations, `/health`, deterministic UI (watchlist, company charts, screener, filing/evidence viewer, provenance) | yes | - | - |
 | Facts ingestion + normalization + ratios + labels | fixture-backed (verified) | - | - (live SEC ingestion of the 15-company watchlist verified 2026-09-14; still refuses a placeholder `EDGAR_IDENTITY` by design) |
 | Document ingestion (HTML + PDF), chunking, index build, lexical search | fixture-backed (verified) | - | live SEC download path (same identity gate) |
-| Dense / hybrid retrieval, brief + ask generation, memo writing | degraded paths verified (facts + evidence shown, no fake prose) | yes - this is the real path; **live-model verification is in progress at release time** | real-model retrieval/generation quality numbers (see `docs/retrieval_experiments.md` → PENDING) |
-| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | real-model retrieval quality numbers (rerun at n=30 in progress) |
+| Dense / hybrid retrieval, brief + ask generation, memo writing | degraded paths verified (facts + evidence shown, no fake prose) | yes - this is the real path; live-model runs recorded 2026-09-17 | clean `ok` brief from a local ≤4B model still unmeasured; real-model numbers are small-n fixture-corpus (see `docs/retrieval_experiments.md`) |
+| Eval + regression + dashboard | yes (fixture corpus, fake embeddings - labeled as such) | scheduled real-model eval is opt-in | real-model numbers measured small-n (2026-09-17); not production-scale claims |
 | Agent workflow (budgets, checkpoints, approval-gated export) | yes, offline-verified with fakes | live model memo quality untested | live yfinance/Ollama paths |
 | PostgreSQL 16 + pgvector profile | contract tests pass against a live server (`make test-postgres`; `psycopg` ships in the `postgres` extra) | - | - |
 
@@ -179,9 +179,9 @@ hardware (SPEC §29).
 | 6 | Watchlist/charts/screener work without an LLM | met (smoke-tested with Ollama down) |
 | 7 | HTML and text-based PDF ingestion with source metadata | met (fixtures) |
 | 8 | Both chunking strategies built and evaluated | met (fixture corpus) |
-| 9 | Hybrid retrieval and reranking work with measured comparisons | **partial** - hybrid measured (fake embeddings); reranker verified in degraded mode only, no real cross-encoder comparison |
+| 9 | Hybrid retrieval and reranking work with measured comparisons | met - real-model matrix 2026-09-17 (`docs/retrieval_experiments.md`): live nomic-embed-text over the full 2x4 matrix plus the REAL cross-encoder (`ms-marco-MiniLM-L-6-v2`, 52 rerank calls) on both rerank arms; measured verdict: reranking lifts fixed (95.0% → 100.0% Hit@5) and hurts section (90.0% → 70.0%) - small-n, one-document corpus, not a production-quality claim |
 | 10 | SQLite and optional PostgreSQL profile pass contract tests | met - SQLite passes; the 6 pgvector contract tests executed green against live PostgreSQL 16 + pgvector on 2026-09-15 |
-| 11 | Briefs return validated JSON and resolvable citations | **partial** - verified offline (scripted provider + degraded paths); live-model run pending |
+| 11 | Briefs return validated JSON and resolvable citations | **partial** - validation gate + resolvable citations verified offline (scripted provider, degraded paths) AND live (2026-09-17, `docs/retrieval_experiments.md`: qwen3:4b end to end; gate proven in both directions - clean abstentions pass untouched, non-compliant prose is stripped); a clean `ok` brief from a local ≤4B model remains unmeasured, so full generation quality is not claimed |
 | 12 | Numbers rendered from validated references or rejected | met (tested) |
 | 13 | Unanswerable → explicit insufficient evidence | met (tested) |
 | 14 | Advice → research-only refusal + alternative | met (tested) |
@@ -189,7 +189,7 @@ hardware (SPEC §29).
 | 16 | ≥30 reviewed evaluation questions committed | met - 30 committed (20 answerable with machine-verified gold spans, 6 insufficient-evidence incl. 2 wrong-company traps, 4 advice refusals); every anchor verified by `quarterline.eval.dataset.verify_spans` against the ingested corpus; baseline regenerated through the `QUARTERLINE_EVAL_WRITE_BASELINE` gate 2026-09-17 |
 | 17 | CI executes reproducible regression checks, no live SEC/paid provider | met - GitHub Actions runs on every push to `main`; latest run green |
 | 18 | Dashboard reports real run metrics + sample sizes | met (tested) |
-| 19 | Tests pass | met - 988 passed, 0 skipped (2026-09-15; the pgvector contract tests execute for real once the compose database is up) |
+| 19 | Tests pass | met - 987 passed + 1 environment-conditional skip (2026-09-17, run with live PostgreSQL 16 + pgvector so the 6 pgvector contract tests execute for real; the single skip is the rerank-guard unit test, which skips only where the `[rerank]` extra is installed and whose fallback path an injected-loader integration test covers in every environment) |
 | 20 | Docs separate implemented / measured / optional / unverified | met (this docs set) |
 
 Passing these criteria does not justify claiming "hallucination-free" or
