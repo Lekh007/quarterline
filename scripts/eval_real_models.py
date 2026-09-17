@@ -134,8 +134,7 @@ def main() -> int:
         )
     print(
         f"\nmeasured with real nomic-embed-text queries over the fixture corpus "
-        f"(n={len(questions)}), reranker arm: {rerank_note}, in {elapsed:.1f}s"
-        + rerank_summary
+        f"(n={len(questions)}), reranker arm: {rerank_note}, in {elapsed:.1f}s" + rerank_summary
     )
 
     out_dir = Path("storage/eval_reports")
